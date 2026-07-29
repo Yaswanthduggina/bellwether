@@ -125,7 +125,9 @@ model IngestionRun {
   finishedAt  DateTime?
   rowsFetched Int      @default(0)
   rowsFailed  Int      @default(0)
-  status      String   @default("running") // "running" | "success" | "failed"
+  // "partial" = the run completed but dropped rows. Kept distinct from "success"
+  // so a run that lost half its data cannot read as clean in the audit trail.
+  status      String   @default("running") // "running" | "success" | "partial" | "failed"
   errorNote   String?
 
   @@index([accountId, startedAt])

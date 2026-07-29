@@ -288,6 +288,7 @@ const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 export function createSeedAdapter(platform: Platform): SocialAdapter {
     return {
         platform,
+        source: "seed",
 
         async fetchAccountMeta(accountHandle: string): Promise<RawAccountMeta> {
             const profile = profileFor(accountHandle);

@@ -38,6 +38,13 @@ export interface RawAccountMeta {
 
 export interface SocialAdapter {
     platform: RawPost["platform"];
+    /**
+     * Provenance label written to IngestionRun.source — e.g. "youtube_api", "seed",
+     * "csv_import". Lives on the adapter rather than being passed in by the caller,
+     * so the audit trail records what actually served the data instead of what the
+     * caller believed it asked for.
+     */
+    source: string;
     fetchAccountMeta(accountHandle: string): Promise<RawAccountMeta>;
     fetchPosts(accountHandle: string, sinceDate: Date): Promise<RawPost[]>;
 }
