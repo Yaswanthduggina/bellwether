@@ -29,10 +29,29 @@
 // fetched. Account.isSynthetic and Post.isSynthetic mark that at row level and the
 // UI badges it.
 //
-// The YouTube handles must be verified against the Data API before the live
-// adapter is trusted — a channel handle that does not resolve should fail loudly
-// at ingestion rather than quietly return an empty result set that reads as "this
-// account posted nothing in 90 days".
+// The YouTube handles WERE verified against the Data API, and the check earned
+// its keep. Results:
+//
+//   @ShashiTharoorOfficial       "Dr. Shashi Tharoor Official"    835K subs   LIVE
+//   @PriyankaChaturvediOfficial  "Priyanka Chaturvedi Official"    42.7K subs LIVE
+//   @KanhaiyaKumar               "Kanhaiya Kumar"                  3.71M subs LIVE
+//   @VarunGandhi                 0 subscribers, one 2023 upload    SQUATTER
+//
+// The first guess for Priyanka Chaturvedi (@PriyankaChaturvedi) did not resolve
+// at all. Worse, @VarunGandhi DOES resolve — to a dormant channel with no
+// subscribers whose only upload is a 2023 "Happy Independence Day" post. Ingesting
+// it would have produced a real-looking row of near-zero engagement attributed to
+// a sitting politician: a fabricated finding, arrived at honestly. No alternative
+// handle resolves, so Varun Gandhi stays seeded on YouTube and says so.
+//
+// This is why resolveChannel() throws instead of returning an empty list. An
+// unresolved handle rendering as "posted nothing in 90 days" would appear on the
+// dashboard as a finding rather than a failure.
+//
+// NOTE ON THE SUBSCRIBER SPREAD: 42.7K to 3.71M is an 87x range, far wider than
+// the follower comparability the peer set was chosen for. It does not distort the
+// YouTube numbers, because YouTube engagement rate is normalised by VIEWS, not
+// subscribers — which is exactly the case the per-platform denominator exists for.
 // ─────────────────────────────────────────────────────────────────────────
 
 export type Platform = "INSTAGRAM" | "FACEBOOK" | "X" | "YOUTUBE";
@@ -47,24 +66,40 @@ export interface TrackedAccount {
     displayName: string;
     /** IANA zone. Drives the local-time timing heatmap (FR7). */
     timezone: string;
+    /**
+     * Force this account to be seeded even where a live adapter exists, and record
+     * WHY. Without this, "seeded" would be inferred purely from platform, and an
+     * account with no real channel on an otherwise-live platform would silently
+     * get ingested from whatever the handle happened to resolve to.
+     */
+    seedReason?: string;
 }
 
 const IST = "Asia/Kolkata";
+
+/** A handle, optionally pinned to the seed adapter with a stated reason. */
+type HandleSpec = string | { handle: string; seedReason: string };
 
 function forPerson(
     personName: string,
     role: AccountRole,
     displayName: string,
-    handles: Record<Platform, string>,
+    handles: Record<Platform, HandleSpec>,
 ): TrackedAccount[] {
-    return (Object.keys(handles) as Platform[]).map((platform) => ({
-        personName,
-        role,
-        platform,
-        handle: handles[platform],
-        displayName,
-        timezone: IST,
-    }));
+    return (Object.keys(handles) as Platform[]).map((platform) => {
+        const spec = handles[platform];
+        const resolved = typeof spec === "string" ? { handle: spec, seedReason: undefined } : spec;
+
+        return {
+            personName,
+            role,
+            platform,
+            handle: resolved.handle,
+            displayName,
+            timezone: IST,
+            ...(resolved.seedReason ? { seedReason: resolved.seedReason } : {}),
+        };
+    });
 }
 
 export const TRACKED_ACCOUNTS: TrackedAccount[] = [
@@ -84,7 +119,7 @@ export const TRACKED_ACCOUNTS: TrackedAccount[] = [
         X: "priyankac19",
         INSTAGRAM: "priyankac19",
         FACEBOOK: "priyankachaturvedi",
-        YOUTUBE: "PriyankaChaturvedi",
+        YOUTUBE: "PriyankaChaturvediOfficial",
     }),
 
     // Former Lok Sabha MP. Comparable national profile, long-form written
@@ -94,7 +129,10 @@ export const TRACKED_ACCOUNTS: TrackedAccount[] = [
         X: "varungandhi80",
         INSTAGRAM: "varunferozegandhi",
         FACEBOOK: "VarunGandhiOfficial",
-        YOUTUBE: "VarunGandhi",
+        // @VarunGandhi resolves to a dormant channel with 0 subscribers whose only
+        // upload is from 2023 — not the politician, and no alternative handle
+        // resolves. Seeded rather than ingesting a stranger's channel as his.
+        YOUTUBE: { handle: "VarunGandhi", seedReason: "no verified YouTube channel — @VarunGandhi is a dormant unrelated channel" },
     }),
 
     // National politician, contested Lok Sabha. Included for contrast: a

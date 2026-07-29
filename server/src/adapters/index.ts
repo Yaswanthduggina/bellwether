@@ -7,6 +7,7 @@
 
 import { createSeedAdapter } from "./seedAdapter";
 import { RawPost, SocialAdapter } from "./types";
+import { createYouTubeAdapter } from "./youtubeAdapter";
 
 type Platform = RawPost["platform"];
 
@@ -16,7 +17,11 @@ type Platform = RawPost["platform"];
  * silently falling back to seeded data and letting it be mistaken for real.
  */
 const LIVE_ADAPTERS: Partial<Record<Platform, () => SocialAdapter>> = {
-    // YOUTUBE: () => createYouTubeAdapter(),   // step 5
+    YOUTUBE: () => createYouTubeAdapter(),
+    // X, INSTAGRAM and FACEBOOK have no live adapter. X's free read tier will not
+    // support a 90-day backfill, and Meta's Graph API needs a Business account you
+    // control plus app review. Both are recorded as closed and seeded instead —
+    // see the provenance table in the README.
 };
 
 export function getAdapter(platform: Platform, isSynthetic: boolean): SocialAdapter {
