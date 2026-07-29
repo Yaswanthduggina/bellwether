@@ -1,4 +1,4 @@
-import { RawPost, SocialAdapter } from "./types";
+import { RawAccountMeta, RawPost, SocialAdapter } from "./types";
 
 const CAPTIONS = [
     "Met with constituents today to discuss local infrastructure concerns.",
@@ -32,9 +32,34 @@ function randomDateWithin(days: number): Date {
     return new Date(past);
 }
 
+// Follower counts must be STABLE across seed runs — they are the denominator of
+// the engagement rate, so a value that changed on every re-seed would make the
+// headline metric jump for no reason. Derived from the handle, not Math.random().
+function stableHash(input: string): number {
+    let h = 2166136261;
+    for (let i = 0; i < input.length; i++) {
+        h ^= input.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+    }
+    return Math.abs(h);
+}
+
 export function createSeedAdapter(platform: RawPost["platform"]): SocialAdapter {
     return {
         platform,
+
+        async fetchAccountMeta(accountHandle: string): Promise<RawAccountMeta> {
+            const h = stableHash(`${platform}:${accountHandle}`);
+            return {
+                platform,
+                accountHandle,
+                displayName: accountHandle,
+                // 400K–2.4M — the peer-tier band the principal and competitors sit in.
+                followerCount: 400_000 + (h % 2_000_000),
+                isSynthetic: true,
+            };
+        },
+
         async fetchPosts(accountHandle: string, sinceDate: Date): Promise<RawPost[]> {
             const count = randomInt(35, 60); // realistic post volume over 90 days
             const posts: RawPost[] = [];

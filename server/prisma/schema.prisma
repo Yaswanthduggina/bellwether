@@ -3,8 +3,13 @@
 // Design principle: real and seeded data share ONE schema so the rest of the
 // system (analytics, AI layer, dashboard) never needs to know where a row came from.
 
+// Prisma 7 is ESM-first. `prisma-client` (not the removed `prisma-client-js`)
+// requires an explicit output path; the server is ESM to match.
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "esm"
 }
 
 datasource db {
@@ -59,6 +64,10 @@ model Account {
   handle        String      // platform-specific username/channel id
   displayName   String
   followerCount Int?        // nullable — not always available, never used to "rank"
+  // IANA zone. FR7 requires the timing heatmap in the account's LOCAL time;
+  // posts are stored in UTC, so the conversion needs this to read from.
+  // All four tracked accounts are India-based, hence the default.
+  timezone      String      @default("Asia/Kolkata")
   isSynthetic   Boolean     @default(false) // true = this account's data is seeded, not live
 
   posts          Post[]
@@ -72,7 +81,9 @@ model Account {
 // One row per post, normalised across all platforms.
 model Post {
   id          String     @id @default(cuid())
-  account     Account    @relation(fields: [accountId], references: [id])
+  // Cascade: FR1 lets the user REMOVE a tracked account from the UI. The default
+  // (Restrict) would make that fail with an FK error the moment an account has posts.
+  account     Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
   accountId   String
 
   platform    Platform   // denormalised for fast filtering/queries
@@ -106,7 +117,7 @@ model Post {
 // When numbers on the dashboard look wrong, this table is the first place to check.
 model IngestionRun {
   id          String   @id @default(cuid())
-  account     Account  @relation(fields: [accountId], references: [id])
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   accountId   String
 
   source      String   // e.g. "youtube_api", "seed_csv"
