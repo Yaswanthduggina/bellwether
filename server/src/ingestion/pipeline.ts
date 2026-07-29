@@ -8,6 +8,7 @@
 // gets to assert — so an account must exist before it can be ingested.
 
 import { getAdapter } from "../adapters";
+import { SocialAdapter } from "../adapters/types";
 import { prisma } from "../db";
 import { normalizePosts } from "./normalize";
 import { failRun, finishRun, startRun, summariseErrors, type RunStatus } from "./runLog";
@@ -26,14 +27,21 @@ export interface IngestResult {
     rowsFailed: number;
 }
 
-export async function ingestAccount(
-    accountId: string,
-    options: { sinceDays?: number } = {},
-): Promise<IngestResult> {
+export interface IngestOptions {
+    sinceDays?: number;
+    /**
+     * Override the registry lookup. Used by the CSV/JSON import path, where the
+     * source is a file the user just handed us rather than a property of the
+     * account — and by tests, which inject a fake adapter instead of a database.
+     */
+    adapter?: SocialAdapter;
+}
+
+export async function ingestAccount(accountId: string, options: IngestOptions = {}): Promise<IngestResult> {
     const account = await prisma.account.findUnique({ where: { id: accountId } });
     if (!account) throw new Error(`No account with id ${accountId}`);
 
-    const adapter = getAdapter(account.platform, account.isSynthetic);
+    const adapter = options.adapter ?? getAdapter(account.platform, account.isSynthetic);
     const since = new Date(Date.now() - (options.sinceDays ?? DEFAULT_WINDOW_DAYS) * 86_400_000);
 
     // Opened before any fetching, so a source that hangs or throws still leaves a
@@ -98,7 +106,7 @@ export async function ingestAccount(
  * One account failing does not stop the others — the failure is already recorded
  * in its own IngestionRun row, and a partial refresh is more useful than none.
  */
-export async function ingestAll(options: { sinceDays?: number } = {}): Promise<IngestResult[]> {
+export async function ingestAll(options: IngestOptions = {}): Promise<IngestResult[]> {
     const accounts = await prisma.account.findMany({
         select: { id: true, handle: true, platform: true },
         orderBy: [{ personName: "asc" }, { platform: "asc" }],

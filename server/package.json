@@ -6,6 +6,7 @@
     "typecheck": "tsc --noEmit",
     "seed": "tsx src/scripts/seed.ts",
     "ingest": "tsx src/scripts/ingest.ts",
+    "import": "tsx src/scripts/import.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
