@@ -103,6 +103,12 @@ const VIRAL_BOOST = 6.5;
 // is supposed to surface on its own.
 
 interface SeedProfile {
+    /**
+     * Handle fragments that resolve to this profile. Needed because handles differ
+     * per platform and do not reliably contain the person's name — @priyankac19 on
+     * X, priyankachaturvedi on Facebook. Matching on the person, not the string.
+     */
+    aliases: string[];
     followerBand: [number, number];
     postsPer90Days: number;
     formatMix: Partial<Record<MediaType, number>>;
@@ -112,6 +118,7 @@ interface SeedProfile {
 }
 
 const DEFAULT_PROFILE: SeedProfile = {
+    aliases: [],
     followerBand: [400_000, 900_000],
     postsPer90Days: 55,
     formatMix: { SINGLE_IMAGE: 3, TEXT_ONLY: 3, CAROUSEL: 2, REEL_SHORT_VIDEO: 2, LINK: 1, LONG_FORM_VIDEO: 1 },
@@ -124,6 +131,7 @@ const SEED_PROFILES: Record<string, SeedProfile> = {
     // Deliberately weak where the data says the wins are: few reels, no
     // ATTACK_REBUTTAL, no PERSONAL_FAMILY, and posts mostly before the evening peak.
     tharoor: {
+        aliases: ["tharoor"],
         followerBand: [1_800_000, 1_800_000],
         postsPer90Days: 96, // flooding — cadence analysis should notice the dilution
         formatMix: { TEXT_ONLY: 5, LINK: 4, SINGLE_IMAGE: 4, CAROUSEL: 2, LONG_FORM_VIDEO: 2, REEL_SHORT_VIDEO: 1 },
@@ -134,6 +142,7 @@ const SEED_PROFILES: Record<string, SeedProfile> = {
     // COMPETITOR — reel-forward, evening poster, heavy on rebuttal content.
     // The "what's working for them, not for us" case.
     chaturvedi: {
+        aliases: ["chaturvedi", "priyankac"],
         followerBand: [1_100_000, 1_100_000],
         postsPer90Days: 62,
         formatMix: { REEL_SHORT_VIDEO: 5, TEXT_ONLY: 3, SINGLE_IMAGE: 2, CAROUSEL: 2, LONG_FORM_VIDEO: 1 },
@@ -144,6 +153,7 @@ const SEED_PROFILES: Record<string, SeedProfile> = {
     // COMPETITOR — low volume, high craft. Carousels and long-form, personal content.
     // The counter-example to "post more": under-posts and still performs.
     varungandhi: {
+        aliases: ["varungandhi", "varunferozegandhi"],
         followerBand: [1_400_000, 1_400_000],
         postsPer90Days: 31,
         formatMix: { CAROUSEL: 4, LONG_FORM_VIDEO: 3, TEXT_ONLY: 3, SINGLE_IMAGE: 2, REEL_SHORT_VIDEO: 2 },
@@ -153,6 +163,7 @@ const SEED_PROFILES: Record<string, SeedProfile> = {
 
     // COMPETITOR — video-native, ground-level, evening peak.
     kanhaiyakumar: {
+        aliases: ["kanhaiyakumar", "kanhaiya"],
         followerBand: [900_000, 900_000],
         postsPer90Days: 74,
         formatMix: { REEL_SHORT_VIDEO: 6, LIVE: 2, LONG_FORM_VIDEO: 2, SINGLE_IMAGE: 2, TEXT_ONLY: 1 },
@@ -161,11 +172,46 @@ const SEED_PROFILES: Record<string, SeedProfile> = {
     },
 };
 
+/**
+ * Which formats each platform actually has. Without this the corpus contains
+ * carousels and text-only posts on YouTube, which is both obviously wrong to any
+ * reviewer and quietly corrupting: per-platform format analysis would report on
+ * formats that cannot exist there.
+ *
+ * An account's formatMix is intersected with this, then re-weighted — so posting
+ * habits stay a property of the person while the menu stays a property of the
+ * platform. A text-forward principal is text-forward on X and long-form on
+ * YouTube, which is what actually happens.
+ */
+const PLATFORM_FORMATS: Record<Platform, MediaType[]> = {
+    // Shorts, regular uploads, streams. Community posts exist but the Data API
+    // does not expose them usefully, so they are out of scope rather than faked.
+    YOUTUBE: ["REEL_SHORT_VIDEO", "LONG_FORM_VIDEO", "LIVE"],
+    INSTAGRAM: ["REEL_SHORT_VIDEO", "CAROUSEL", "SINGLE_IMAGE", "LONG_FORM_VIDEO", "LIVE"],
+    X: ["TEXT_ONLY", "LINK", "SINGLE_IMAGE", "CAROUSEL", "REEL_SHORT_VIDEO"],
+    FACEBOOK: ["TEXT_ONLY", "LINK", "SINGLE_IMAGE", "CAROUSEL", "REEL_SHORT_VIDEO", "LONG_FORM_VIDEO", "LIVE"],
+};
+
+/** The account's habits, restricted to what this platform can actually publish. */
+function formatMixFor(platform: Platform, profile: SeedProfile): Partial<Record<MediaType, number>> {
+    const allowed = PLATFORM_FORMATS[platform];
+    const mix: Partial<Record<MediaType, number>> = {};
+
+    for (const [format, weight] of Object.entries(profile.formatMix) as [MediaType, number][]) {
+        if (allowed.includes(format)) mix[format] = weight;
+    }
+
+    // An account whose entire habit is unavailable here still has to post something.
+    if (Object.keys(mix).length === 0) mix[allowed[0]!] = 1;
+
+    return mix;
+}
+
 /** Handles differ per platform (@ShashiTharoor, ShashiTharoorOfficial, ...). Match on the person. */
 function profileFor(handle: string): SeedProfile {
     const key = handle.toLowerCase().replace(/[^a-z]/g, "");
-    for (const [name, profile] of Object.entries(SEED_PROFILES)) {
-        if (key.includes(name)) return profile;
+    for (const profile of Object.values(SEED_PROFILES)) {
+        if (profile.aliases.some((alias) => key.includes(alias))) return profile;
     }
     return DEFAULT_PROFILE;
 }
@@ -312,10 +358,11 @@ export function createSeedAdapter(platform: Platform): SocialAdapter {
             const { followerCount } = await this.fetchAccountMeta(accountHandle);
             const followers = followerCount ?? 500_000;
 
+            const formatMix = formatMixFor(platform, profile);
             const posts: RawPost[] = [];
 
             for (let i = 0; i < profile.postsPer90Days; i++) {
-                const mediaType = pickWeighted<MediaType>(rng, profile.formatMix);
+                const mediaType = pickWeighted<MediaType>(rng, formatMix);
                 const theme = pickWeighted<Theme>(rng, profile.themeMix);
 
                 // Place the post at a local hour this account actually posts at, then

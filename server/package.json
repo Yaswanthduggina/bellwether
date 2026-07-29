@@ -4,6 +4,8 @@
   "description": "Bellwether API — ingestion, analytics and AI layer",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "seed": "tsx src/scripts/seed.ts",
+    "ingest": "tsx src/scripts/ingest.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
