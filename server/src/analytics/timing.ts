@@ -339,6 +339,25 @@ export function worstHours(analysis: TimingAnalysis, count = 3): HourBucket[] {
         .reverse();
 }
 
+/**
+ * Every local hour an account has ANY post in, suppression ignored.
+ *
+ * Distinct from `analysis.byHour`, and the distinction is load-bearing. `byHour`
+ * drops buckets below MIN_CELL_N because three posts are not a pattern — correct
+ * for "how does this hour PERFORM", wrong for "does this account POST here".
+ * Reading presence off the suppressed marginal reports an hour with two posts in
+ * it as one the account has never used, and a recommendation to "start posting
+ * at 10:00" then goes to someone who already does.
+ */
+export function occupiedHours<T extends TimingPost>(
+    rated: readonly RatedPost<T>[],
+    timezone: string,
+): number[] {
+    const hours = new Set<number>();
+    for (const { post } of rated) hours.add(localSlot(post.postedAt, timezone).hour);
+    return [...hours].sort((a, b) => a - b);
+}
+
 // ── Contiguous hour runs ─────────────────────────────────────────────────
 
 export interface HourRun<T> {

@@ -302,14 +302,40 @@ export function parseImportFile(contents: string, extension: string): ParsedFile
  */
 export function createFileAdapter(platform: Platform, filePath: string): SocialAdapter {
     const extension = extname(filePath).toLowerCase();
+    assertSupportedExtension(extension);
+
+    // Read lazily and once, not once per account: a 16-account import would
+    // otherwise re-read and re-parse the same file 16 times.
+    let contents: string | undefined;
+    return createFileAdapterFromContents(platform, () => (contents ??= readFileSync(filePath, "utf8")), extension);
+}
+
+function assertSupportedExtension(extension: string): asserts extension is ".csv" | ".json" {
     if (extension !== ".csv" && extension !== ".json") {
         throw new Error(`Unsupported import file type "${extension}" — expected .csv or .json`);
     }
+}
 
-    // Read once, not once per account: a 16-account import would otherwise re-parse
-    // the same file 16 times.
+/**
+ * The same adapter over contents already in memory.
+ *
+ * The HTTP import route (FR3) receives the file's text in a request body and has
+ * no path to read from. Splitting this out rather than writing the upload to a
+ * temp file keeps ONE implementation of the filtering and date rules — two
+ * copies would be two chances for the CLI import and the UI import to disagree
+ * about which rows a file contains.
+ *
+ * `read` is a thunk so the parse stays lazy and cached in both callers.
+ */
+export function createFileAdapterFromContents(
+    platform: Platform,
+    read: () => string,
+    extension: string,
+): SocialAdapter {
+    assertSupportedExtension(extension);
+
     let cache: ParsedFile | undefined;
-    const load = (): ParsedFile => (cache ??= parseImportFile(readFileSync(filePath, "utf8"), extension));
+    const load = (): ParsedFile => (cache ??= parseImportFile(read(), extension));
 
     const rowsFor = (handle: string) =>
         load().posts.filter(

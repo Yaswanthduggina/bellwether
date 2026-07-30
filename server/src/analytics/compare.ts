@@ -418,6 +418,15 @@ export interface WindowCorpus {
     isSynthetic: boolean;
     timezone: string;
     analysis: TimingAnalysis | null;
+    /**
+     * Every local hour this account has ANY post in — see `timing.occupiedHours`.
+     *
+     * Supplied separately rather than read off `analysis.byHour` because that
+     * marginal suppresses buckets below MIN_CELL_N. Deriving presence from it
+     * reported an hour holding two posts as one the principal had never used,
+     * and "start posting at 10:00" then goes to someone already posting at 10:00.
+     */
+    occupiedHours: readonly number[];
 }
 
 /**
@@ -470,12 +479,11 @@ export function compareWindows(corpora: readonly WindowCorpus[], count = 4): Win
     const principalCorpora = withAnalysis.filter((c) => c.role === "PRINCIPAL");
     const peerCorpora = withAnalysis.filter((c) => c.role === "COMPETITOR");
 
-    // Every hour the principal has ANY post in — drawn from the full marginal,
-    // not from his best hours, because "never uses" is a question about presence
-    // and an hour he posts in badly is still an hour he uses.
+    // Every hour the principal has ANY post in. "Never uses" is a question about
+    // presence: an hour he posts in badly, or rarely, is still an hour he uses.
     const principalHours = new Set<number>();
     for (const corpus of principalCorpora) {
-        for (const bucket of corpus.analysis!.byHour) principalHours.add(bucket.hour);
+        for (const hour of corpus.occupiedHours) principalHours.add(hour);
     }
 
     const peerWindows = peerCorpora.flatMap(windowsFor);

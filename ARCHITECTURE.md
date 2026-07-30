@@ -109,6 +109,8 @@ Three tables, already migrated. The design principle in one line: **real and syn
 ### 1.4 API surface
 
 ```
+GET    /api/health                        liveness AND database readiness
+
 GET    /api/accounts                      list tracked accounts
 POST   /api/accounts                      add principal or competitor        (FR1)
 DELETE /api/accounts/:id                  remove                             (FR1)
@@ -123,6 +125,7 @@ GET    /api/analytics/timing              day×hour heatmap + n per cell      (F
 GET    /api/analytics/top-posts           best/worst + permalinks            (FR8)
 GET    /api/analytics/compare             principal vs peers                 (FR9)
 GET    /api/analytics/gaps                gap analysis                       (FR10)
+GET    /api/analytics/report              the whole analytics document
 
 POST   /api/ai/classify                   run/refresh theme classification   (FR11)
 GET    /api/ai/recommendations            grounded, validated, ranked        (FR12)

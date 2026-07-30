@@ -32,7 +32,7 @@ import { loadCorpora, type CorpusFilter, type CorpusPost, type LoadedCorpus } fr
 import { partitionByBasis, type EngagementBasis, type Platform } from "./engagement";
 import { analyseFormats, type FormatAnalysis } from "./format";
 import { describeGap, describeOverInvestment, findGaps, mergeHourWindows, type GapAnalysis } from "./gaps";
-import { analyseTiming, bestHours, type TimingAnalysis } from "./timing";
+import { analyseTiming, bestHours, occupiedHours, type TimingAnalysis } from "./timing";
 import { topPosts } from "./topPosts";
 
 // ── Caps ─────────────────────────────────────────────────────────────────
@@ -239,6 +239,7 @@ function buildBasisSection(
             isSynthetic: c.isSynthetic,
             timezone: c.timezone,
             analysis: analyseTiming(c.rated, c.timezone, `${context} ${c.personName}`),
+            occupiedHours: occupiedHours(c.rated, c.timezone),
         })),
     );
 

@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import { MixedBasisError, type EngagementBasis, type MediaType, type RatedPost } from "../analytics/engagement";
-import { analyseTiming, type TimingPost } from "../analytics/timing";
+import { analyseTiming, occupiedHours, type TimingPost } from "../analytics/timing";
 import {
     compareFormatMix,
     compareWindows,
@@ -138,6 +138,7 @@ function windowCorpus(
         isSynthetic: false,
         timezone: IST,
         analysis: analyseTiming(posts, IST),
+        occupiedHours: occupiedHours(posts, IST),
     };
 }
 
@@ -162,15 +163,39 @@ describe("best-performing windows — the fourth dimension", () => {
     });
 
     it("names the hours the principal never posts in at all", () => {
-        // Drawn from his full hour marginal rather than his BEST hours: an hour
-        // he posts in badly is still an hour he uses, and telling him to "start"
-        // there would be wrong advice.
+        // An hour he posts in BADLY is still an hour he uses, and telling him to
+        // "start" there would be wrong advice about something he already does.
         const result = compareWindows([
             windowCorpus("Tharoor", "PRINCIPAL", [...hourBlock(10, 10, 0.03), ...hourBlock(6, 20, 0.001)]),
             windowCorpus("PeerA", "COMPETITOR", [...hourBlock(6, 9, 0.02), ...hourBlock(6, 19, 0.08), ...hourBlock(6, 20, 0.08)]),
         ])!;
 
         // 19 is genuinely unused; 20 is used (badly) and must not be listed.
+        expect(result.hoursPrincipalNeverUses).toEqual([19]);
+    });
+
+    it("does not call an hour he uses RARELY an hour he never uses", () => {
+        // THE REGRESSION, caught on the live YouTube corpus: presence was read
+        // off `analysis.byHour`, which suppresses buckets under MIN_CELL_N. Two
+        // posts at 20:00 vanished from the marginal and the route reported 20:00
+        // as an hour the principal had never used — so the advice would have been
+        // "start posting at 20:00" to someone already posting at 20:00.
+        //
+        // One post, deliberately: below MIN_CELL_N=3, so it exists in the corpus
+        // and cannot exist in the marginal.
+        const principal = windowCorpus("Tharoor", "PRINCIPAL", [
+            ...hourBlock(10, 10, 0.03),
+            ...hourBlock(1, 20, 0.03),
+        ]);
+
+        expect(principal.analysis!.byHour.some((b) => b.hour === 20)).toBe(false);
+        expect(principal.occupiedHours).toContain(20);
+
+        const result = compareWindows([
+            principal,
+            windowCorpus("PeerA", "COMPETITOR", [...hourBlock(6, 9, 0.02), ...hourBlock(6, 19, 0.08), ...hourBlock(6, 20, 0.08)]),
+        ])!;
+
         expect(result.hoursPrincipalNeverUses).toEqual([19]);
     });
 
