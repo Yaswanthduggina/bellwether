@@ -48,7 +48,7 @@ import {
     type RatedPost,
 } from "./engagement";
 import { median, describe as describeDistribution } from "./stats";
-import { localSlot, type DayOfWeek, type TimingPost } from "./timing";
+import { groupContiguousHours, localSlot, type DayOfWeek, type TimingPost } from "./timing";
 import type { AccountCorpus, AccountRole } from "./compare";
 
 /**
@@ -602,51 +602,27 @@ export interface HourWindow {
 }
 
 /**
- * Collapse adjacent hour gaps into windows.
+ * Collapse adjacent hour gaps into schedulable windows.
  *
- * A comms manager schedules a window, not an hour — "post between 19:00 and
- * 21:00" is an instruction, "post at 19:00, and also at 20:00, and also at
- * 21:00" is three instructions that mean the same thing. Three separate
- * recommendations built from one contiguous finding would also read as three
- * independent pieces of evidence, which they are not.
- *
- * Wrap-around is not merged: a 23:00 and a 00:00 gap stay separate, because a
- * window that crosses midnight is a different scheduling instruction and the
- * corpus here gives no reason to assume it.
+ * The run-finding itself lives in `timing.groupContiguousHours` — including the
+ * decision not to merge across midnight — because the comparison view needs the
+ * same boundary rule and two copies would be two chances to disagree about it.
  */
 export function mergeHourWindows(gaps: readonly Gap[]): HourWindow[] {
-    const hourGaps = gaps
-        .filter((g): g is Gap & { key: { dimension: "HOUR"; hour: number } } => g.key.dimension === "HOUR")
-        .sort((a, b) => a.key.hour - b.key.hour);
+    const hourGaps = gaps.filter(
+        (g): g is Gap & { key: { dimension: "HOUR"; hour: number } } => g.key.dimension === "HOUR",
+    );
 
-    const windows: HourWindow[] = [];
-    let run: (Gap & { key: { dimension: "HOUR"; hour: number } })[] = [];
-
-    const flush = () => {
-        if (run.length === 0) return;
-        const startHour = run[0].key.hour;
-        const endHour = run[run.length - 1].key.hour;
-        windows.push({
-            startHour,
-            endHour,
-            label:
-                startHour === endHour
-                    ? `${String(startHour).padStart(2, "0")}:00`
-                    : `${String(startHour).padStart(2, "0")}:00–${String(endHour).padStart(2, "0")}:59`,
-            peerLift: medianOf(run.map((g) => g.peerLift)),
-            principalAbsent: run.every((g) => g.kind === "ABSENT"),
-            hours: [...run],
-        });
-        run = [];
-    };
-
-    for (const gap of hourGaps) {
-        if (run.length > 0 && gap.key.hour !== run[run.length - 1].key.hour + 1) flush();
-        run.push(gap);
-    }
-    flush();
-
-    return windows.sort((a, b) => b.peerLift - a.peerLift);
+    return groupContiguousHours(hourGaps, (g) => g.key.hour)
+        .map((run) => ({
+            startHour: run.startHour,
+            endHour: run.endHour,
+            label: run.label,
+            peerLift: medianOf(run.items.map((g) => g.peerLift)),
+            principalAbsent: run.items.every((g) => g.kind === "ABSENT"),
+            hours: run.items as Gap[],
+        }))
+        .sort((a, b) => b.peerLift - a.peerLift);
 }
 
 // ── Narrative ────────────────────────────────────────────────────────────

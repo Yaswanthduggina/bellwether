@@ -24,13 +24,16 @@
 
 import {
     assertSingleBasis,
+    MixedBasisError,
     partitionByBasis,
     type EngagementBasis,
     type EngagementPost,
+    type MediaType,
     type Platform,
     type RatedPost,
 } from "./engagement";
 import { describe as describeDistribution, type Distribution } from "./stats";
+import { bestHours, groupContiguousHours, type TimingAnalysis } from "./timing";
 
 /** Below this, an account is not given a comparison figure. Same bar as format.ts. */
 export const MIN_COMPARE_N = 5;
@@ -247,4 +250,246 @@ export function describeComparison(comparison: Comparison): string {
     return provenance.mixed
         ? `${sentence} NOTE: this comparison mixes live and seeded accounts — seeded: ${provenance.syntheticAccounts.join(", ")}.`
         : sentence;
+}
+
+// ── Format mix ───────────────────────────────────────────────────────────
+//
+// The Module C MUST names four dimensions, and this is the one most easily
+// confused with format.ts. They answer different questions:
+//
+//   format.ts   — how well does each format PERFORM for this account?
+//   format mix  — how much of the calendar does each format TAKE UP?
+//
+// Both are needed, and the gap between them is where the advice lives. A format
+// that performs at 2× and occupies 4% of output is the finding; either number
+// alone is not. Mix is a share of posts, so it has no denominator and therefore
+// no engagement basis — it is counted over every post, rated or not.
+
+export interface FormatShare {
+    mediaType: MediaType;
+    n: number;
+    /** Share of this account's posts, 0–1. */
+    share: number;
+}
+
+export interface AccountFormatMix {
+    accountId: string;
+    personName: string;
+    role: AccountRole;
+    isSynthetic: boolean;
+    total: number;
+    /** Every format this account used, largest share first. */
+    shares: FormatShare[];
+}
+
+/** Where the principal's allocation differs most from the peer set's. */
+export interface MixDivergence {
+    mediaType: MediaType;
+    principalShare: number;
+    /** Median of the peers' shares for this format — 0 where a peer never uses it. */
+    peerShare: number;
+    /** principalShare − peerShare. Negative means the principal under-uses it. */
+    difference: number;
+}
+
+export interface FormatMixComparison {
+    principal: AccountFormatMix | null;
+    peers: AccountFormatMix[];
+    /** Largest absolute divergence first — the formats worth talking about. */
+    divergences: MixDivergence[];
+}
+
+/** All this comparison needs from a post. Note the absence of any metric. */
+export interface MixPost {
+    mediaType: MediaType;
+}
+
+export interface MixCorpus<T extends MixPost> {
+    accountId: string;
+    personName: string;
+    role: AccountRole;
+    isSynthetic: boolean;
+    posts: readonly T[];
+}
+
+function mixFor<T extends MixPost>(corpus: MixCorpus<T>): AccountFormatMix {
+    const counts = new Map<MediaType, number>();
+    for (const post of corpus.posts) {
+        counts.set(post.mediaType, (counts.get(post.mediaType) ?? 0) + 1);
+    }
+
+    const total = corpus.posts.length;
+
+    return {
+        accountId: corpus.accountId,
+        personName: corpus.personName,
+        role: corpus.role,
+        isSynthetic: corpus.isSynthetic,
+        total,
+        shares: [...counts.entries()]
+            .map(([mediaType, n]) => ({ mediaType, n, share: total === 0 ? 0 : n / total }))
+            .sort((a, b) => b.share - a.share),
+    };
+}
+
+/**
+ * How the principal allocates output across formats, against the peer set.
+ *
+ * Divergence is computed against the MEDIAN peer share rather than the pooled
+ * peer share, for the same reason every other benchmark in this product is a
+ * median: one competitor who posts nothing but reels should not redefine what
+ * "normal" looks like for the peer set.
+ *
+ * A format the principal never uses is included with a share of 0 rather than
+ * omitted — a 0% allocation against a 30% peer median is the single most
+ * actionable thing this function can report, and dropping the row would hide it.
+ */
+export function compareFormatMix<T extends MixPost>(corpora: readonly MixCorpus<T>[]): FormatMixComparison {
+    const mixes = corpora.map(mixFor);
+
+    const principal = mixes.find((m) => m.role === "PRINCIPAL") ?? null;
+    const peers = mixes.filter((m) => m.role === "COMPETITOR");
+
+    const divergences: MixDivergence[] = [];
+
+    if (principal !== null && peers.length > 0) {
+        const allFormats = new Set<MediaType>();
+        for (const mix of mixes) for (const share of mix.shares) allFormats.add(share.mediaType);
+
+        for (const mediaType of allFormats) {
+            const principalShare = principal.shares.find((s) => s.mediaType === mediaType)?.share ?? 0;
+
+            const peerShares = peers.map((p) => p.shares.find((s) => s.mediaType === mediaType)?.share ?? 0);
+            const sorted = [...peerShares].sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            const peerShare = sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+
+            divergences.push({ mediaType, principalShare, peerShare, difference: principalShare - peerShare });
+        }
+
+        divergences.sort((a, b) => Math.abs(b.difference) - Math.abs(a.difference));
+    }
+
+    return { principal, peers, divergences };
+}
+
+// ── Best-performing windows ──────────────────────────────────────────────
+//
+// The fourth dimension of the MUST. Unlike cadence and mix, this one IS derived
+// from engagement rates, so it carries a basis and inherits every sample-size
+// rule in timing.ts — `bestHours` already drops LOW-confidence buckets, which is
+// what keeps a one-post hour out of a side-by-side comparison where it would
+// read as an equal claim to a peer's twenty-post hour.
+
+export interface AccountWindow {
+    accountId: string;
+    personName: string;
+    role: AccountRole;
+    isSynthetic: boolean;
+    /** The zone these hours are expressed in — per account, never assumed shared. */
+    timezone: string;
+    startHour: number;
+    endHour: number;
+    label: string;
+    /** Posts across the merged hours. */
+    n: number;
+    /** Median of the merged hours' multiples of that account's overall median. */
+    multipleOfOverall: number;
+}
+
+export interface WindowComparison {
+    basis: EngagementBasis;
+    principal: AccountWindow[];
+    peers: AccountWindow[];
+    /**
+     * Hours where at least one peer has a quotable window and the principal has
+     * no post at all. The overlap with `gaps.ts` is intentional — this is the
+     * descriptive version for the comparison screen, `gaps.ts` is the ranked,
+     * evidence-gated version the AI layer is allowed to cite.
+     */
+    hoursPrincipalNeverUses: number[];
+}
+
+/** The timing input a window comparison needs, per account. */
+export interface WindowCorpus {
+    accountId: string;
+    personName: string;
+    role: AccountRole;
+    isSynthetic: boolean;
+    timezone: string;
+    analysis: TimingAnalysis | null;
+}
+
+/**
+ * A "best-performing window" must actually perform.
+ *
+ * `bestHours` returns an account's top `count` hours whether or not any of them
+ * are good — which is correct for a ranked list and wrong for this screen. An
+ * account active in only four hours would report all four as best-performing
+ * windows, including the one dragging its average down, and a comms manager
+ * reading four accounts side by side would take every one of them as a
+ * recommendation. At or above the account's own median is the bar.
+ */
+const MIN_WINDOW_MULTIPLE = 1;
+
+/**
+ * Each account's best-performing windows, side by side.
+ *
+ * `count` is the number of top HOURS considered before merging, not the number
+ * of windows returned — three adjacent strong hours collapse into one window,
+ * which is the intended behaviour and why the two numbers differ.
+ */
+export function compareWindows(corpora: readonly WindowCorpus[], count = 4): WindowComparison | null {
+    const withAnalysis = corpora.filter((c) => c.analysis !== null);
+    if (withAnalysis.length === 0) return null;
+
+    const bases = new Set(withAnalysis.map((c) => c.analysis!.basis));
+    if (bases.size > 1) {
+        // Same rule as everywhere: a views-normalised window and a
+        // followers-normalised one are different quantities on one screen.
+        throw new MixedBasisError("window comparison", [...bases].sort());
+    }
+
+    const windowsFor = (corpus: WindowCorpus): AccountWindow[] =>
+        groupContiguousHours(
+            bestHours(corpus.analysis!, count).filter((b) => b.multipleOfOverall >= MIN_WINDOW_MULTIPLE),
+            (b) => b.hour,
+        ).map((run) => ({
+            accountId: corpus.accountId,
+            personName: corpus.personName,
+            role: corpus.role,
+            isSynthetic: corpus.isSynthetic,
+            timezone: corpus.timezone,
+            startHour: run.startHour,
+            endHour: run.endHour,
+            label: run.label,
+            n: run.items.reduce((total, bucket) => total + bucket.n, 0),
+            multipleOfOverall: medianOf(run.items.map((b) => b.multipleOfOverall)) ?? 0,
+        }));
+
+    const principalCorpora = withAnalysis.filter((c) => c.role === "PRINCIPAL");
+    const peerCorpora = withAnalysis.filter((c) => c.role === "COMPETITOR");
+
+    // Every hour the principal has ANY post in — drawn from the full marginal,
+    // not from his best hours, because "never uses" is a question about presence
+    // and an hour he posts in badly is still an hour he uses.
+    const principalHours = new Set<number>();
+    for (const corpus of principalCorpora) {
+        for (const bucket of corpus.analysis!.byHour) principalHours.add(bucket.hour);
+    }
+
+    const peerWindows = peerCorpora.flatMap(windowsFor);
+    const unusedHours = new Set<number>();
+    for (const window of peerWindows) {
+        for (let hour = window.startHour; hour <= window.endHour; hour += 1) {
+            if (!principalHours.has(hour)) unusedHours.add(hour);
+        }
+    }
+
+    return {
+        basis: [...bases][0],
+        principal: principalCorpora.flatMap(windowsFor),
+        peers: peerWindows.sort((a, b) => b.multipleOfOverall - a.multipleOfOverall),
+        hoursPrincipalNeverUses: [...unusedHours].sort((a, b) => a - b),
+    };
 }

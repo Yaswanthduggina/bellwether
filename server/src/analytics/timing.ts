@@ -162,6 +162,39 @@ export function localSlot(instant: Date, timezone: string): { dayOfWeek: DayOfWe
     return { dayOfWeek, hour: Number(hour) % 24 };
 }
 
+const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
+/**
+ * The local calendar date of a UTC instant, as `YYYY-MM-DD`.
+ *
+ * Needed wherever "the same day" is the question rather than "the same hour" —
+ * cadence's burst detection, for one. A UTC-aligned day bucket gets this wrong
+ * in both directions in IST: 23:00 and 01:00 local fall on one UTC day and two
+ * local days, and the account posted on two days.
+ */
+export function localDateKey(instant: Date, timezone: string): string {
+    let formatter = dateFormatterCache.get(timezone);
+    if (formatter === undefined) {
+        try {
+            formatter = new Intl.DateTimeFormat("en-CA", {
+                timeZone: timezone,
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+            });
+        } catch {
+            throw new Error(
+                `Unknown timezone "${timezone}". Account.timezone must be an IANA zone name such as "Asia/Kolkata".`,
+            );
+        }
+        dateFormatterCache.set(timezone, formatter);
+    }
+
+    // en-CA renders as YYYY-MM-DD, which sorts lexicographically as it sorts
+    // chronologically — worth having even though this is only used as a key.
+    return formatter.format(instant);
+}
+
 // ── Bucketing ────────────────────────────────────────────────────────────
 
 function toBucket(rates: number[], overallMedian: number): TimingBucket | null {
@@ -304,4 +337,62 @@ export function worstHours(analysis: TimingAnalysis, count = 3): HourBucket[] {
         .filter((bucket) => bucket.confidence === "OK")
         .slice(-count)
         .reverse();
+}
+
+// ── Contiguous hour runs ─────────────────────────────────────────────────
+
+export interface HourRun<T> {
+    /** Local hour the run opens, inclusive. */
+    startHour: number;
+    /** Local hour the run closes, inclusive — 19 and 21 means 19:00–21:59. */
+    endHour: number;
+    label: string;
+    items: T[];
+}
+
+export function formatHour(hour: number): string {
+    return `${String(hour).padStart(2, "0")}:00`;
+}
+
+/**
+ * Collapse items on adjacent hours into runs.
+ *
+ * A comms manager schedules a WINDOW, not an hour. "Post between 19:00 and
+ * 21:00" is one instruction; "post at 19:00, and also at 20:00, and also at
+ * 21:00" is three instructions that say the same thing — and, worse, three
+ * findings that read as three independent pieces of evidence when they are one.
+ *
+ * Wrap-around is deliberately not merged: 23:00 and 00:00 are adjacent on a
+ * clock but a window crossing midnight is a different scheduling instruction,
+ * and nothing in a 90-day corpus justifies inferring it.
+ *
+ * Generic because both the gap analysis and the comparison view need exactly
+ * this, and two copies would be two chances to disagree about the boundary.
+ */
+export function groupContiguousHours<T>(items: readonly T[], hourOf: (item: T) => number): HourRun<T>[] {
+    const sorted = [...items].sort((a, b) => hourOf(a) - hourOf(b));
+
+    const runs: HourRun<T>[] = [];
+    let current: T[] = [];
+
+    const flush = () => {
+        if (current.length === 0) return;
+        const startHour = hourOf(current[0]);
+        const endHour = hourOf(current[current.length - 1]);
+        runs.push({
+            startHour,
+            endHour,
+            label: startHour === endHour ? formatHour(startHour) : `${formatHour(startHour)}–${formatHour(endHour).replace(":00", ":59")}`,
+            items: [...current],
+        });
+        current = [];
+    };
+
+    for (const item of sorted) {
+        if (current.length > 0 && hourOf(item) !== hourOf(current[current.length - 1]) + 1) flush();
+        current.push(item);
+    }
+    flush();
+
+    return runs;
 }

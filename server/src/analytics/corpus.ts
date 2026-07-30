@@ -45,6 +45,15 @@ export interface LoadedCorpus extends GapCorpus<CorpusPost> {
     displayName: string;
     followerCount: number | null;
     /**
+     * Every post the filter matched, rated or not.
+     *
+     * Distinct from `rated` on purpose. Cadence is a question about BEHAVIOUR —
+     * a post whose like count the platform hid still happened, and dropping it
+     * would report an account as posting less often than it does. Anything
+     * measuring PERFORMANCE uses `rated`; anything counting activity uses this.
+     */
+    posts: CorpusPost[];
+    /**
      * Posts that could not be rated, by reason. Carried per account because
      * "we could rate 40 of 90 posts" is something the reader of a dashboard is
      * entitled to know, and it differs by platform.
@@ -126,6 +135,7 @@ export async function loadCorpora(filter: CorpusFilter = {}): Promise<LoadedCorp
             followerCount: account.followerCount,
             isSynthetic: account.isSynthetic,
             timezone: account.timezone,
+            posts,
             rated,
             gaps,
             fetchedPosts: posts.length,
@@ -161,6 +171,7 @@ export function mergeByPerson(corpora: readonly LoadedCorpus[]): LoadedCorpus[] 
             // Marking it synthetic because one platform is seeded would badge a
             // mostly-live corpus as generated; the per-account rows keep the detail.
             isSynthetic: group.every((c) => c.isSynthetic),
+            posts: group.flatMap((c) => c.posts),
             rated: group.flatMap((c) => c.rated),
             gaps: group.reduce(
                 (acc, c) => ({

@@ -239,9 +239,11 @@ Goal: **submittable by evening, with hours to spare.**
 
 ### Cut list — sacrifice in this order
 
-`cadence analysis` → `theme × format` → `filters` → `PDF export (keep Markdown)` → `any stretch item` → `the second live platform (seed X, say so plainly)`
+`theme × format` → `filters` → `PDF export (keep Markdown)` → `any stretch item` → `the second live platform (seed X, say so plainly)`
 
 **Never cut:** the validator, the tests on `engagement.ts`, `DECISIONS.md`, the clean-clone test.
+
+**Corrected on Day 3 — `cadence analysis` was first on this list and should never have been on it.** The Module C MUST reads "principal vs. competitors on engagement, cadence and best-performing windows, on one screen." Cadence is named *inside* a required deliverable, so the plan's first sacrifice would have broken a MUST while the list still read as though every item on it were optional. It was mis-filed as a Module B SHOULD — which it also is, and that is what caused the error: an item that appears in two places inherits the weaker priority unless someone checks. Built on Day 3 in `analytics/cadence.ts`.
 
 ---
 

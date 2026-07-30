@@ -1,0 +1,261 @@
+// Cadence has one trap and it is the whole module: "posts per week" is a
+// division, and getting the DENOMINATOR from the corpus instead of from an
+// explicit window inverts the answer. An account with two posts three days
+// apart would score 4.7 posts/week — higher than an account posting daily —
+// because its span collapses to the days it happened to be active.
+//
+// The first test in this file is that trap. The rest are the distinction the
+// module exists to preserve: volume and regularity are different questions, and
+// an account can need "post more" or "post on a schedule" independently.
+
+import { describe, expect, it } from "vitest";
+import {
+    analyseCadence,
+    compareCadence,
+    describeCadence,
+    windowSpanning,
+    type CadenceCorpus,
+    type CadencePost,
+    type CadenceWindow,
+} from "../analytics/cadence";
+
+const IST = "Asia/Kolkata";
+
+/** A 28-day window — exactly four 7-day blocks, so every expectation is exact. */
+const WINDOW: CadenceWindow = {
+    from: new Date("2026-01-01T00:00:00.000Z"),
+    to: new Date("2026-01-29T00:00:00.000Z"),
+};
+
+/** Day `n` of the window (0-indexed) at `hour` UTC. */
+function day(n: number, hour = 12): Date {
+    return new Date(Date.UTC(2026, 0, 1 + n, hour));
+}
+
+function corpus(
+    personName: string,
+    role: "PRINCIPAL" | "COMPETITOR",
+    dates: Date[],
+    options: { timezone?: string; isSynthetic?: boolean } = {},
+): CadenceCorpus<CadencePost> {
+    return {
+        accountId: `acc_${personName}`,
+        personName,
+        role,
+        handle: personName.toLowerCase(),
+        isSynthetic: options.isSynthetic ?? false,
+        timezone: options.timezone ?? IST,
+        posts: dates.map((postedAt) => ({ postedAt })),
+    };
+}
+
+describe("the window is the denominator, not the corpus", () => {
+    it("does not credit a two-post account with a heavy cadence", () => {
+        // Two posts three days apart. Measured against their own span they would
+        // score 4.67/week — busier than an account posting every single day.
+        // Measured against the 28-day window they score 0.5/week, which is true.
+        const quiet = analyseCadence(corpus("Quiet", "PRINCIPAL", [day(10), day(13)]), WINDOW);
+
+        expect(quiet.posts).toBe(2);
+        expect(quiet.windowDays).toBe(28);
+        expect(quiet.postsPerWeek).toBeCloseTo(0.5, 12);
+    });
+
+    it("gives every account in one comparison the same denominator", () => {
+        // Busy spans the whole window; Quiet is active for three days of it.
+        // A per-account span would hand Quiet the higher rate.
+        const comparison = compareCadence(
+            [
+                corpus("Busy", "PRINCIPAL", Array.from({ length: 28 }, (_, i) => day(i))),
+                corpus("Quiet", "COMPETITOR", [day(10), day(13)]),
+            ],
+            WINDOW,
+        )!;
+
+        expect(comparison.principal!.postsPerWeek).toBeCloseTo(7, 12);
+        expect(comparison.peers[0].postsPerWeek).toBeCloseTo(0.5, 12);
+        expect(comparison.principal!.windowDays).toBe(comparison.peers[0].windowDays);
+    });
+
+    it("derives one shared window from the union when none is given", () => {
+        const span = windowSpanning([
+            corpus("A", "PRINCIPAL", [day(5), day(10)]),
+            corpus("B", "COMPETITOR", [day(2), day(20)]),
+        ])!;
+
+        expect(span.from).toEqual(day(2));
+        expect(span.to).toEqual(day(20));
+    });
+
+    it("ignores posts outside the window rather than trusting the caller", () => {
+        // A caller that queried 90 days and then asked about 28 must not get a
+        // rate computed from posts the window excludes.
+        const stats = analyseCadence(
+            corpus("A", "PRINCIPAL", [new Date("2025-12-01T12:00:00Z"), day(5), new Date("2026-03-01T12:00:00Z")]),
+            WINDOW,
+        );
+
+        expect(stats.posts).toBe(1);
+    });
+});
+
+describe("volume and regularity are separate findings", () => {
+    // Both accounts post exactly 8 times in the same 28-day window. Their
+    // posts-per-week is identical and their operations are not.
+    const steady = corpus(
+        "Steady",
+        "PRINCIPAL",
+        [0, 3, 7, 10, 14, 17, 21, 24].map((n) => day(n)),
+    );
+    const bursty = corpus(
+        "Bursty",
+        "COMPETITOR",
+        [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7].map((n) => day(Math.floor(n), 8 + Math.round((n % 1) * 10))),
+    );
+
+    it("reports the same volume for both", () => {
+        expect(analyseCadence(steady, WINDOW).postsPerWeek).toBeCloseTo(2, 12);
+        expect(analyseCadence(bursty, WINDOW).postsPerWeek).toBeCloseTo(2, 12);
+    });
+
+    it("separates them on consistency", () => {
+        // Steady touches all four 7-day blocks; Bursty spends itself in the first.
+        expect(analyseCadence(steady, WINDOW).consistency).toBeCloseTo(1, 12);
+        expect(analyseCadence(bursty, WINDOW).consistency).toBeCloseTo(0.25, 12);
+    });
+
+    it("leads with the MEDIAN gap, which the mean would hide", () => {
+        const stats = analyseCadence(bursty, WINDOW)!;
+
+        // Seven gaps of about an hour. The typical wait between Bursty's posts
+        // is an hour — and the account is silent for the other 27 days, which is
+        // what longestSilenceDays is for rather than the mean gap.
+        expect(stats.gapHours!.median).toBeLessThan(2);
+        expect(stats.daysSinceLastPost).toBeGreaterThan(27);
+    });
+
+    it("reports the longest silence in days", () => {
+        const stats = analyseCadence(corpus("Gappy", "PRINCIPAL", [day(0), day(1), day(15), day(16)]), WINDOW);
+
+        expect(stats.longestSilenceDays).toBeCloseTo(14, 6);
+    });
+});
+
+describe("burst detection reads local calendar days", () => {
+    it("counts 23:00 and 01:00 IST as two days, not one", () => {
+        // Both instants land on 5 Jan in UTC (17:30 and 19:30) and on 5 and 6
+        // Jan in IST. The account posted once on each of two days.
+        const stats = analyseCadence(
+            corpus("A", "PRINCIPAL", [
+                new Date("2026-01-05T17:30:00.000Z"), // 23:00 IST, 5 Jan
+                new Date("2026-01-05T19:30:00.000Z"), // 01:00 IST, 6 Jan
+            ]),
+            WINDOW,
+        );
+
+        expect(stats.maxPostsInOneDay).toBe(1);
+    });
+
+    it("still catches a genuine burst inside one local day", () => {
+        const stats = analyseCadence(
+            corpus("A", "PRINCIPAL", [day(5, 6), day(5, 8), day(5, 10), day(12, 6)]),
+            WINDOW,
+        );
+
+        expect(stats.maxPostsInOneDay).toBe(3);
+    });
+
+    it("honours the account's own zone", () => {
+        // The same two instants, read in UTC, ARE the same calendar day.
+        const stats = analyseCadence(
+            corpus(
+                "A",
+                "PRINCIPAL",
+                [new Date("2026-01-05T17:30:00.000Z"), new Date("2026-01-05T19:30:00.000Z")],
+                { timezone: "UTC" },
+            ),
+            WINDOW,
+        );
+
+        expect(stats.maxPostsInOneDay).toBe(2);
+    });
+});
+
+describe("degenerate inputs", () => {
+    it("reports an account that posted nothing as zero, not NaN", () => {
+        const stats = analyseCadence(corpus("Silent", "PRINCIPAL", []), WINDOW);
+
+        expect(stats).toMatchObject({
+            posts: 0,
+            postsPerWeek: 0,
+            consistency: 0,
+            gapHours: null,
+            longestSilenceDays: null,
+            daysSinceLastPost: null,
+            maxPostsInOneDay: 0,
+        });
+    });
+
+    it("has no gap distribution from a single post", () => {
+        // One post is not an interval. Reporting 0 would claim it posts constantly.
+        expect(analyseCadence(corpus("One", "PRINCIPAL", [day(5)]), WINDOW).gapHours).toBeNull();
+    });
+
+    it("survives a zero-length window without dividing by zero", () => {
+        const instant = day(5);
+        const stats = analyseCadence(corpus("A", "PRINCIPAL", [instant]), { from: instant, to: instant });
+
+        expect(Number.isFinite(stats.postsPerWeek)).toBe(true);
+    });
+
+    it("returns null when there is nothing to derive a window from", () => {
+        expect(compareCadence([corpus("A", "PRINCIPAL", [])])).toBeNull();
+    });
+});
+
+describe("compareCadence", () => {
+    const principal = corpus(
+        "Tharoor",
+        "PRINCIPAL",
+        [0, 7, 14, 21].map((n) => day(n)),
+    ); // 1.0/week
+
+    it("benchmarks against the MEDIAN peer, not the mean", () => {
+        // Peer rates 2, 3, 20 per week. The median is 3; the mean is 8.33 and
+        // would make the principal look eight times worse than he is.
+        const comparison = compareCadence(
+            [
+                principal,
+                corpus("A", "COMPETITOR", Array.from({ length: 8 }, (_, i) => day(i * 3))),
+                corpus("B", "COMPETITOR", Array.from({ length: 12 }, (_, i) => day(i * 2))),
+                corpus("C", "COMPETITOR", Array.from({ length: 80 }, (_, i) => day(i % 28, i % 24))),
+            ],
+            WINDOW,
+        )!;
+
+        expect(comparison.peerBenchmark).toBeCloseTo(3, 12);
+        expect(comparison.principalVsPeers).toBeCloseTo(1 / 3, 12);
+    });
+
+    it("does not suppress a thin account the way the rate modules do", () => {
+        // There is no sample-size problem here. An account that posted twice in
+        // 90 days has not given a thin estimate of its posting rate — it has
+        // stated it exactly, and it is the most actionable finding available.
+        const comparison = compareCadence([principal, corpus("Quiet", "COMPETITOR", [day(3), day(9)])], WINDOW)!;
+
+        expect(comparison.peers[0].posts).toBe(2);
+        expect(comparison.peers[0].postsPerWeek).toBeCloseTo(0.5, 12);
+    });
+
+    it("says volume and regularity in one sentence without collapsing them", () => {
+        const comparison = compareCadence(
+            [principal, corpus("A", "COMPETITOR", Array.from({ length: 8 }, (_, i) => day(i * 3)))],
+            WINDOW,
+        )!;
+
+        const sentence = describeCadence(comparison);
+        expect(sentence).toContain("1.0×/week");
+        expect(sentence).toContain("2.0×/week");
+        expect(sentence).toContain("% of weeks");
+    });
+});
