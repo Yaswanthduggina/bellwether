@@ -74,7 +74,7 @@ The weights follow an **effort-and-reach ladder**:
 
 **Honest limitation:** these weights are a documented judgement call, not an empirically fitted model. Fitting them properly would need an outcome variable we don't have (reach lift per action type, or downstream follower conversion). The weights live in one constant in `server/src/analytics/engagement.ts` and are trivially adjustable — and the tests pin the arithmetic, not the weights, so changing them doesn't silently break anything.
 
-> **Status:** this section is the specification `analytics/engagement.ts` is being built to, not a description of committed code. Module B is in progress — see [Project status](#project-status).
+> **Status:** implemented and tested in `server/src/analytics/engagement.ts` as described. The basis-mixing guard throws — see the tests.
 
 ### Denominator — per platform, because platforms differ
 
@@ -238,23 +238,30 @@ cd server && npm test
 
 Coverage is deliberately concentrated on the layers where a silent error corrupts every number downstream.
 
-**Passing today — 69 tests across 5 files:**
+**Passing today — 175 tests across 11 files.**
+
+Module A — ingestion:
 
 - Normalisation: each adapter's `RawPost` → `Post` mapping, plus the rejection rules (bad dates, negative metrics, non-HTTP permalinks, missing `postId`)
 - Idempotency: ingesting the same payload twice produces one row, not two
 - Adapters: seed determinism, YouTube response mapping, CSV/JSON column inference
 - Pipeline integration: run-log status transitions, partial-failure accounting, platform-mismatch guard
 
-**Planned for Module B — not yet written:**
+Module B — analytics:
 
-- Engagement rate: weighting, both denominators, division-by-zero, null-metric handling
-- Basis-mixing guard: aggregating `VIEWS`-based and `FOLLOWERS`-based rates together must throw
-- Format aggregation: mean/median/stdev/IQR against hand-computed fixtures
-- Timing bucketing: UTC → account-local timezone, including a DST-free IST case and a cross-midnight boundary
-- Sample-size suppression thresholds
-- The recommendation validator: a fabricated number and a non-existent `post_id` must both be rejected
+- Engagement rate: weighting, both denominators, division-by-zero, absent-vs-zero handling
+- Basis-mixing guard: aggregating `VIEWS`-based and `FOLLOWERS`-based rates together **throws**
+- Statistics: mean/median/stdev/IQR against hand-computed fixtures, R type-7 quantiles pinned
+- Format aggregation: the `n < 5` gate, median-based ranking, the outlier-driven headline
+- Timing: UTC → account-local bucketing including a cross-midnight boundary and a **DST-observing zone**, plus the `n < 3` / `n < 5` suppression thresholds
+- Top posts: ranking on rate rather than raw counts, with the trap asserted to be real
+- Comparison: median-peer benchmarking, sample-size exclusion with reasons, and mixed provenance reported rather than averaged away
 
-The seed generator makes the Module B tests unusually strong: every multiplier it plants (format quality, the 7–9pm IST peak, the midweek lift, the theme ranking) is a documented constant, so the analytics tests assert that the engine **recovered a pattern that was deliberately put there** — not merely that it computed some number without crashing.
+Still to write (Day 3): the recommendation validator — a fabricated number and a non-existent `post_id` must both be rejected.
+
+**The round-trip tests are the ones worth reading.** Every multiplier the seed generator plants — format quality, the 7–9pm IST peak, the midweek lift, the theme ranking — is an exported constant, so the analytics tests run the real generator through the real pipeline and assert the engine **recovered a pattern that was deliberately put there**. That is a much stronger claim than "it computed a number without crashing."
+
+One of them earned its keep: pooling format statistics across accounts turned out to conflate format quality with *posting habit* — the accounts that post reels also post in the evening peak on the themes that travel, inflating reel-over-link from the planted 3.45× to 6.46×. Format analysis is therefore computed per account, and the test that found it is kept as the explanation.
 
 ---
 
@@ -262,7 +269,7 @@ The seed generator makes the Module B tests unusually strong: every multiplier i
 
 <!-- UPDATE THIS TABLE AS YOU BUILD — it is the first thing a reviewer reads -->
 
-**Day 1 of 4 complete.** Ingestion runs end to end: **940 posts** in Postgres across four platforms, **108 of them live** from the YouTube Data API. `npm test` → **69 passing**, `tsc --noEmit` clean.
+**Days 1–2 of 4 complete.** Ingestion runs end to end — **940 posts** in Postgres across four platforms, **108 of them live** from the YouTube Data API — and every number the product will show is now computed and tested. `npm test` → **175 passing**, `tsc --noEmit` clean.
 
 | Module | Status |
 |---|---|
@@ -272,10 +279,11 @@ The seed generator makes the Module B tests unusually strong: every multiplier i
 | A — Normalise + idempotent upsert + ingestion run log | ✅ Done |
 | A — YouTube live adapter | ✅ Done — 108 real posts, 3 verified channels |
 | A — CSV/JSON import adapter (`fileAdapter.ts`) | ✅ Done |
-| B — Engagement rate + format analysis | 🔨 in progress |
-| B — Timing heatmap | ⬜ |
-| B — Top/bottom performers | ⬜ |
-| C — Comparison + gap analysis | ⬜ |
+| B — Engagement rate + format analysis | ✅ Done |
+| B — Timing heatmap | ✅ Done |
+| B — Top/bottom performers | ✅ Done |
+| C — Comparison | ✅ Done |
+| C — Gap analysis | ⬜ — Day 3 |
 | D — Theme classification | ⬜ |
 | D — Grounded recommendations + validator | ⬜ |
 | E — React portal | ⬜ — `client/` is an empty directory until Day 3 |
