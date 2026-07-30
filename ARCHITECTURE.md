@@ -193,11 +193,32 @@ Goal: **every number the product will ever show is computed and tested.**
 - [ ] `compare.ts` — principal vs peer set
 - [ ] Tests against hand-computed fixtures — **this is the 25% analytical-soundness criterion**
 
+### Day 2 — Fri Jul 31 · the analytics engine ✅ complete
+
+Goal met: every number the product will show is computed and tested. 175 tests, `tsc` clean. Verified against the real 940-post corpus, not only fixtures.
+
+**What the engine found on the real data** — the planted gap surfaced on its own, which is the point of the exercise:
+
+```
+[Shashi Tharoor / X]  107 posts, views-normalised
+  REEL_SHORT_VIDEO  n=14  median 6.84%  1.82x overall
+  CAROUSEL          n=13  median 6.15%  1.64x
+  TEXT_ONLY         n=37  median 3.47%  0.92x
+  SINGLE_IMAGE      n=22  median 2.83%  0.75x
+  LINK              n=21  median 2.43%  0.65x
+```
+
+That is `FORMAT_QUALITY` (1.9 · 1.25 · 1.0 · 0.75 · 0.55) recovered in exact order by code that has never seen those constants. The principal ranks **4 of 4** on every platform — 2.66× behind the peer benchmark on X — which is the central planted gap, discovered rather than asserted. The mixed-provenance note fires correctly on YouTube, naming Varun Gandhi as the seeded account.
+
+**⚠️ One finding that changes Day 3.** Tharoor's own best hours come out as 10:00, 11:00 and 08:00 — all at roughly **1.0×** his overall median. The 7–9pm peak is nowhere in his data, and the engine is not wrong: he posts between 08:00 and 16:00 and never in the evening, so *his corpus contains no evidence that evenings are better.*
+
+**An account's own timing data cannot reveal a slot it never posts in.** So a timing recommendation drawn only from the principal will always say "keep doing roughly what you do". The evening peak is visible only in the competitors' corpora — which means `gaps.ts` is not a nice-to-have that rounds out the comparison, it is **the only place a timing recommendation can legitimately come from**. Build it before `recommend.ts`, and make the recommendation prompt draw timing evidence from the peer set with the principal's own thin coverage stated as the reason.
+
 ### Day 3 — Sat Aug 1 · AI layer + the portal
 
 Goal: **it runs end to end in a browser.** Longest day; start early.
 
-- [ ] `gaps.ts` — formats, slots and themes competitors own that the principal doesn't
+- [ ] `gaps.ts` — formats, slots and themes competitors own that the principal doesn't. **Do this first**, and see the Day 2 warning above: it is the only source of a defensible timing recommendation
 - [ ] `buildReport.ts` — the single analytics JSON the AI consumes
 - [ ] `classify.ts` — batched, schema-constrained, confidence stored
 - [ ] `recommend.ts` + **`validate.ts` in the same sitting** — build the validator *with* the generator, never after
