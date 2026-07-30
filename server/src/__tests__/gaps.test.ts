@@ -477,6 +477,36 @@ describe("themes", () => {
         expect(analysis.notes.join(" ")).toContain("Theme gaps unavailable");
     });
 
+    it("flags a partially classified corpus as provisional rather than reporting it flat", () => {
+        // Classification runs newest-first, so a half-finished pass covers the
+        // most RECENT posts — the subset most likely to differ from the 90-day
+        // average. A theme finding drawn from it is a finding about the last few
+        // weeks wearing a 90-day label, and the reader has to be told.
+        const analysis = findGaps([
+            corpus("Tharoor", "PRINCIPAL", [
+                ...block(10, { rate: 0.03, theme: "POLICY_ANNOUNCEMENT" }),
+                ...block(10, { rate: 0.03, theme: null }),
+            ]),
+            peerWithTheme("PeerA"),
+            peerWithTheme("PeerB"),
+        ])!;
+
+        const notes = analysis.notes.join(" ");
+        expect(notes).toContain("Theme gaps cover");
+        expect(notes).toContain("skews recent");
+        expect(notes).not.toContain("Theme gaps unavailable");
+    });
+
+    it("says nothing about coverage once every post is classified", () => {
+        const analysis = findGaps([
+            corpus("Tharoor", "PRINCIPAL", block(20, { rate: 0.03, theme: "POLICY_ANNOUNCEMENT" })),
+            peerWithTheme("PeerA"),
+            peerWithTheme("PeerB"),
+        ])!;
+
+        expect(analysis.notes.join(" ")).not.toContain("Theme gaps cover");
+    });
+
     it("finds a theme the principal does not cover once classification has run", () => {
         const analysis = findGaps([
             corpus("Tharoor", "PRINCIPAL", block(20, { rate: 0.03, theme: "POLICY_ANNOUNCEMENT" })),

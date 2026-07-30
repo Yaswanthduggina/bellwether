@@ -67,7 +67,7 @@ server/src/
 │   └── buildReport.ts      #   assembles the ONE analytics JSON the AI layer consumes
 │
 ├── ai/
-│   ├── client.ts           #   Anthropic client
+│   ├── client.ts           #   Gemini client + model choice
 │   ├── taxonomy.ts         #   the 8 content pillars, as a shared constant
 │   ├── classify.ts         #   batched: caption + mediaType → {theme, confidence}
 │   ├── recommend.ts        #   analytics JSON → ranked recommendations w/ evidence

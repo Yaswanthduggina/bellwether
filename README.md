@@ -119,7 +119,7 @@ This is the design decision the project is built around.
 
 On top of that, three layers:
 
-1. **Schema-constrained output.** Both LLM calls use Claude's tool-use with a strict JSON schema. Nothing is parsed out of free text.
+1. **Schema-constrained output.** Both LLM calls use Gemini's `responseSchema` structured output. Nothing is parsed out of free text — a model that cannot emit a field cannot smuggle an unverifiable claim into one.
 2. **A deterministic validator (`server/src/ai/validate.ts`, no LLM involved).** It extracts every numeric literal and every `post_id` from the model's output and checks each one against the analytics JSON that was passed in — numbers must match a real value within a rounding tolerance, post IDs must exist in the database.
 3. **Reject and retry.** A recommendation citing an unverifiable figure is rejected, and the call is retried once with the specific violation named. If it fails twice, that recommendation is **dropped, not shown**. Drop counts are logged so the failure rate is visible rather than invisible.
 
@@ -148,7 +148,7 @@ Every classification stores a `themeConfidence`. Posts below the confidence thre
 | Backend | Node.js + Express | Same language as the frontend — no context-switching under time pressure |
 | Database | PostgreSQL (Supabase) | Real datastore with a considered schema; also what the team uses in production |
 | ORM | Prisma 7 + `@prisma/adapter-pg` | Type-safe queries, readable schema file, migrations included |
-| LLM | Claude (Anthropic API), tool-use / structured output | Structured output *is* the grounding mechanism |
+| LLM | Gemini (`@google/genai`), `responseSchema` structured output | Structured output *is* the grounding mechanism |
 | Charts | Recharts | |
 | Tests | Vitest | Analytics math is tested; that's where correctness actually matters |
 
@@ -163,7 +163,7 @@ Every classification stores a `themeConfidence`. Posts below the confidence thre
 ### Prerequisites
 - Node.js 20+
 - A PostgreSQL database (Supabase free tier is fastest)
-- An Anthropic API key
+- A Google Gemini API key ([aistudio.google.com](https://aistudio.google.com/apikey))
 - *(Optional, for live YouTube data)* a YouTube Data API v3 key
 
 ### 1. Clone and install
@@ -187,7 +187,7 @@ Fill in `server/.env`:
 
 ```env
 DATABASE_URL="postgresql://user:pass@host:5432/postgres"
-ANTHROPIC_API_KEY="sk-ant-..."
+GEMINI_API_KEY="..."
 YOUTUBE_API_KEY=""        # optional — omit to run fully on seeded data
 PORT=4000
 ```
@@ -215,6 +215,17 @@ This loads the principal and peer accounts and generates 90 days of synthetic po
 ```bash
 npm run ingest -- --platform=YOUTUBE
 ```
+
+### 5b. (Optional) Classify content themes
+
+Needs `GEMINI_API_KEY`. Incremental — only posts with no theme are sent, so re-running after an ingest costs a couple of calls rather than the whole corpus.
+
+```bash
+npm run classify              # everything unclassified
+npm run classify -- --limit=50   # a cheap smoke test first
+```
+
+On the free tier the daily quota will not cover 940 posts in one pass. The run stops cleanly, reports how many posts it did not attempt, and continues from there next time.
 
 ### 6. Run
 
@@ -257,6 +268,16 @@ Module B — analytics:
 - Top posts: ranking on rate rather than raw counts, with the trap asserted to be real
 - Comparison: median-peer benchmarking, sample-size exclusion with reasons, and mixed provenance reported rather than averaged away
 
+Module C — gap analysis:
+
+- The finding that justifies the module: an account's own timing data **cannot reveal a slot it never posts in**, so a timing recommendation drawn only from the principal always says "carry on". Both halves are asserted on one corpus.
+- Volume invariance: tripling one peer's output must not move the reported lift. Pooling would swing it 1.67× → 2.00×, which is the Day 2 habit-vs-quality bug in a different costume.
+- Agreement is a gate, not a footnote — two peers must each clear the bar, because the median of two values interpolates and one enthusiastic peer was dragging a flat one over the line.
+
+Module D — classification:
+
+- Alignment, not position. `responseSchema` constrains shape but **not count or order**; a positional zip of results to posts would shift every label by one and write a whole batch of confidently wrong themes with no error. Out-of-order, skipped, duplicated, out-of-range and non-integer indices are all pinned.
+
 Still to write (Day 3): the recommendation validator — a fabricated number and a non-existent `post_id` must both be rejected.
 
 **The round-trip tests are the ones worth reading.** Every multiplier the seed generator plants — format quality, the 7–9pm IST peak, the midweek lift, the theme ranking — is an exported constant, so the analytics tests run the real generator through the real pipeline and assert the engine **recovered a pattern that was deliberately put there**. That is a much stronger claim than "it computed a number without crashing."
@@ -269,7 +290,7 @@ One of them earned its keep: pooling format statistics across accounts turned ou
 
 <!-- UPDATE THIS TABLE AS YOU BUILD — it is the first thing a reviewer reads -->
 
-**Days 1–2 of 4 complete.** Ingestion runs end to end — **940 posts** in Postgres across four platforms, **108 of them live** from the YouTube Data API — and every number the product will show is now computed and tested. `npm test` → **175 passing**, `tsc --noEmit` clean.
+**Day 3 of 4 in progress.** Ingestion runs end to end — **940 posts** in Postgres across four platforms, **108 of them live** from the YouTube Data API. Every number the product shows is computed and tested, the REST API is up, and theme classification is running. `npm test` → **265 passing**, `tsc --noEmit` clean.
 
 | Module | Status |
 |---|---|
@@ -283,10 +304,13 @@ One of them earned its keep: pooling format statistics across accounts turned ou
 | B — Timing heatmap | ✅ Done |
 | B — Top/bottom performers | ✅ Done |
 | C — Comparison | ✅ Done |
-| C — Gap analysis | ⬜ — Day 3 |
-| D — Theme classification | ⬜ |
-| D — Grounded recommendations + validator | ⬜ |
-| E — React portal | ⬜ — `client/` is an empty directory until Day 3 |
+| B — Cadence analysis | ✅ Done |
+| C — Gap analysis (formats · hours · days · themes) | ✅ Done |
+| C — Comparison: cadence, format mix, best windows | ✅ Done |
+| API — Express routes, accounts CRUD, shared filters | ✅ Done |
+| D — Theme classification | 🔨 **450 of 940 classified** — free-tier quota exhausted mid-run, see below |
+| D — Grounded recommendations + validator | ⬜ — next |
+| E — React portal | ⬜ — `client/` is still an empty directory |
 | Docs — README / DECISIONS.md / sample report / video | 🔨 README + `DECISIONS.md` current; report and video pending |
 
 **Corpus as ingested** (`npm run seed && npm run ingest -- --platform=YOUTUBE`):
@@ -309,6 +333,7 @@ Stated plainly rather than buried.
 - **Three of four platforms are synthetic.** Instagram, Facebook and X data is generated, not fetched. Every affected row is flagged `isSynthetic` and every affected UI number carries a SEEDED badge. Format and timing conclusions drawn from those platforms describe the seed generator's assumptions, not reality — they demonstrate that the pipeline works, not that the finding is true.
 - **YouTube is mixed provenance.** Three of the four tracked people have a verified channel (108 live posts); the fourth is seeded (31 posts). So a YouTube-wide aggregate blends real behaviour with generated behaviour. The analytics layer therefore reports provenance per account rather than per platform, and any cross-account YouTube comparison states which side of it is seeded.
 - **No metric history.** Post metrics are a single snapshot at ingestion time. Bellwether cannot distinguish a post that earned 10K likes in two hours from one that took three weeks. Follower counts are likewise a single scalar, so follower-growth trend is out of scope.
+- **Theme classification is incomplete: 450 of 940 posts.** The Gemini free tier's daily quota ran out mid-run. Classification is incremental — it only considers posts with no theme — so re-running `npm run classify` after the quota resets continues where it stopped. Two consequences while it is partial: theme gaps are computed over the classified subset only, and because classification runs **newest-first**, that subset skews recent. `gaps.ts` says so in its `notes` rather than reporting the finding flat, and `buildReport.ts` states the classified fraction.
 - **Engagement weights are a judgement call**, not empirically fitted. See the formula section.
 - **Timezone is account-level, defaulting to `Asia/Kolkata`.** All four tracked accounts are India-based, so this is accurate here; a multi-region deployment would need per-account configuration honoured everywhere.
 - **No comment-level analysis.** Sentiment and tone of comments — including code-mixed Hinglish/Manglish — was deliberately not attempted. It was a stretch item, and doing it badly across Indian languages would be worse than not doing it.

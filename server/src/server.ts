@@ -7,6 +7,7 @@ import "dotenv/config";
 import cors from "cors";
 import express, { type Express } from "express";
 import { accountsRouter } from "./api/accounts";
+import { aiRouter } from "./api/ai";
 import { analyticsRouter } from "./api/analytics";
 import { errorHandler, route } from "./api/http";
 import { ingestionRouter } from "./api/ingestion";
@@ -45,6 +46,7 @@ export function createApp(): Express {
 
     app.use("/api/accounts", accountsRouter);
     app.use("/api/analytics", analyticsRouter);
+    app.use("/api/ai", aiRouter);
     app.use("/api", ingestionRouter);
 
     // A 404 that names the path beats Express's HTML default, which renders as

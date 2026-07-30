@@ -400,11 +400,30 @@ export function findGaps<T extends GapPost>(
     }
     const usablePeers = peers.filter((p) => p.overallMedian > 0);
 
-    const themedPosts = [...principal.buckets.keys()].filter((k) => k.startsWith("THEME:")).length;
-    if (themedPosts === 0) {
+    // Counted over POSTS, not over distinct theme buckets. Coverage is the
+    // question — "how much of this corpus does the theme dimension actually
+    // speak for" — and a corpus where every classified post landed in one
+    // category has one bucket and may still be fully classified.
+    const themedRated = corpora.flatMap((c) => c.rated).filter((r) => r.post.theme !== null).length;
+    const totalRated = corpora.reduce((sum, c) => sum + c.rated.length, 0);
+
+    if (themedRated === 0) {
         notes.push(
             "Theme gaps unavailable: no post in this corpus is classified yet. Run the classification step " +
                 "(POST /api/ai/classify) to populate the theme dimension.",
+        );
+    } else if (themedRated < totalRated) {
+        // Partial classification is not neutral here. Classification runs
+        // newest-first, so a half-finished pass covers the most RECENT posts —
+        // which is exactly the subset most likely to differ from the 90-day
+        // average, because it is closest to whatever is currently in the news.
+        // A theme finding drawn from it is a finding about the last few weeks
+        // wearing a 90-day label.
+        const pct = Math.round((themedRated / totalRated) * 100);
+        notes.push(
+            `Theme gaps cover ${themedRated} of ${totalRated} rated posts (${pct}%). Classification runs ` +
+                `newest-first, so this subset skews recent — treat theme findings as provisional until ` +
+                `classification is complete.`,
         );
     }
 
