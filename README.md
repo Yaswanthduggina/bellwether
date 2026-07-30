@@ -20,7 +20,7 @@ Question 4 is the point of the product. Everything above it exists to make the r
 | Platform | Source | Live? | Why |
 |---|---|---|---|
 | YouTube | YouTube Data API v3 | 🟢 **Live** | Official API, public channel data, workable free quota |
-| X | *(status set on Day 1 — see below)* | 🟡 | Free tier read limits are thin; if they don't support a 90-day pull, X is seeded and labelled as such |
+| X | Seeded | 🔴 **Synthetic** | Free tier read caps are far below a 90-day pull across four accounts. Assessed on Day 1 and rejected rather than half-wired — see `DECISIONS.md` |
 | Instagram | Seeded | 🔴 **Synthetic** | Graph API requires a Business/Professional account you control plus app review — not obtainable in the project window |
 | Facebook | Seeded | 🔴 **Synthetic** | Same as Instagram |
 
@@ -73,6 +73,8 @@ The weights follow an **effort-and-reach ladder**:
 | Share | 5 | Highest weight: it costs social capital **and** it distributes the message to a new audience. For a communications team, a share is the closest proxy to the outcome they actually want. |
 
 **Honest limitation:** these weights are a documented judgement call, not an empirically fitted model. Fitting them properly would need an outcome variable we don't have (reach lift per action type, or downstream follower conversion). The weights live in one constant in `server/src/analytics/engagement.ts` and are trivially adjustable — and the tests pin the arithmetic, not the weights, so changing them doesn't silently break anything.
+
+> **Status:** this section is the specification `analytics/engagement.ts` is being built to, not a description of committed code. Module B is in progress — see [Project status](#project-status).
 
 ### Denominator — per platform, because platforms differ
 
@@ -234,16 +236,25 @@ Open http://localhost:5173.
 cd server && npm test
 ```
 
-Coverage is deliberately concentrated on the analytics layer — if the engagement-rate math is wrong, every number downstream is wrong:
+Coverage is deliberately concentrated on the layers where a silent error corrupts every number downstream.
+
+**Passing today — 69 tests across 5 files:**
+
+- Normalisation: each adapter's `RawPost` → `Post` mapping, plus the rejection rules (bad dates, negative metrics, non-HTTP permalinks, missing `postId`)
+- Idempotency: ingesting the same payload twice produces one row, not two
+- Adapters: seed determinism, YouTube response mapping, CSV/JSON column inference
+- Pipeline integration: run-log status transitions, partial-failure accounting, platform-mismatch guard
+
+**Planned for Module B — not yet written:**
 
 - Engagement rate: weighting, both denominators, division-by-zero, null-metric handling
 - Basis-mixing guard: aggregating `VIEWS`-based and `FOLLOWERS`-based rates together must throw
 - Format aggregation: mean/median/stdev/IQR against hand-computed fixtures
 - Timing bucketing: UTC → account-local timezone, including a DST-free IST case and a cross-midnight boundary
 - Sample-size suppression thresholds
-- Normalisation: each adapter's `RawPost` → `Post` mapping
-- Idempotency: ingesting the same payload twice produces one row, not two
 - The recommendation validator: a fabricated number and a non-existent `post_id` must both be rejected
+
+The seed generator makes the Module B tests unusually strong: every multiplier it plants (format quality, the 7–9pm IST peak, the midweek lift, the theme ranking) is a documented constant, so the analytics tests assert that the engine **recovered a pattern that was deliberately put there** — not merely that it computed some number without crashing.
 
 ---
 
@@ -251,22 +262,35 @@ Coverage is deliberately concentrated on the analytics layer — if the engageme
 
 <!-- UPDATE THIS TABLE AS YOU BUILD — it is the first thing a reviewer reads -->
 
+**Day 1 of 4 complete.** Ingestion runs end to end: **940 posts** in Postgres across four platforms, **108 of them live** from the YouTube Data API. `npm test` → **69 passing**, `tsc --noEmit` clean.
+
 | Module | Status |
 |---|---|
 | A — Schema, migrations, adapter contract, seed adapter | ✅ Done |
 | A — DB client (Prisma 7 + `adapter-pg`), verified against Supabase | ✅ Done |
-| A — Seed generator carrying real signal (patterns to discover) | ⬜ next |
-| A — Normalise + idempotent upsert + ingestion run log | ⬜ |
-| A — YouTube live adapter | ⬜ |
-| A — CSV/JSON import adapter | ⬜ |
-| B — Engagement rate + format analysis | ⬜ |
+| A — Seed generator carrying real signal (patterns to discover) | ✅ Done |
+| A — Normalise + idempotent upsert + ingestion run log | ✅ Done |
+| A — YouTube live adapter | ✅ Done — 108 real posts, 3 verified channels |
+| A — CSV/JSON import adapter (`fileAdapter.ts`) | ✅ Done |
+| B — Engagement rate + format analysis | 🔨 in progress |
 | B — Timing heatmap | ⬜ |
 | B — Top/bottom performers | ⬜ |
 | C — Comparison + gap analysis | ⬜ |
 | D — Theme classification | ⬜ |
 | D — Grounded recommendations + validator | ⬜ |
-| E — React portal | ⬜ |
-| Docs — README / DECISIONS.md / sample report / video | ⬜ |
+| E — React portal | ⬜ — `client/` is an empty directory until Day 3 |
+| Docs — README / DECISIONS.md / sample report / video | 🔨 README + `DECISIONS.md` current; report and video pending |
+
+**Corpus as ingested** (`npm run seed && npm run ingest -- --platform=YOUTUBE`):
+
+| Platform | Posts | Provenance |
+|---|---|---|
+| X | 275 | seeded |
+| Instagram | 263 | seeded |
+| Facebook | 263 | seeded |
+| YouTube | 108 live + 31 seeded | **mixed** — 3 of the 4 tracked people have a verified channel; the fourth is seeded and flagged |
+
+48 `IngestionRun` rows record every fetch attempt behind those numbers.
 
 ---
 
@@ -274,7 +298,8 @@ Coverage is deliberately concentrated on the analytics layer — if the engageme
 
 Stated plainly rather than buried.
 
-- **Two of four platforms are synthetic.** Instagram and Facebook data is generated, not fetched. Every affected row is flagged `isSynthetic` and every affected UI number carries a SEEDED badge. Format and timing conclusions drawn from those two platforms describe the seed generator's assumptions, not reality — they demonstrate that the pipeline works, not that the finding is true.
+- **Three of four platforms are synthetic.** Instagram, Facebook and X data is generated, not fetched. Every affected row is flagged `isSynthetic` and every affected UI number carries a SEEDED badge. Format and timing conclusions drawn from those platforms describe the seed generator's assumptions, not reality — they demonstrate that the pipeline works, not that the finding is true.
+- **YouTube is mixed provenance.** Three of the four tracked people have a verified channel (108 live posts); the fourth is seeded (31 posts). So a YouTube-wide aggregate blends real behaviour with generated behaviour. The analytics layer therefore reports provenance per account rather than per platform, and any cross-account YouTube comparison states which side of it is seeded.
 - **No metric history.** Post metrics are a single snapshot at ingestion time. Bellwether cannot distinguish a post that earned 10K likes in two hours from one that took three weeks. Follower counts are likewise a single scalar, so follower-growth trend is out of scope.
 - **Engagement weights are a judgement call**, not empirically fitted. See the formula section.
 - **Timezone is account-level, defaulting to `Asia/Kolkata`.** All four tracked accounts are India-based, so this is accurate here; a multi-region deployment would need per-account configuration honoured everywhere.

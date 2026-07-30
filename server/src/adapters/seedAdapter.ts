@@ -39,10 +39,10 @@ type Theme =
 // Documented here so a reviewer can check the engine against them directly.
 
 /** Baseline engagement rate before any multiplier: 3.2% of reach interacts. */
-const BASE_ER = 0.032;
+export const BASE_ER = 0.032;
 
 /** PLANT: short video earns; link-outs and static images do not. */
-const FORMAT_QUALITY: Record<MediaType, number> = {
+export const FORMAT_QUALITY: Record<MediaType, number> = {
     REEL_SHORT_VIDEO: 1.9,
     CAROUSEL: 1.25,
     LIVE: 1.1,
@@ -53,7 +53,7 @@ const FORMAT_QUALITY: Record<MediaType, number> = {
 };
 
 /** How far a format travels, independent of how well it engages. */
-const FORMAT_REACH: Record<MediaType, number> = {
+export const FORMAT_REACH: Record<MediaType, number> = {
     REEL_SHORT_VIDEO: 0.55,
     LIVE: 0.12,
     CAROUSEL: 0.3,
@@ -64,7 +64,7 @@ const FORMAT_REACH: Record<MediaType, number> = {
 };
 
 /** PLANT: a sharp 7-9pm IST peak, a dead overnight window. Hour is LOCAL time. */
-const HOUR_QUALITY: Record<number, number> = {
+export const HOUR_QUALITY: Record<number, number> = {
     0: 0.45, 1: 0.4, 2: 0.35, 3: 0.35, 4: 0.4, 5: 0.55,
     6: 0.8, 7: 0.95, 8: 1.05, 9: 1.0, 10: 0.9, 11: 0.85,
     12: 1.1, 13: 1.15, 14: 1.0, 15: 0.85, 16: 0.85, 17: 0.95,
@@ -72,12 +72,12 @@ const HOUR_QUALITY: Record<number, number> = {
 };
 
 /** PLANT: midweek outperforms; the weekend sags. Index 0 = Sunday. */
-const DAY_QUALITY: Record<number, number> = {
+export const DAY_QUALITY: Record<number, number> = {
     0: 0.85, 1: 1.0, 2: 1.12, 3: 1.1, 4: 1.12, 5: 0.95, 6: 0.82,
 };
 
 /** PLANT: conflict and personal content travel; greetings and self-praise do not. */
-const THEME_QUALITY: Record<Theme, number> = {
+export const THEME_QUALITY: Record<Theme, number> = {
     ATTACK_REBUTTAL: 1.5,
     PERSONAL_FAMILY: 1.35,
     MEDIA_APPEARANCE: 1.15,
@@ -88,8 +88,8 @@ const THEME_QUALITY: Record<Theme, number> = {
 };
 
 /** Roughly 1 post in 25 goes unusually wide — gives the outlier flag something real to catch. */
-const VIRAL_RATE = 0.04;
-const VIRAL_BOOST = 6.5;
+export const VIRAL_RATE = 0.04;
+export const VIRAL_BOOST = 6.5;
 
 // ── The demo cast ────────────────────────────────────────────────────────
 // Per-account behaviour, keyed by handle. This is what makes competitor gap

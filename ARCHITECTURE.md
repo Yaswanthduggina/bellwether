@@ -45,18 +45,18 @@ Three boundaries are deliberate and load-bearing:
 server/src/
 ├── adapters/               # ← ONE interface, many sources
 │   ├── types.ts            #   RawPost + SocialAdapter contract          ✅ done
-│   ├── seedAdapter.ts      #   synthetic generator                       ✅ done (needs fixes, §3.2)
-│   ├── youtubeAdapter.ts   #   YouTube Data API v3
-│   ├── csvAdapter.ts       #   CSV/JSON import — a MUST, not a nicety
-│   └── index.ts            #   registry: platform → adapter
+│   ├── seedAdapter.ts      #   synthetic generator, patterns planted     ✅ done
+│   ├── youtubeAdapter.ts   #   YouTube Data API v3                       ✅ done — 108 live posts
+│   ├── fileAdapter.ts      #   CSV/JSON import — a MUST, not a nicety    ✅ done
+│   └── index.ts            #   registry: platform → adapter              ✅ done
 │
-├── ingestion/
+├── ingestion/                                                            # ✅ all done
 │   ├── normalize.ts        #   RawPost → Prisma Post input
 │   ├── upsert.ts           #   idempotent write on (platform, postId)
 │   ├── runLog.ts           #   opens/closes IngestionRun rows
 │   └── pipeline.ts         #   orchestrates: fetch → normalize → upsert → log
 │
-├── analytics/              # ← deterministic. tested. no LLM anywhere near this.
+├── analytics/              # ← deterministic. tested. no LLM anywhere near this.  🔨 Day 2
 │   ├── engagement.ts       #   THE formula. weights + per-platform denominator + erBasis
 │   ├── format.ts           #   mean/median/stdev/IQR/n by media type
 │   ├── timing.ts           #   day×hour in account-local tz, sample-size gated
@@ -167,19 +167,19 @@ Every recommendation must carry: **a multiple, a baseline it's measured against,
 
 Prisma schema designed and migrated to Supabase · adapter interface (`SocialAdapter` / `RawPost`) written before any adapter · seed adapter working · principal and peer set chosen · stack finalised.
 
-### Day 1 — Thu Jul 30 · ingestion works end to end
+### Day 1 — Thu Jul 30 · ingestion works end to end ✅ complete
 
-Goal by end of day: **posts are in the database, from more than one source, and re-running doesn't duplicate them.**
+Goal by end of day: **posts are in the database, from more than one source, and re-running doesn't duplicate them.** Met — 940 posts, four platforms, three sources, 69 tests green.
 
 - [x] ~~Clear the blockers in §3.2~~ — done in the Day 0 hardening commit
 - [x] ~~`db.ts` — PrismaClient wired with `@prisma/adapter-pg`~~ — done, verified against Supabase
-- [ ] Fix the seed generator so the data actually contains signal (§3.3) — **this is not cosmetic, do it first**
-- [ ] `normalize.ts` + `upsert.ts` + `runLog.ts` + `pipeline.ts`
-- [ ] Account seeding: Tharoor + 3 peers × 4 platforms, with follower counts and timezone
-- [ ] `csvAdapter.ts` — CSV/JSON import (MUST, easy to postpone and then forget)
-- [ ] `youtubeAdapter.ts` — real API, same interface
-- [ ] Tests: normalisation mapping, idempotent re-ingestion
-- [ ] Commit at each step, not once at the end
+- [x] ~~Fix the seed generator so the data actually contains signal (§3.3)~~ — reach-first model, every multiplier a documented constant
+- [x] ~~`normalize.ts` + `upsert.ts` + `runLog.ts` + `pipeline.ts`~~
+- [x] ~~Account seeding: Tharoor + 3 peers × 4 platforms, with follower counts and timezone~~ — 16 accounts
+- [x] ~~`csvAdapter.ts` — CSV/JSON import~~ — shipped as `fileAdapter.ts`; it handles both formats behind one entry point, so naming it for CSV alone would have been misleading
+- [x] ~~`youtubeAdapter.ts` — real API, same interface~~ — 108 live posts from 3 verified channels
+- [x] ~~Tests: normalisation mapping, idempotent re-ingestion~~ — 69 tests, 5 files
+- [x] ~~Commit at each step, not once at the end~~ — 5 commits, one per working piece
 
 ### Day 2 — Fri Jul 31 · the analytics engine
 
@@ -255,7 +255,9 @@ The architectural instinct was right: interface before adapters, schema before c
 | — | `RawPost.postedAt` comment showed `+05:30`; code emits `Z`. `test.ts` was a `console.log` script that read like a test suite | Comment corrected to state the UTC-store / local-present split; `test.ts` deleted |
 | — | No npm scripts — only the default failing `test` | `typecheck`, `test` (vitest), `db:generate`, `db:migrate`, `db:deploy`, `db:studio`. `.env.example` added |
 
-### 3.3 Still outstanding — the seed generator
+### 3.3 The seed generator — ✅ resolved in `c4f8300`
+
+*Kept as written on Day 0, because the diagnosis is what shaped the fix. Resolution at the end of the section.*
 
 **① The seed data contains no signal — this is the next task.**
 
@@ -274,6 +276,22 @@ Two consequences, both fatal to graded MUSTs:
 
 The seed generator needs *deliberately planted* patterns — reels beating statics, evenings beating mornings, one theme underperforming, plus a couple of viral outliers so the mean-vs-median outlier flag has something to catch. That gives you two things at once: a demo where the AI layer has something true to say, and **known-input/known-output fixtures for the analytics tests** — you can assert the pipeline recovered the pattern you planted.
 
+**Resolution.** The generator was rewritten to model reach first (`reach = followers × reachFactor(format)`, then `interactions = reach × BASE_ER × format × hour × day × theme × noise`). The ordering is the load-bearing part: engagement *rate* is interactions ÷ reach, so deriving reach **from** interactions would have cancelled the planted signal back out to noise no matter how much structure the raw counts appeared to carry.
+
+Planted constants, all exported from `seedAdapter.ts` and all fair game as test fixtures:
+
+| Pattern | Planted as |
+|---|---|
+| Short video wins, link-outs are suppressed | `FORMAT_QUALITY` — `REEL_SHORT_VIDEO 1.9` … `LINK 0.55` |
+| Sharp 7–9pm IST peak, dead overnight | `HOUR_QUALITY` — `20 → 1.85`, `03 → 0.35` |
+| Midweek lift, weekend sag | `DAY_QUALITY` — `Wed 1.12`, `Sat 0.82` |
+| Conflict and personal content travel; greetings don't | `THEME_QUALITY` — `ATTACK_REBUTTAL 1.5` … `FESTIVAL_GREETING 0.7` |
+| Outliers exist | `VIRAL_RATE 0.04`, `VIRAL_BOOST 6.5` — the mean-vs-median flag has something real to catch |
+
+**The central planted gap**, which is what makes Module C non-vacuous: the principal posts policy and media appearances at safe daytime hours and rarely uses short video, while two competitors lean on the two highest-performing themes and post reels into the evening peak. The pipeline is supposed to surface that on its own; the demo is only honest if nobody hard-codes it.
+
+Measured after the rewrite: **20 distinct posting hours** across 940 posts, against 1 before.
+
 ### 3.4 Verified green
 
 | Check | Result |
@@ -286,9 +304,24 @@ The seed generator needs *deliberately planted* patterns — reels beating stati
 | Secrets in git history | ✅ none — `.env` gitignored from commit #1 |
 | Repository visibility | ✅ **private** (Deliverable 1 requires it; the brief's footer forbids public publication) |
 
-### 3.5 Day 1 status
+### 3.5 Day 1 status — ✅ complete, verified Thu Jul 30
 
-Day 1 covers the seeded dataset, the normalise pipeline, the ingestion run log, the CSV adapter, the YouTube adapter and normalisation tests. **None of it exists yet** — `server/src/` holds the adapter contract, the seed adapter and `db.ts`; `client/` is empty. Day 0 is complete and the foundation now runs.
+Re-verified against the running system, not assumed.
+
+| Check | Result |
+|---|---|
+| `npm test` | ✅ 69 passing, 5 files |
+| `tsc --noEmit` | ✅ clean |
+| Posts persisted | ✅ **940** — X 275 · Instagram 263 · Facebook 263 · YouTube 139 |
+| Live data | ✅ **108** YouTube posts from 3 verified channels via Data API v3 |
+| Distinct posting hours | ✅ **20** — §3.3's single-stripe heatmap defect is fixed |
+| Audit trail populated | ✅ 48 `IngestionRun` rows |
+| Idempotency in practice | ✅ re-running `seed` and `ingest` leaves the row count unchanged |
+| Secrets in git | ✅ none — working tree clean, `.env` gitignored |
+
+**Known state going into Day 2:** `analytics/`, `ai/`, `api/` and `server.ts` do not exist yet; `client/` is still an empty directory. That is on plan — Module B starts today, the portal on Day 3.
+
+**One item §3.3 did not anticipate.** YouTube ended up *mixed provenance*: three tracked people have a verified channel, the fourth does not, so 108 live posts and 31 seeded posts share a platform. Every other platform is uniformly one or the other. Analytics must therefore carry provenance **per account**, not per platform — a platform-level `isSynthetic` rollup would report YouTube as "real" while a quarter of its rows are generated. `compare.ts` and `gaps.ts` are the two places this can go wrong quietly.
 
 ---
 
