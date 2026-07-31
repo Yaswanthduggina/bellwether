@@ -1,4 +1,5 @@
-// The tracked set: one principal and three peers, across four platforms.
+// The tracked set: one principal and three peers, declared across all four
+// platforms and ingested on the two that can currently be read.
 //
 // WHY THESE FOUR
 //
@@ -15,22 +16,35 @@
 // explicit denominator. See the engagement-rate section of the README.
 //
 // Contrast is deliberate too. Kanhaiya Kumar is video-native where Tharoor is
-// text-forward; Varun Gandhi posts a third as often. A peer set that all behaved
-// identically would make gap analysis (a Module C MUST) vacuous.
+// text-forward; Varun Gandhi posts a fraction as often. A peer set that all
+// behaved identically would make gap analysis (a Module C MUST) vacuous.
+//
+// ─────────────────────────────────────────────────────────────────────────
+// DECLARED vs TRACKED
+//
+// Every handle below is declared, including the ones on platforms with no adapter
+// yet. Only the platforms whose adapter is LIVE are ingested — the split is
+// derived from the registry in adapters/index.ts, not restated here, so building
+// xAdapter.ts flips those accounts on with no edit to this file.
+//
+//   TRACKED_ACCOUNTS   ingested now         (Instagram, YouTube)
+//   PLANNED_ACCOUNTS   declared, not ingested (X, Facebook — blockers in the registry)
+//
+// Nothing is seeded. A platform we cannot read stays empty and says why; it does
+// not get filled in with generated posts that then need labelling everywhere they
+// surface.
 //
 // ─────────────────────────────────────────────────────────────────────────
 // ON THE HANDLES
 //
 // These are public accounts belonging to public figures acting in a public
-// capacity — the only category this product touches.
+// capacity — the only category this product touches. Every tracked handle is
+// fetched live, so a wrong one is not a cosmetic error: it either fails the run
+// or, worse, attributes a stranger's account to a politician. Both adapters
+// therefore throw on an unresolved handle instead of returning an empty list, and
+// `npm run ingest -- --check-handles` resolves every handle without writing a row.
 //
-// For platforms served by the SEED adapter, the handle is a *label*: it names who
-// the synthetic corpus is modelled on, and the data behind it is generated, not
-// fetched. Account.isSynthetic and Post.isSynthetic mark that at row level and the
-// UI badges it.
-//
-// The YouTube handles WERE verified against the Data API, and the check earned
-// its keep. Results:
+// YouTube — verified against the Data API:
 //
 //   @ShashiTharoorOfficial       "Dr. Shashi Tharoor Official"    835K subs   LIVE
 //   @PriyankaChaturvediOfficial  "Priyanka Chaturvedi Official"    42.7K subs LIVE
@@ -39,20 +53,41 @@
 //
 // The first guess for Priyanka Chaturvedi (@PriyankaChaturvedi) did not resolve
 // at all. Worse, @VarunGandhi DOES resolve — to a dormant channel with no
-// subscribers whose only upload is a 2023 "Happy Independence Day" post. Ingesting
-// it would have produced a real-looking row of near-zero engagement attributed to
-// a sitting politician: a fabricated finding, arrived at honestly. No alternative
-// handle resolves, so Varun Gandhi stays seeded on YouTube and says so.
+// subscribers whose only upload is a 2023 "Happy Independence Day" post.
+// Ingesting it would have produced a real-looking row of near-zero engagement
+// attributed to a sitting politician: a fabricated finding, arrived at honestly.
+// No alternative handle resolves, so Varun Gandhi has NO YouTube entry.
 //
-// This is why resolveChannel() throws instead of returning an empty list. An
-// unresolved handle rendering as "posted nothing in 90 days" would appear on the
-// dashboard as a finding rather than a failure.
+// Instagram — resolved against the live source on 31 Jul 2026, measured rather
+// than taken from a stats site:
 //
-// NOTE ON THE SUBSCRIBER SPREAD: 42.7K to 3.71M is an 87x range, far wider than
-// the follower comparability the peer set was chosen for. It does not distort the
-// YouTube numbers, because YouTube engagement rate is normalised by VIEWS, not
-// subscribers — which is exactly the case the per-platform denominator exists for.
+//   @shashitharoor       2,299,726 followers   ~2,125 posts   INC MP, Thiruvananthapuram
+//   @kanhaiyakumar       1,508,085 followers                  AICC/NSUI, ex-JNUSU president
+//   @ferozevarungandhi     838,354 followers   28 posts       MP, Lok Sabha 2009-2024
+//   @priyankac19           382,514 followers   ~866 posts     former MP, Shiv Sena (UBT)
+//
+// Two things that follow from that table, both load-bearing:
+//
+// ① The Instagram spread is 383K–2.30M — 6.0x, comfortably inside the one
+//    order of magnitude the peer set was chosen for. (YouTube's 87x spread is the
+//    outlier, and it is harmless there only because YouTube engagement is
+//    normalised by views rather than subscribers.)
+//
+// ② @ferozevarungandhi has 28 posts in the account's entire life, so a 90-day
+//    window may legitimately return ZERO. That is a real finding about how he
+//    uses the platform, not a bug — the sample-size gates in format.ts, timing.ts
+//    and gaps.ts will exclude him with a stated reason rather than reporting
+//    conclusions from two posts. If a fuller peer is wanted on Instagram, the
+//    honest fix is to swap the person, not to lower the gates.
+//
+// Varun Gandhi is the awkward one here too. He appears under several handles:
+// @therealvarungandhi (4K followers, 70 posts, bio claims official) and
+// @ferozevarungandhi (839K, MP bio, 28 posts). Feroze Varun Gandhi is his name as
+// recorded by the Lok Sabha, and the reach is consistent with the peer set, so
+// that is the handle tracked. It is the one judgement call in this list.
 // ─────────────────────────────────────────────────────────────────────────
+
+import { hasLiveAdapter } from "../adapters";
 
 export type Platform = "INSTAGRAM" | "FACEBOOK" | "X" | "YOUTUBE";
 export type AccountRole = "PRINCIPAL" | "COMPETITOR";
@@ -66,73 +101,61 @@ export interface TrackedAccount {
     displayName: string;
     /** IANA zone. Drives the local-time timing heatmap (FR7). */
     timezone: string;
-    /**
-     * Force this account to be seeded even where a live adapter exists, and record
-     * WHY. Without this, "seeded" would be inferred purely from platform, and an
-     * account with no real channel on an otherwise-live platform would silently
-     * get ingested from whatever the handle happened to resolve to.
-     */
-    seedReason?: string;
 }
 
 const IST = "Asia/Kolkata";
 
-/** A handle, optionally pinned to the seed adapter with a stated reason. */
-type HandleSpec = string | { handle: string; seedReason: string };
-
+/**
+ * Platforms are optional per person. A missing entry means "no account we can
+ * verify", which is a fact about that person on that platform — not a gap to be
+ * papered over with a handle that merely looks plausible.
+ */
 function forPerson(
     personName: string,
     role: AccountRole,
     displayName: string,
-    handles: Record<Platform, HandleSpec>,
+    handles: Partial<Record<Platform, string>>,
 ): TrackedAccount[] {
-    return (Object.keys(handles) as Platform[]).map((platform) => {
-        const spec = handles[platform];
-        const resolved = typeof spec === "string" ? { handle: spec, seedReason: undefined } : spec;
-
-        return {
+    return (Object.keys(handles) as Platform[])
+        .filter((platform) => handles[platform])
+        .map((platform) => ({
             personName,
             role,
             platform,
-            handle: resolved.handle,
+            handle: handles[platform]!,
             displayName,
             timezone: IST,
-            ...(resolved.seedReason ? { seedReason: resolved.seedReason } : {}),
-        };
-    });
+        }));
 }
 
-export const TRACKED_ACCOUNTS: TrackedAccount[] = [
+/** Everyone we intend to cover, on every platform, regardless of adapter status. */
+export const DECLARED_ACCOUNTS: TrackedAccount[] = [
     // PRINCIPAL — sitting Lok Sabha MP (Thiruvananthapuram). Chosen for genuine
     // multi-platform activity: without volume there is nothing for format or
     // timing analysis to chew on.
     ...forPerson("Shashi Tharoor", "PRINCIPAL", "Shashi Tharoor", {
-        X: "ShashiTharoor",
         INSTAGRAM: "shashitharoor",
-        FACEBOOK: "ShashiTharoor",
         YOUTUBE: "ShashiTharoorOfficial",
+        X: "ShashiTharoor",
+        FACEBOOK: "ShashiTharoor",
     }),
 
     // Rajya Sabha MP. National profile, very active, heavy media-appearance and
     // rebuttal content — the closest behavioural comparison to the principal.
     ...forPerson("Priyanka Chaturvedi", "COMPETITOR", "Priyanka Chaturvedi", {
-        X: "priyankac19",
         INSTAGRAM: "priyankac19",
-        FACEBOOK: "priyankachaturvedi",
         YOUTUBE: "PriyankaChaturvediOfficial",
+        X: "priyankac19",
+        FACEBOOK: "priyankachaturvedi",
     }),
 
     // Former Lok Sabha MP. Comparable national profile, long-form written
     // positions — a like-for-like test of whether the principal's format mix is
-    // actually working for him.
+    // actually working for him. No YouTube entry: see the handle notes above.
     ...forPerson("Varun Gandhi", "COMPETITOR", "Varun Gandhi", {
+        INSTAGRAM: "ferozevarungandhi",
         X: "varungandhi80",
-        INSTAGRAM: "varunferozegandhi",
         FACEBOOK: "VarunGandhiOfficial",
-        // @VarunGandhi resolves to a dormant channel with 0 subscribers whose only
-        // upload is from 2023 — not the politician, and no alternative handle
-        // resolves. Seeded rather than ingesting a stranger's channel as his.
-        YOUTUBE: { handle: "VarunGandhi", seedReason: "no verified YouTube channel — @VarunGandhi is a dormant unrelated channel" },
     }),
 
     // National politician, contested Lok Sabha. Included for contrast: a
@@ -140,11 +163,27 @@ export const TRACKED_ACCOUNTS: TrackedAccount[] = [
     // gap analysis has something real to find rather than four variations of one
     // posting style.
     ...forPerson("Kanhaiya Kumar", "COMPETITOR", "Kanhaiya Kumar", {
-        X: "kanhaiyakumar",
         INSTAGRAM: "kanhaiyakumar",
-        FACEBOOK: "kanhaiyakumar",
         YOUTUBE: "KanhaiyaKumar",
+        X: "kanhaiyakumar",
+        FACEBOOK: "kanhaiyakumar",
     }),
 ];
+
+/**
+ * The accounts ingestion actually creates and refreshes.
+ *
+ * Derived from the adapter registry rather than hand-maintained: an account is
+ * tracked exactly when its platform can be read for real. The X and Facebook
+ * handles above are declared but not ingested — they are not seeded either.
+ */
+export const TRACKED_ACCOUNTS: TrackedAccount[] = DECLARED_ACCOUNTS.filter((account) =>
+    hasLiveAdapter(account.platform),
+);
+
+/** Declared, not yet ingestible. Printed by the roster run so the gap stays visible. */
+export const PLANNED_ACCOUNTS: TrackedAccount[] = DECLARED_ACCOUNTS.filter(
+    (account) => !hasLiveAdapter(account.platform),
+);
 
 export const PRINCIPAL_NAME = "Shashi Tharoor";

@@ -1,14 +1,16 @@
 // FR1 — track an arbitrary number of accounts, added and removed from the UI.
 //
 // THE ACKNOWLEDGEMENT GATE IS THE INTERESTING PART. Two of the four platforms
-// have no live adapter, so an account added on them gets a GENERATED corpus. The
-// server refuses to create one unless the caller explicitly sends
-// `allowSeeded: true`, and this page surfaces that refusal as a checkbox the
+// have no live adapter, so an account added on them cannot be ingested and stays
+// EMPTY. The server refuses to create one unless the caller explicitly sends
+// `allowNoSource: true`, and this page surfaces that refusal as a checkbox the
 // user has to tick, with the consequence spelled out — rather than catching the
 // error and silently retrying with the flag set, which would defeat the point.
 //
-// Silently generating a synthetic corpus for a real person someone just typed
-// in, and then rendering it beside live data, is how a demo becomes a lie.
+// It used to warn that such an account would be SEEDED. Since the synthetic
+// corpus was removed the warning is different but the reason for it is the same:
+// an account that quietly collects nothing looks, on a dashboard, exactly like a
+// person who does not post.
 //
 // Deleting cascades to posts. The count is shown in the confirmation because
 // "removed" over a silent loss of 263 rows is not an honest confirmation.
@@ -21,7 +23,12 @@ import { useAsync } from "../hooks/useAsync";
 const PLATFORMS = ["INSTAGRAM", "FACEBOOK", "X", "YOUTUBE"] as const;
 
 /** Mirrors the server's adapter registry. YouTube is the one live source. */
-const LIVE_PLATFORMS = new Set(["YOUTUBE"]);
+// Mirrors the LIVE entries in the server's adapter registry. Duplicated state,
+// and it is the reason this list was wrong for a release: Instagram went live and
+// this set still said YouTube only. The honest fix is to read platform status
+// from the API — every account response already carries `liveAdapterAvailable` —
+// and it is worth doing the next time this file is touched for a real feature.
+const LIVE_PLATFORMS = new Set(["YOUTUBE", "INSTAGRAM"]);
 
 const EMPTY: NewAccount = {
     personName: "",
@@ -37,7 +44,7 @@ function AddForm({ onCreated }: { onCreated: () => void }) {
     const [success, setSuccess] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
 
-    const willBeSeeded = !LIVE_PLATFORMS.has(draft.platform);
+    const hasNoSource = !LIVE_PLATFORMS.has(draft.platform);
 
     const set = <K extends keyof NewAccount>(key: K, value: NewAccount[K]) =>
         setDraft((current) => ({ ...current, [key]: value }));
@@ -52,7 +59,7 @@ function AddForm({ onCreated }: { onCreated: () => void }) {
             const result = await api.createAccount({
                 ...draft,
                 handle: draft.handle.replace(/^@/, ""),
-                allowSeeded: willBeSeeded ? draft.allowSeeded : undefined,
+                allowNoSource: hasNoSource ? draft.allowNoSource : undefined,
             });
             setSuccess(
                 `Added ${result.account.personName} on ${result.account.platform}.` +
@@ -109,7 +116,7 @@ function AddForm({ onCreated }: { onCreated: () => void }) {
                         {PLATFORMS.map((platform) => (
                             <option key={platform} value={platform}>
                                 {platform}
-                                {LIVE_PLATFORMS.has(platform) ? " (live)" : " (seeded)"}
+                                {LIVE_PLATFORMS.has(platform) ? " (live)" : " (no adapter yet)"}
                             </option>
                         ))}
                     </select>
@@ -138,20 +145,20 @@ function AddForm({ onCreated }: { onCreated: () => void }) {
                 </button>
             </div>
 
-            {willBeSeeded && (
+            {hasNoSource && (
                 <Notice kind="warn">
                     <label style={{ display: "flex", gap: 9, alignItems: "flex-start", cursor: "pointer" }}>
                         <input
                             type="checkbox"
-                            checked={draft.allowSeeded ?? false}
-                            onChange={(e) => set("allowSeeded", e.target.checked)}
+                            checked={draft.allowNoSource ?? false}
+                            onChange={(e) => set("allowNoSource", e.target.checked)}
                             style={{ marginTop: 3 }}
                         />
                         <span>
-                            <strong>{draft.platform} has no live adapter.</strong> This account's posts will be{" "}
-                            <strong>generated, not fetched</strong>. They are flagged <code>isSynthetic</code> in the
-                            database and every figure they contribute to carries a SEEDED badge. Tick to confirm you
-                            want a synthetic corpus for this person.
+                            <strong>{draft.platform} has no live adapter yet.</strong> This account{" "}
+                            <strong>cannot be ingested</strong> and will stay empty — nothing is generated to fill it.
+                            Import a CSV/JSON export to give it data, or leave it as a placeholder until the adapter
+                            exists. Tick to confirm.
                         </span>
                     </label>
                 </Notice>
@@ -287,8 +294,8 @@ export function Accounts() {
 
             <Notice kind="plain">
                 <strong>One thing that will surprise you when demoing this.</strong>{" "}
-                <code>npm run seed</code> prunes accounts that are not in <code>config/accounts.ts</code>, so an account
-                added here does not survive a re-seed. Use <code>npm run ingest</code> to refresh it instead.
+                <code>npm run ingest -- --roster</code> prunes accounts that are not in <code>config/accounts.ts</code>,
+                so an account added here does not survive it. Use plain <code>npm run ingest</code> to refresh it instead.
             </Notice>
         </>
     );

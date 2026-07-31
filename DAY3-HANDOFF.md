@@ -5,6 +5,30 @@ Working notes. Delete before submission; `README.md`, `ARCHITECTURE.md` and
 
 ---
 
+## ⚠️ Day 4 overtook parts of this file
+
+The synthetic corpus was removed. Instagram now comes from Apify, YouTube from the
+Data API, and **nothing is seeded**. What that invalidates below, in order of how
+badly it would mislead you:
+
+- **The 940-post corpus is gone.** `npm run ingest -- --roster` purges the seeded
+  rows and re-ingests from live sources. Every count in this file (940 posts,
+  16 accounts, 48 runs, "450 of 940 classified") describes the old corpus.
+- **`npm run seed` no longer exists.** It is `npm run ingest -- --roster`. Plain
+  `npm run ingest` still refreshes without touching the roster.
+- **The X evening-window finding is unusable** — not because it was seeded and
+  caveated, but because X has no data at all now. Do not put it in the video.
+- **Classification has to re-run** over whatever the first live ingest produces.
+  Still incremental, still quota-bound on the free tier.
+- **Two new env vars are required:** `APIFY_API_TOKEN`, and `YOUTUBE_API_KEY` is
+  no longer optional. `npm run ingest -- --check-handles` verifies every handle
+  against its live source without writing a row — run it first.
+
+The YouTube findings further down (84% reels vs 52% peer median; 69% weekly
+consistency) came off real API data and still stand.
+
+---
+
 ## Done today (5 commits)
 
 | Commit | What |
@@ -175,17 +199,17 @@ asserts an upper bound.
   is worse at.
 - **69% weekly consistency against a 92% peer median**, longest silence 8 days.
 
-**The X evening-window finding is correctly self-caveating.** X is fully seeded,
-so `describeGap` appends "every peer behind this figure is seeded data — it
-demonstrates the pipeline, not a real-world finding." Do not quote it as a real
-finding in the video.
+**The X evening-window finding is gone with the platform** — see the Day 4 note at
+the top. The self-caveating machinery in `describeGap` still works and is still
+worth showing; it just has nothing seeded left to fire on.
 
-**Database state:** 16 accounts, 940 posts, 48 ingestion runs. Test accounts
-created while exercising the API were deleted; the DB is as Day 2 left it.
+**Database state:** as the Day 4 re-ingest leaves it — 7 tracked accounts
+(4 Instagram, 3 YouTube). The old 940-post seeded corpus was purged.
 
-**`npm run seed` prunes accounts not in `config/accounts.ts`.** Accounts added
-through the UI do not survive it — use `npm run ingest` to refresh those. This is
-documented in `seed.ts` but it will surprise someone demoing the accounts CRUD.
+**`npm run ingest -- --roster` prunes accounts not in `config/accounts.ts`.**
+Accounts added through the UI do not survive it — use plain `npm run ingest` to
+refresh those. This is documented in `ingest.ts` and in the Accounts page itself,
+but it will still surprise someone demoing the accounts CRUD.
 
 **Server:** `cd server && npm run dev` → http://localhost:4000. Kill a stuck one
 with PowerShell, not bash job control — each Bash tool call is a fresh shell:

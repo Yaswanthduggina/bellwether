@@ -1,3 +1,11 @@
+> **Scratch notes from a Day-2 review. Not a shipping document — delete before submission.**
+> Two things in here are now wrong at the level of fact, and both are load-bearing
+> in the argument: the platform question was settled on Day 4 (no synthetic data,
+> Instagram live via Apify, X and Facebook declared but not ingested), and Modules
+> D and E — recorded below as 0% — are built. The rubric analysis is still worth
+> re-reading; the status is not. The formatting was mangled on paste and has been
+> left as-is rather than half-repaired into something that reads as authoritative.
+
 Straight answer first
 
 Technically: yes, this is good work. Analytical soundness (25%) and engineering judgement (15%) are done to a standard well above what this brief asks for.

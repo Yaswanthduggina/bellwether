@@ -102,7 +102,7 @@ export function Dashboard() {
             ) : platforms.length === 0 ? (
                 <Notice kind="warn">
                     No platform has any posts under this filter. Widen it, or ingest data with{" "}
-                    <code>cd server &amp;&amp; npm run seed</code>.
+                    <code>cd server &amp;&amp; npm run ingest -- --roster</code>.
                 </Notice>
             ) : (
                 <>

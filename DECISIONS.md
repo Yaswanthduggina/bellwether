@@ -10,6 +10,10 @@ The format is deliberate: **what was chosen · what was rejected · what it cost
 
 ### 1.1 Seed the platforms we cannot legitimately reach, and say so loudly
 
+> **⚠️ Superseded on Day 4 by §1.6.** Kept as written, because §1.6 only makes sense
+> against the reasoning it replaced. The diagnosis below is still correct; the
+> conclusion is no longer available.
+
 **Chosen:** live YouTube via the Data API v3; Instagram, Facebook and X seeded and flagged at row level.
 
 **Rejected:** scraping Instagram or Facebook behind a login wall; using an unofficial X client; quietly presenting seeded numbers as real.
@@ -19,6 +23,9 @@ The format is deliberate: **what was chosen · what was rejected · what it cost
 **Cost, stated plainly:** three quarters of the corpus is generated. Any format or timing conclusion drawn from Instagram, Facebook or X describes the seed generator's assumptions, not Indian political social media. The pipeline is what's being demonstrated there, not the finding. This is why `isSynthetic` is a column on both `Account` and `Post` rather than a footnote — the flag travels with the data into every aggregate, and the UI cannot accidentally lose it.
 
 ### 1.2 X: assessed, then rejected rather than half-wired
+
+> **Partly superseded on Day 4.** The assessment stands and is why X still has no
+> adapter. What changed is the fallback: X is now *declared and empty*, not seeded.
 
 **Chosen:** X is seeded.
 
@@ -40,6 +47,12 @@ The format is deliberate: **what was chosen · what was rejected · what it cost
 
 ### 1.4 YouTube is mixed provenance, and provenance is therefore per-account
 
+> **Resolved on Day 4, not reversed.** YouTube is now uniformly live — the account
+> without a real channel was dropped rather than seeded. Per-account provenance
+> reporting stays, because the reasoning holds for any future mixed source (a CSV
+> import sits beside API data today) and because removing a guard that currently
+> has nothing to catch is how it fails to catch the next thing.
+
 **Chosen:** provenance is reported per **account**, never rolled up per platform.
 
 **Rejected:** a platform-level `isLive` flag.
@@ -50,6 +63,9 @@ The format is deliberate: **what was chosen · what was rejected · what it cost
 
 ### 1.5 The seed generator models reach first
 
+> **Still true, but its output no longer reaches the database.** As of Day 4 the
+> generator is a test-fixture factory only — see §1.7.
+
 **Chosen:** `reach = followers × reachFactor(format)`, then `interactions = reach × BASE_ER × format × hour × day × theme × noise`.
 
 **Rejected:** the obvious `likes = randomInt(500, 15000)`, and the tempting `views = likes × k`.
@@ -59,6 +75,46 @@ The format is deliberate: **what was chosen · what was rejected · what it cost
 **Why it matters beyond the demo:** every multiplier is an exported constant, so the Module B tests assert that the engine **recovered a pattern deliberately put there** — a far stronger claim than "it computed a number without crashing."
 
 **Cost:** the synthetic data is *tidier* than reality. Real engagement has autocorrelation, news shocks and follower drift that this model has none of. An analyst who mistook the seeded findings for facts about Indian politics would be badly wrong, which is why they are labelled everywhere they surface.
+
+### 1.6 Day 4 — every row is fetched, or there is no row
+
+**Chosen:** remove synthetic data from the product entirely. Instagram moves to Apify actors over the public profile surface; YouTube stays on the Data API; X and Facebook are declared with no data behind them.
+
+**Rejected:** keeping the labelled seed corpus (§1.1); a `--demo` flag that seeds on request; generating "illustrative" rows for the platforms with no adapter.
+
+**Why:** the requirement came from outside the build — the seeded corpus was rejected outright. But the change is defensible on its own terms, and §1.1 already contained the argument against itself: *every* place a seeded number surfaces has to carry a label, and the guarantee is only as strong as the least careful reader. A demo flag is the same bet with an extra step, because the flag's state is invisible in a screenshot.
+
+The Graph API was never the alternative for Instagram. It reads accounts you administer; competitor benchmarking is by definition about accounts you do not. Apify reads the same public profile a visitor sees, which is the category this product already limits itself to.
+
+**Cost, stated plainly:**
+
+- **Two platforms lost.** X and Facebook contribute nothing until their adapters exist. The product covers less than it did.
+- **The corpus is smaller and less even.** Varun Gandhi has 28 Instagram posts in the account's lifetime, so a 90-day window may return zero for him. Sample-size gates exclude him with a reason rather than reporting from two posts.
+- **A per-result bill.** Apify charges per scraped item, so a full refresh has a real cost and `APIFY_RESULTS_LIMIT` is a cost knob, not a tuning knob.
+- **A scraped source is less stable than an API.** Instagram can change its public surface without notice. The mitigation is that a failed or partial scrape is treated as a **failed run**, never as "posted nothing" — a silent zero would read as a finding.
+- **The strongest analytics tests would have died with it** — which is why the generator survives as §1.7.
+
+### 1.7 The seed generator stays in the tree, as a test fixture only
+
+**Chosen:** `seedAdapter.ts` and its tests remain; no ingestion path imports it. The adapter registry throws on an account flagged `isSynthetic` rather than serving it.
+
+**Rejected:** deleting it with the seeded corpus; leaving it wired up "just in case".
+
+**Why:** the round-trip tests are the best evidence in the repo that the analytics engine finds what is actually there — they plant known constants and assert the engine recovers them. Deleting the generator would have removed that evidence to remove code that no longer produces a stored row. Leaving it *callable* would have been worse than deleting it: one `isSynthetic` flag set by hand and generated rows are back in a corpus the UI presents as real.
+
+**Cost:** a reader who greps for "seed" finds a generator and has to be told it is inert. That is what the comment at the top of `adapters/index.ts` is for, and it is a cheaper cost than either alternative.
+
+### 1.8 X and Facebook stay visible as `PLANNED`, not deleted
+
+**Chosen:** the registry records a status per platform — `LIVE` with a factory, or `PLANNED` with a stated blocker and the filename the adapter will have. The roster declares all four platforms' handles; `TRACKED_ACCOUNTS` is derived by filtering on `hasLiveAdapter`.
+
+**Rejected:** deleting the unreadable platforms from the code; keeping their accounts in the database with no source (they would fail every run and pollute the audit trail).
+
+**Why:** a platform deleted from the code is a gap the next person rediscovers from first principles, including the two days of API-terms reading that produced the blocker. A platform present with its blocker written down is a decision that can be read, argued with, and closed. Deriving the tracked set from the registry rather than restating it means building `xAdapter.ts` and flipping one entry starts ingesting the already-declared accounts — the roster is not touched, so it cannot fall out of step.
+
+**Cost:** platform status is now duplicated in the client, and duplicated state drifts — `Accounts.tsx` held a hardcoded `LIVE_PLATFORMS = {YOUTUBE}` that was silently wrong the moment Instagram went live, offering a "seeded" warning for a platform that had just become real. It is corrected and commented, but the honest fix is for the UI to read status from the API (every account response already carries `liveAdapterAvailable`), and that is not done. `Filters.tsx` still lists X and Facebook as filter options that return nothing.
+
+**A second cost, worth naming separately:** the account-creation gate had to change meaning. It used to make the caller acknowledge that a new account on an adapterless platform would be *seeded*; it now makes them acknowledge it will be *empty*, and such accounts are created with `isSynthetic: false`. Writing `true` there would have been worse than cosmetic — the registry refuses flagged accounts, so those accounts would have been permanently skipped by the very adapter they were waiting for.
 
 ---
 
@@ -216,9 +272,9 @@ The format is deliberate: **what was chosen · what was rejected · what it cost
 
 **Rejected:** maintaining follower counts by hand outside the adapters.
 
-**Why:** follower count *is* the engagement-rate denominator for non-video platforms, and only the source can supply it — YouTube reports subscribers, the seed generator invents them. Hand-maintained follower counts would go stale and silently distort every rate they touch. The seed implementation derives a **stable** count from the handle, so the denominator doesn't move between seed runs.
+**Why:** follower count *is* the engagement-rate denominator for non-video platforms, and only the source can supply it — YouTube reports subscribers, Instagram reports followers. Hand-maintained follower counts would go stale and silently distort every rate they touch.
 
-**Cost:** one more method every adapter must implement, including sources that have nothing useful to return (`followerCount: null`).
+**Cost:** one more method every adapter must implement, including sources that have nothing useful to return (`followerCount: null`). On Instagram it costs a **second Apify actor**: the post scraper does not report follower count, and Instagram stills carry no view count, so without the profile scraper every photo and carousel would fall into `NO_DENOMINATOR` and drop out of the comparison. Two actor runs per account per refresh is the price of the denominator existing at all.
 
 ### 4.6 `fileAdapter.ts`, not `csvAdapter.ts`
 
@@ -246,7 +302,19 @@ The format is deliberate: **what was chosen · what was rejected · what it cost
 
 **Cost:** a full refresh is slower than it could be. Irrelevant at 16 accounts; would need revisiting at hundreds.
 
-### 4.9 Normalisation counts bad rows instead of throwing on them
+### 4.9 `seed.ts` folded into `ingest.ts` behind a `--roster` flag
+
+**Chosen:** one script. `npm run ingest` refreshes posts; `npm run ingest -- --roster` reconciles the roster first; `--check-handles` resolves every handle and writes nothing.
+
+**Rejected:** keeping `npm run seed` as the roster command; keeping two scripts under new names.
+
+**Why:** the command was named for the thing it no longer does. In a product whose central claim is that its data is real, a first-run command called `seed` is a trap for exactly the reader the claim is aimed at. The distinction the two scripts protected is still real — refreshing posts must not silently re-assert the roster, or accounts added through the UI (FR1) vanish — so it survives as a flag, which is where a modal difference of one line of behaviour belongs.
+
+`--check-handles` was added at the same time because live sources made handle correctness load-bearing: a wrong handle either fails the run or attributes a stranger's posts to a politician, and neither is catchable downstream.
+
+**Cost:** the first-run command now carries a flag (`npm run ingest -- --roster`), which is marginally less obvious than a bare word. Every doc that referenced `npm run seed` had to change, including two strings in the UI.
+
+### 4.10 Normalisation counts bad rows instead of throwing on them
 
 **Chosen:** `normalize.ts` validates and collects failures; the pipeline records them as `rowsFailed`. It imports nothing from Prisma.
 
@@ -270,6 +338,10 @@ The Day 0 audit sections in `ARCHITECTURE.md` are kept as originally written, wi
 
 ### 5.3 What gets cut, in order
 
-`cadence analysis` → `theme × format` → `filters` → `PDF export (Markdown stays)` → `any stretch item` → `the second live platform`.
+`theme × format` → `filters` → `PDF export (Markdown stays)` → `any stretch item` → `a platform's coverage`.
+
+**Cadence analysis was first on this list and should never have been on it** — it is named inside a Module C MUST, so the first sacrifice would have broken a required deliverable. An item that appears in two places inherits the weaker priority unless someone checks.
+
+**"Seed it and say so" is no longer the last resort.** The original list ended with *"the second live platform (seed X, say so plainly)"*. Since Day 4 that move does not exist: a platform is read for real or left visibly empty. The list is shorter and the remaining choice is starker.
 
 **Never cut:** the validator, the tests on `engagement.ts`, this file, and the clean-clone test.

@@ -1,12 +1,11 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Bellwether API \u2014 ingestion, analytics and AI layer",
+  "description": "Bellwether API — ingestion, analytics and AI layer",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
-    "seed": "tsx src/scripts/seed.ts",
     "ingest": "tsx src/scripts/ingest.ts",
     "import": "tsx src/scripts/import.ts",
     "test": "vitest run",
@@ -26,6 +25,7 @@
     "@google/genai": "^2.15.0",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "apify-client": "^2.24.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1"

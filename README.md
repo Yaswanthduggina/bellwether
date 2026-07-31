@@ -2,7 +2,7 @@
 
 A social media intelligence portal for political communications teams.
 
-Bellwether ingests the last 90 days of **public** posts for a principal and their peer set across Instagram, Facebook, X and YouTube, normalises everything into one schema, and answers four questions:
+Bellwether ingests the last 90 days of **public** posts for a principal and their peer set across Instagram and YouTube, normalises everything into one schema, and answers four questions:
 
 1. **What content works?** — performance by media format, on a normalised engagement measure, with spread (not just averages).
 2. **When should we post?** — day × hour heatmap per platform in the account's local timezone, with sample sizes shown and thin cells suppressed.
@@ -15,21 +15,25 @@ Question 4 is the point of the product. Everything above it exists to make the r
 
 ## ⚠️ Data provenance — read this first
 
-**Not all data in this portal is live.** The table below is the honest state of every platform.
+**Every row in this portal is fetched, not generated.** The table below is the honest state of every platform.
 
 | Platform | Source | Live? | Why |
 |---|---|---|---|
 | YouTube | YouTube Data API v3 | 🟢 **Live** | Official API, public channel data, workable free quota |
-| X | Seeded | 🔴 **Synthetic** | Free tier read caps are far below a 90-day pull across four accounts. Assessed on Day 1 and rejected rather than half-wired — see `DECISIONS.md` |
-| Instagram | Seeded | 🔴 **Synthetic** | Graph API requires a Business/Professional account you control plus app review — not obtainable in the project window |
-| Facebook | Seeded | 🔴 **Synthetic** | Same as Instagram |
+| Instagram | Apify actors (`instagram-post-scraper`, `instagram-profile-scraper`) | 🟢 **Live** | Reads the same public profile surface any visitor sees. The Graph API cannot be used here: it reads only accounts you administer, and competitor benchmarking is by definition about accounts you do not |
+| X | `xAdapter.ts` | 🟡 **Planned** | Accounts declared, adapter not built. Free tier read caps are far below a 90-day pull across four accounts — a truncated sample would *look* live and hide its own sampling bias. Assessed on Day 1 and rejected rather than half-wired; see `DECISIONS.md` |
+| Facebook | `facebookAdapter.ts` | 🟡 **Planned** | Accounts declared, adapter not built. Graph API reads only Pages you administer, so a peer's Page is unreadable without their cooperation |
 
-Synthetic data is not hidden. It is marked at the row level:
+X and Facebook are **declared but not ingested** — the handles are in `config/accounts.ts`, the blockers are in `adapters/index.ts`, and neither platform is filled in with generated stand-ins. Two platforms of real data beats four with two of them invented.
 
-- `Account.isSynthetic` and `Post.isSynthetic` are booleans on every row
-- Synthetic captions are prefixed `[synthetic]`
-- Synthetic posts carry `permalink: null` — there is nothing real to link to
-- The UI shows a **SEEDED** badge anywhere synthetic data contributes to a number
+They stay visible on purpose. A platform deleted from the code is a gap the next person rediscovers from first principles; a platform present with a stated blocker is a decision they can read and close. The registry is the switch: building `xAdapter.ts` and flipping its entry to `LIVE` starts ingesting the already-declared X accounts on the next run, with no edit to the roster.
+
+The provenance machinery is still in place and still enforced, because a claim is only as good as the thing that checks it:
+
+- `Account.isSynthetic` and `Post.isSynthetic` are booleans on every row — now `false` on every row
+- The adapter registry refuses to serve an account flagged `isSynthetic`; there is no code path left that writes a generated post
+- The UI shows a **SEEDED** badge anywhere synthetic data contributes to a number, so a regression would be visible rather than silent
+- `seedAdapter.ts` remains in the tree with its tests, unreferenced by the ingestion path — kept as the CSV/JSON fallback's sibling and as the record of how the corpus used to be filled
 
 No live-account data was scraped from behind a login wall, and no platform authentication or rate limit was circumvented. Only public accounts and public content. See [Ethics & scope](#ethics--scope).
 
@@ -37,15 +41,34 @@ No live-account data was scraped from behind a login wall, and no platform authe
 
 ## Who we track, and why
 
-**Principal:** **Shashi Tharoor** — sitting Lok Sabha MP (Thiruvananthapuram), unusually active and multi-platform, with a confirmed "Shashi Tharoor Official" YouTube channel. He posts across all four platforms in volume, which means the format and timing analysis has something to actually chew on.
+**Principal:** **Shashi Tharoor** — sitting Lok Sabha MP (Thiruvananthapuram), unusually active and multi-platform, with a confirmed "Shashi Tharoor Official" YouTube channel. He posts in volume on both tracked platforms, which means the format and timing analysis has something to actually chew on.
 
 **Peer set:**
 
 | Account | Office / tier | Why they're a fair comparison |
 |---|---|---|
 | Priyanka Chaturvedi | Rajya Sabha MP | National-profile parliamentarian, very active on X, confirmed active YouTube channel, heavy media-appearance content |
-| Varun Gandhi | Former Lok Sabha MP | Comparable national profile and communication style — long-form written positions, policy-forward content |
+| Varun Gandhi | Former Lok Sabha MP | Comparable national profile and communication style — long-form written positions, policy-forward content. Instagram only: no YouTube channel resolves to him |
 | Kanhaiya Kumar | National politician, contested Lok Sabha | Different generational and format mix (video-heavy, rally-forward) — deliberately included so the format gap analysis has genuine contrast |
+
+**Handles were verified before the first ingest**, because a wrong handle is the one error the pipeline cannot catch for you — it either fails the run, or resolves to a stranger's account and attributes their posts to a politician. `npm run ingest -- --check-handles` resolves every handle against its live source and writes nothing.
+
+Resolved against the live sources on 31 Jul 2026 — these are measured, not estimates from a third-party stats site:
+
+| Account | Platform | Followers | Resolved name |
+|---|---|---|---|
+| [`@shashitharoor`](https://www.instagram.com/shashitharoor/) | Instagram | **2,299,726** | Shashi Tharoor |
+| `@ShashiTharoorOfficial` | YouTube | 836,000 | Dr. Shashi Tharoor Official |
+| [`@kanhaiyakumar`](https://www.instagram.com/kanhaiyakumar/) | Instagram | **1,508,085** | Kanhaiya Kumar |
+| `@KanhaiyaKumar` | YouTube | 3,710,000 | Kanhaiya Kumar |
+| [`@ferozevarungandhi`](https://www.instagram.com/ferozevarungandhi/) | Instagram | **838,354** | Varun Gandhi |
+| [`@priyankac19`](https://www.instagram.com/priyankac19/) | Instagram | **382,514** | Priyanka Chaturvedi |
+| `@PriyankaChaturvediOfficial` | YouTube | 42,700 | Priyanka Chaturvedi Official |
+
+Two things follow from that table:
+
+- **The Instagram spread is 6.0×** (383K to 2.30M), comfortably inside the one order of magnitude the peer set was chosen for. YouTube's 87× subscriber spread is the outlier, and it is harmless only because YouTube engagement is normalised by *views*, not subscribers.
+- **Varun Gandhi has 28 Instagram posts in the account's entire life**, so a 90-day window may legitimately return zero. That is a real finding about how he uses the platform, not a bug — the sample-size gates exclude him with a stated reason rather than drawing conclusions from two posts. He also uses several handles; [`@therealvarungandhi`](https://www.instagram.com/therealvarungandhi/) (4K followers, 70 posts) claims to be official, but `@ferozevarungandhi` carries the reach and the [Lok Sabha's spelling of his name](https://sansad.in/ls/members/biography/4277?from=members). This is the one judgement call in the roster.
 
 **On comparability:** the brief warns against benchmarking a 20M-follower national figure against a first-term MLA. These four are all national-profile parliamentary-tier figures — but their follower counts are *not* identical, and that is precisely why **nothing in this portal ranks on raw followers or raw likes**. Every cross-account comparison runs on a normalised engagement rate with an explicit denominator. See below.
 
@@ -187,8 +210,10 @@ Fill in `server/.env`:
 
 ```env
 DATABASE_URL="postgresql://user:pass@host:5432/postgres"
-GEMINI_API_KEY="..."
-YOUTUBE_API_KEY=""        # optional — omit to run fully on seeded data
+GEMINI_API_KEY="..."      # optional — only theme classification and recommendations need it
+YOUTUBE_API_KEY="..."     # required — YouTube accounts are ingested live
+APIFY_API_TOKEN="..."     # required — serves the Instagram accounts
+APIFY_RESULTS_LIMIT=""    # optional — posts per Instagram account per run (default 200)
 PORT=4000
 ```
 
@@ -202,21 +227,36 @@ npx prisma migrate deploy
 npx prisma generate
 ```
 
-### 4. Seed the demo dataset
+### 4. Check the handles before spending anything
 
 ```bash
-npm run seed
+npm run ingest -- --check-handles
 ```
 
-This loads the principal and peer accounts and generates 90 days of synthetic posts for the platforms without live access. **The portal is fully demonstrable from this point with no API keys at all.**
+Resolves every tracked handle against its live source and prints what came back — display name and follower count — **without writing a row**. A wrong handle is the one error the pipeline cannot catch for you, and this costs one cheap call per account.
 
-### 5. (Optional) Pull live YouTube data
+### 5. Load the roster and ingest 90 days
 
 ```bash
-npm run ingest -- --platform=YOUTUBE
+npm run ingest -- --roster
 ```
 
-### 5b. (Optional) Classify content themes
+Upserts the principal and peer accounts, then runs the ingestion pipeline over them: YouTube through the Data API, Instagram through Apify. Nothing is generated — an account whose source fails is recorded as a failed run in `IngestionRun` and left empty rather than filled in.
+
+Run this once after upgrading from an earlier build too: it purges any generated posts left behind by the seeded era and prunes accounts that are no longer in the roster.
+
+### 6. Refresh later without re-asserting the roster
+
+```bash
+npm run ingest                          # everything, last 90 days
+npm run ingest -- --days=30             # shorter window
+npm run ingest -- --platform=INSTAGRAM
+npm run ingest -- --roster --reset      # wipe and rebuild from scratch
+```
+
+**There is no `npm run seed`.** It was folded into this one command when the synthetic corpus was removed — a script whose name implies generated data has no place in a product whose central claim is that its data is real. The distinction it protected survives as the `--roster` flag: a plain `npm run ingest` refreshes posts *without* re-asserting the roster, so accounts you added through the UI (FR1) are not pruned out from under you.
+
+### 7. (Optional) Classify content themes
 
 Needs `GEMINI_API_KEY`. Incremental — only posts with no theme are sent, so re-running after an ingest costs a couple of calls rather than the whole corpus.
 
@@ -225,9 +265,9 @@ npm run classify              # everything unclassified
 npm run classify -- --limit=50   # a cheap smoke test first
 ```
 
-On the free tier the daily quota will not cover 940 posts in one pass. The run stops cleanly, reports how many posts it did not attempt, and continues from there next time.
+On the free tier the daily quota will not cover a full corpus in one pass. The run stops cleanly, reports how many posts it did not attempt, and continues from there next time.
 
-### 6. Run
+### 8. Run
 
 ```bash
 # terminal 1
@@ -255,7 +295,7 @@ Module A — ingestion:
 
 - Normalisation: each adapter's `RawPost` → `Post` mapping, plus the rejection rules (bad dates, negative metrics, non-HTTP permalinks, missing `postId`)
 - Idempotency: ingesting the same payload twice produces one row, not two
-- Adapters: seed determinism, YouTube response mapping, CSV/JSON column inference
+- Adapters: YouTube response mapping, Instagram/Apify response mapping, CSV/JSON column inference, seed determinism
 - Pipeline integration: run-log status transitions, partial-failure accounting, platform-mismatch guard
 
 Module B — analytics:
@@ -287,6 +327,8 @@ Module D — the recommendation validator (`src/__tests__/validate.test.ts`):
 
 **The round-trip tests are the ones worth reading.** Every multiplier the seed generator plants — format quality, the 7–9pm IST peak, the midweek lift, the theme ranking — is an exported constant, so the analytics tests run the real generator through the real pipeline and assert the engine **recovered a pattern that was deliberately put there**. That is a much stronger claim than "it computed a number without crashing."
 
+This is the seed generator's **only** remaining job. It writes nothing to the database and no ingestion path calls it; it survives as a fixture factory precisely because a generator with known planted constants is the one thing that can prove the analytics engine finds what is actually there. Deleting it would have cost the strongest tests in the suite to remove code that no longer produces a single stored row.
+
 One of them earned its keep: pooling format statistics across accounts turned out to conflate format quality with *posting habit* — the accounts that post reels also post in the evening peak on the themes that travel, inflating reel-over-link from the planted 3.45× to 6.46×. Format analysis is therefore computed per account, and the test that found it is kept as the explanation.
 
 ---
@@ -295,18 +337,23 @@ One of them earned its keep: pooling format statistics across accounts turned ou
 
 <!-- UPDATE THIS TABLE AS YOU BUILD — it is the first thing a reviewer reads -->
 
-**Day 3 of 4 complete.** Ingestion runs end to end — **940 posts** in Postgres across four platforms, **108 of them live** from the YouTube Data API. Every number the product shows is computed and tested, the REST API is up, all 940 posts are classified, the grounded recommendation layer is in, and the portal runs in a browser.
+**Day 3 of 4 complete, plus a source change on Day 4.** Ingestion runs end to end, every number the product shows is computed and tested, the REST API is up, the grounded recommendation layer is in, and the portal runs in a browser.
 
-`cd server && npm test` → **293 passing**, `tsc --noEmit` clean.
+The Day 4 change: **the synthetic corpus is gone.** Instagram now comes from Apify and YouTube from the Data API, so the database holds fetched rows only. Nothing above the adapter layer moved — same `RawPost` contract, same validate → normalise → upsert → log pipeline, same analytics, same API, same UI. The corpus counts below are from the last seeded run and are **stale until the first live Apify ingest**; they are left visible rather than quietly replaced with numbers nobody has measured.
+
+`cd server && npm test` → **307 passing**, `tsc --noEmit` clean.
 `cd client && npm test` → **10 passing**, `npm run build` clean.
 
 | Module | Status |
 |---|---|
-| A — Schema, migrations, adapter contract, seed adapter | ✅ Done |
+| A — Schema, migrations, adapter contract | ✅ Done |
 | A — DB client (Prisma 7 + `adapter-pg`), verified against Supabase | ✅ Done |
-| A — Seed generator carrying real signal (patterns to discover) | ✅ Done |
+| A — Seed generator carrying real signal (patterns to discover) | ⚪ Retired — kept in the tree with its tests, unreferenced by ingestion |
 | A — Normalise + idempotent upsert + ingestion run log | ✅ Done |
 | A — YouTube live adapter | ✅ Done — 108 real posts, 3 verified channels |
+| A — Instagram live adapter via Apify (`apifyAdapter.ts`) | ✅ Done — replaces the seeded Instagram corpus |
+| A — X adapter (`xAdapter.ts`) | 🟡 Planned — accounts declared, blocker recorded in the registry |
+| A — Facebook adapter (`facebookAdapter.ts`) | 🟡 Planned — accounts declared, blocker recorded in the registry |
 | A — CSV/JSON import adapter (`fileAdapter.ts`) | ✅ Done |
 | B — Engagement rate + format analysis | ✅ Done |
 | B — Timing heatmap | ✅ Done |
@@ -316,21 +363,35 @@ One of them earned its keep: pooling format statistics across accounts turned ou
 | C — Gap analysis (formats · hours · days · themes) | ✅ Done |
 | C — Comparison: cadence, format mix, best windows | ✅ Done |
 | API — Express routes, accounts CRUD, shared filters | ✅ Done |
-| D — Theme classification | ✅ Done — **940 of 940 classified** |
+| D — Theme classification | ✅ Done — 940 of 940 classified on the previous corpus; re-runs incrementally over the live one |
 | D — Grounded recommendations + validator | ✅ Done — generator, pure validator, retry-then-drop, drop count reported |
 | E — React portal — dashboard, filters, accounts CRUD | ✅ Done — recommendations panel at the top, SEEDED badges throughout |
 | Docs — README / DECISIONS.md / sample report / video | 🔨 README + `DECISIONS.md` current; report and video pending |
 
-**Corpus as ingested** (`npm run seed && npm run ingest -- --platform=YOUTUBE`):
+**Corpus, before the source change** (the last seeded run — kept for comparison, not current):
 
-| Platform | Posts | Provenance |
-|---|---|---|
-| X | 275 | seeded |
-| Instagram | 263 | seeded |
-| Facebook | 263 | seeded |
-| YouTube | 108 live + 31 seeded | **mixed** — 3 of the 4 tracked people have a verified channel; the fourth is seeded and flagged |
+| Platform | Posts | Then | Now |
+|---|---|---|---|
+| X | 275 | seeded | declared, **not ingested** — adapter planned |
+| Instagram | 263 | seeded | **live via Apify** |
+| Facebook | 263 | seeded | declared, **not ingested** — adapter planned |
+| YouTube | 108 live + 31 seeded | mixed | **live only** — the seeded account had no real channel and was dropped |
 
-48 `IngestionRun` rows record every fetch attempt behind those numbers.
+**Corpus as it stands now** — measured, from the live run on 31 Jul 2026:
+
+| Account | Platform | Posts (90d) | Source |
+|---|---|---|---|
+| Priyanka Chaturvedi | YouTube | 39 | `youtube_api` |
+| Shashi Tharoor | YouTube | 38 | `youtube_api` |
+| Kanhaiya Kumar | Instagram | 39 | `apify_instagram` |
+| Priyanka Chaturvedi | Instagram | 36 | `apify_instagram` |
+| Kanhaiya Kumar | YouTube | 35 | `youtube_api` |
+| Shashi Tharoor | Instagram | 27 | `apify_instagram` |
+| **Varun Gandhi** | Instagram | **1** | `apify_instagram` |
+
+**215 posts, 215 of them real, 0 synthetic, 0 failed rows.** Instagram 103, YouTube 112. The reconcile purged 232 generated posts and pruned 10 accounts that are no longer tracked (the X and Facebook rosters, the dormant `@VarunGandhi` YouTube channel, and a mistyped Instagram handle). Theme classification ran clean over the new corpus — 5 batches, 0 failures — and the recommendation layer produced **6 recommendations, 6 accepted, 0 dropped by the validator**.
+
+Varun Gandhi's single post is the predicted consequence of a 28-post account meeting a 90-day window. It is a fact about how he uses Instagram, and the sample-size gates exclude him from figures rather than quoting a rate from one post.
 
 ---
 
@@ -338,8 +399,12 @@ One of them earned its keep: pooling format statistics across accounts turned ou
 
 Stated plainly rather than buried.
 
-- **Three of four platforms are synthetic.** Instagram, Facebook and X data is generated, not fetched. Every affected row is flagged `isSynthetic` and every affected UI number carries a SEEDED badge. Format and timing conclusions drawn from those platforms describe the seed generator's assumptions, not reality — they demonstrate that the pipeline works, not that the finding is true.
-- **YouTube is mixed provenance.** Three of the four tracked people have a verified channel (108 live posts); the fourth is seeded (31 posts). So a YouTube-wide aggregate blends real behaviour with generated behaviour. The analytics layer therefore reports provenance per account rather than per platform, and any cross-account YouTube comparison states which side of it is seeded.
+- **Gap analysis currently returns nothing, and that is the gates working, not a bug.** A gap is only reported where **two or more peers** each clear **n ≥ 5** in the same bucket. The seeded corpus had 940 posts and cleared that bar easily; four real people over 90 real days produce 215 posts, which spread across format × hour × day × theme buckets rarely does. The evidence paths that feed recommendations still fire — peer hour windows, format mixes and cadence all produce cited figures — but the dedicated `gaps` array is empty. The honest options are more peers or a longer window, **not** a lower bar: dropping `MIN_GAP_N` would manufacture findings from three posts, which is the exact failure this product is built against.
+- **Two platforms carry data, not four.** X and Facebook are declared in the roster and visible in the adapter registry with their blockers, but neither is ingested and neither is approximated. Any conclusion here describes Instagram and YouTube behaviour only — a comms team's X strategy is outside what this data can speak to, and the product says so rather than implying coverage it does not have.
+- **Instagram data is scraped, not served by an API.** Apify reads the public profile surface, which means it is subject to what Instagram renders publicly and can change shape without notice. Two consequences: a failed or partial scrape is treated as a **failed run** rather than as "posted nothing" (a silent zero would read as a finding), and shares and saves are unavailable, so Instagram engagement is computed from likes, comments and — on Reels — plays.
+- **Instagram follower counts are a scraped scalar.** They are the engagement denominator for photos and carousels, which have no view count. A hidden or unreadable count leaves the previous stored value in place rather than overwriting it with a guess.
+- **Uneven coverage across the peer set.** Varun Gandhi has no verifiable YouTube channel, so he appears on Instagram only — where his account has 28 posts in its lifetime, and a 90-day window may return zero. Comparisons involving him are Instagram-only by necessity, and the analytics layer reports the per-account sample rather than implying a like-for-like sweep.
+- **The dashboard's platform filter still offers X and Facebook**, which return nothing. Platform status is hardcoded in two client files rather than read from the API, which is exactly the duplication that let `Accounts.tsx` keep calling Instagram "seeded" after it went live. Fixed there, unfixed in `Filters.tsx`.
 - **No metric history.** Post metrics are a single snapshot at ingestion time. Bellwether cannot distinguish a post that earned 10K likes in two hours from one that took three weeks. Follower counts are likewise a single scalar, so follower-growth trend is out of scope.
 - **Theme classification is incomplete: 450 of 940 posts.** The Gemini free tier's daily quota ran out mid-run. Classification is incremental — it only considers posts with no theme — so re-running `npm run classify` after the quota resets continues where it stopped. Two consequences while it is partial: theme gaps are computed over the classified subset only, and because classification runs **newest-first**, that subset skews recent. `gaps.ts` says so in its `notes` rather than reporting the finding flat, and `buildReport.ts` states the classified fraction.
 - **Engagement weights are a judgement call**, not empirically fitted. See the formula section.

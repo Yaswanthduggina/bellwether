@@ -301,7 +301,7 @@ export interface NewAccount {
     handle: string;
     displayName?: string;
     timezone?: string;
-    allowSeeded?: boolean;
+    allowNoSource?: boolean;
     ingestNow?: boolean;
 }
 

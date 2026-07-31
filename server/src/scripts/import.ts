@@ -48,7 +48,7 @@ async function main(): Promise<void> {
     if (unknown.length > 0) {
         throw new Error(
             `These accounts are not tracked yet:\n    ${unknown.join("\n    ")}\n` +
-                `  Add them first (UI, or src/config/accounts.ts + npm run seed), then re-run the import.`,
+                `  Add them first (UI, or src/config/accounts.ts + npm run ingest -- --roster), then re-run the import.`,
         );
     }
 

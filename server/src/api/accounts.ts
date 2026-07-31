@@ -1,16 +1,17 @@
 // FR1 — add and remove tracked accounts, an "arbitrary number" of them.
 //
 // Until this file existed the roster was `config/accounts.ts`, a TypeScript
-// literal, and "add a competitor" meant editing code and re-running the seed.
+// literal, and "add a competitor" meant editing code and re-running a script.
 // That is a hardcoded roster wearing a configuration file's clothes, and it does
 // not satisfy a MUST that says the user chooses who to track.
 //
 // TWO THINGS THIS ROUTE REFUSES TO DO, both deliberate:
 //
 // 1. It will not create an account on a platform with no live adapter unless the
-//    caller acknowledges the result will be seeded. Silently generating a
-//    synthetic corpus for a real person the user just typed in, and rendering it
-//    beside live data, is how a demo becomes a lie.
+//    caller acknowledges it will stay EMPTY. It used to warn that such an account
+//    would be seeded; since the synthetic corpus was removed the truth is simply
+//    that nothing can fetch it, and an account that silently collects no posts is
+//    indistinguishable on a dashboard from a person who does not post.
 //
 // 2. It will not ingest during creation by default. A YouTube backfill takes
 //    seconds and a request that blocks on it looks broken; worse, a failure
@@ -35,8 +36,8 @@ interface CreateBody {
     handle?: unknown;
     displayName?: unknown;
     timezone?: unknown;
-    /** Caller's acknowledgement that this account's data will be generated. */
-    allowSeeded?: unknown;
+    /** Caller's acknowledgement that this account has no source and will stay empty. */
+    allowNoSource?: unknown;
     /** Run the ingestion pipeline before responding. Off by default — see above. */
     ingestNow?: unknown;
 }
@@ -154,16 +155,17 @@ accountsRouter.post(
 
         assertValidTimezone(timezone);
 
-        const isSynthetic = !hasLiveAdapter(platform);
+        const hasSource = hasLiveAdapter(platform);
 
         // The acknowledgement gate. The caller is told exactly what they are
         // about to get and has to say yes, rather than discovering later that a
-        // panel labelled with a real person's name is generated data.
-        if (isSynthetic && body.allowSeeded !== true) {
+        // panel labelled with a real person's name has nothing behind it.
+        if (!hasSource && body.allowNoSource !== true) {
             throw ApiError.badRequest(
-                "SEEDED_NOT_ACKNOWLEDGED",
-                `${platform} has no live adapter, so this account's posts would be GENERATED, not fetched. ` +
-                    `Re-send with "allowSeeded": true to create it as a seeded account.`,
+                "NO_SOURCE_NOT_ACKNOWLEDGED",
+                `${platform} has no live adapter, so this account cannot be ingested and will stay EMPTY ` +
+                    `until one is built or you import a CSV/JSON export for it. ` +
+                    `Re-send with "allowNoSource": true to create it anyway.`,
                 { platform, livePlatforms: PLATFORMS.filter(hasLiveAdapter) },
             );
         }
@@ -195,7 +197,12 @@ accountsRouter.post(
         }
 
         const account = await prisma.account.create({
-            data: { personName, role, platform, handle, displayName, timezone, isSynthetic },
+            // isSynthetic is false unconditionally: nothing generates posts any
+            // more, so an account with no adapter is EMPTY, not synthetic. Writing
+            // true here would also make the account permanently un-ingestable —
+            // the registry refuses flagged accounts — so an adapter landing later
+            // would silently skip exactly the accounts that were waiting for it.
+            data: { personName, role, platform, handle, displayName, timezone, isSynthetic: false },
         });
 
         let ingestion: unknown = null;
@@ -213,9 +220,10 @@ accountsRouter.post(
         res.status(201).json({
             account: { ...account, liveAdapterAvailable: hasLiveAdapter(platform) },
             ingestion,
-            note: isSynthetic
-                ? `${platform} has no live adapter — this account's posts are generated and flagged isSynthetic.`
-                : null,
+            note: hasSource
+                ? null
+                : `${platform} has no live adapter yet — this account will stay empty until one is built, ` +
+                  `or until you import a CSV/JSON export for it.`,
         });
     }),
 );

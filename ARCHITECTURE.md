@@ -16,11 +16,11 @@ Four things flow one direction and never backwards:
 │  YouTube   │     │            │     │            │     │            │
 │  API       │────▶│ normalize  │────▶│ engagement │────▶│  Express   │
 │            │     │     ↓      │     │ format     │     │  REST API  │
-│  CSV/JSON  │────▶│  upsert    │────▶│ timing     │     │     ↓      │
-│  import    │     │     ↓      │     │ compare    │     │  React SPA │
+│  Instagram │────▶│  upsert    │────▶│ timing     │     │     ↓      │
+│  via Apify │     │     ↓      │     │ compare    │     │  React SPA │
 │            │     │  run log   │     │ gaps       │     │            │
-│  Seed      │────▶│            │     │            │     │            │
-│  generator │     └────────────┘     └─────┬──────┘     └────────────┘
+│  CSV/JSON  │────▶│            │     │            │     │            │
+│  import    │     └────────────┘     └─────┬──────┘     └────────────┘
 └────────────┘            │                 │                   ▲
        │                  ▼                 ▼                   │
        │           ┌────────────┐    ┌────────────┐             │
@@ -28,14 +28,19 @@ Four things flow one direction and never backwards:
    all speak the   │  (Prisma)  │    │  classify  │
    SAME interface  └────────────┘    │  recommend │
                                      │  validate  │
-                                     └────────────┘
-                                   receives analytics JSON only —
-                                   never raw posts
+      ┌ ─ ─ ─ ─ ─ ┐                  └────────────┘
+        X          │              receives analytics JSON only —
+      │ Facebook                    never raw posts
+        PLANNED    │
+      └ ─ ─ ─ ─ ─ ┘
+   declared in the registry with
+   their blockers; no adapter yet,
+   and no generated stand-in either
 ```
 
 Three boundaries are deliberate and load-bearing:
 
-1. **Every source implements one interface.** Nothing downstream of `SocialAdapter` knows or cares whether a post came from the YouTube API, a CSV upload, or the seed generator. Adding a platform means adding one file.
+1. **Every source implements one interface.** Nothing downstream of `SocialAdapter` knows or cares whether a post came from the YouTube API, an Apify actor, or a CSV upload. Adding a platform means adding one file and flipping one registry entry from `PLANNED` to `LIVE`.
 2. **Analysis reads the database, never a source.** All analytics run over normalised, persisted rows. Nothing is recomputed from raw JSON on page load.
 3. **The AI layer sits *downstream* of analysis, not beside it.** The recommendation model consumes verified computed output. This is the anti-fabrication mechanism, expressed as an architectural constraint rather than a prompt instruction.
 
@@ -45,10 +50,13 @@ Three boundaries are deliberate and load-bearing:
 server/src/
 ├── adapters/               # ← ONE interface, many sources
 │   ├── types.ts            #   RawPost + SocialAdapter contract          ✅ done
-│   ├── seedAdapter.ts      #   synthetic generator, patterns planted     ✅ done
 │   ├── youtubeAdapter.ts   #   YouTube Data API v3                       ✅ done — 108 live posts
+│   ├── apifyAdapter.ts     #   Instagram via Apify actors                ✅ done
 │   ├── fileAdapter.ts      #   CSV/JSON import — a MUST, not a nicety    ✅ done
-│   └── index.ts            #   registry: platform → adapter              ✅ done
+│   ├── seedAdapter.ts      #   generator — TEST FIXTURES ONLY now        ⚪ retired from ingestion
+│   ├── xAdapter.ts         #   X                                         🟡 planned — blocker in the registry
+│   ├── facebookAdapter.ts  #   Facebook                                  🟡 planned — blocker in the registry
+│   └── index.ts            #   registry: platform → LIVE | PLANNED       ✅ done
 │
 ├── ingestion/                                                            # ✅ all done
 │   ├── normalize.ts        #   RawPost → Prisma Post input
@@ -91,11 +99,11 @@ client/src/
 
 ### 1.3 Data model
 
-Three tables, already migrated. The design principle in one line: **real and synthetic data share one schema**, so analytics, AI and UI never branch on provenance — they read a flag.
+Three tables, already migrated. The design principle in one line: **provenance is a column, not a code path**, so analytics, AI and UI never branch on where a row came from — they read a flag. Every row is now live, which makes the flag a guard rather than a switch: nothing writes `isSynthetic: true` any more, and the registry refuses to ingest an account still carrying it.
 
 | Table | Holds | Notable |
 |---|---|---|
-| `Account` | one row per **account per platform** | `personName` links the same human across platforms — which is what lets Tharoor be *live* on YouTube and *seeded* on Instagram simultaneously. `@@unique([platform, handle])` |
+| `Account` | one row per **account per platform** | `personName` links the same human across platforms — which is what lets one person be compared across YouTube and Instagram, and lets a person present on one and absent from the other say so. `@@unique([platform, handle])` |
 | `Post` | normalised posts | metrics individually nullable (platforms disagree on what they expose). `@@unique([platform, postId])` is the idempotency guard — FR15 falls out of the schema for free |
 | `IngestionRun` | one row per fetch attempt | source, rows fetched/failed, status, error note. First thing anyone opens when a number looks wrong |
 
@@ -229,6 +237,30 @@ Goal: **it runs end to end in a browser.** Longest day; start early.
 - [ ] React: Accounts CRUD → Dashboard → Compare
 - [ ] **Recommendations panel at the top of the dashboard**, not buried below the charts
 
+### Day 4 — the source change ✅ complete
+
+**The synthetic corpus is gone.** The requirement arrived from outside the build
+plan: no seeded data in the product, at all. What changed, and — more usefully —
+what did not:
+
+| Layer | Change |
+|---|---|
+| `adapters/apifyAdapter.ts` | **New.** Instagram via `apify/instagram-post-scraper` (posts) and `apify/instagram-profile-scraper` (follower count, the ER denominator for stills) |
+| `adapters/index.ts` | Registry now records a `status` per platform: `LIVE` for YouTube and Instagram, `PLANNED` with a stated blocker for X and Facebook. Nothing routes to the seed adapter |
+| `config/accounts.ts` | All four platforms declared; `TRACKED_ACCOUNTS` derived by filtering on `hasLiveAdapter`, so an adapter landing flips its accounts on with no roster edit |
+| `scripts/ingest.ts` | `seed.ts` folded in as `--roster`. A command named "seed" describing a system that seeds nothing is a trap for the next reader |
+| Everything else | **Untouched.** Same `RawPost`, same validate → normalise → upsert → log, same analytics, same AI layer, same API, same UI |
+
+That last row is the point of the adapter contract, and this is the first time it
+has been tested by a change it did not anticipate: swapping a platform's entire
+data source moved 4 files and 0 lines of analytics.
+
+**What it cost.** Two platforms of coverage — X and Facebook contribute nothing
+until someone builds their adapters. The corpus is smaller and the peer set is
+uneven (Varun Gandhi is Instagram-only, with 28 lifetime posts). Those are real
+losses, and they are the correct trade: a finding drawn from generated data is not
+a smaller finding, it is a different kind of thing.
+
 ### Day 4 — Sun Aug 2 · SHOULDs, then ship
 
 Goal: **submittable by evening, with hours to spare.**
@@ -245,6 +277,12 @@ Goal: **submittable by evening, with hours to spare.**
 `theme × format` → `filters` → `PDF export (keep Markdown)` → `any stretch item` → `the second live platform (seed X, say so plainly)`
 
 **Never cut:** the validator, the tests on `engagement.ts`, `DECISIONS.md`, the clean-clone test.
+
+**Overtaken on Day 4 — "seed X, say so plainly" is no longer an available move.** The
+cut list's last resort was to seed a platform and label it. The no-synthetic-data
+requirement removes that option entirely, which makes the list shorter and the
+remaining choice starker: a platform is either read for real or left visibly empty.
+Worth recording because the plan's safety net is gone, not because the plan was wrong.
 
 **Corrected on Day 3 — `cadence analysis` was first on this list and should never have been on it.** The Module C MUST reads "principal vs. competitors on engagement, cadence and best-performing windows, on one screen." Cadence is named *inside* a required deliverable, so the plan's first sacrifice would have broken a MUST while the list still read as though every item on it were optional. It was mis-filed as a Module B SHOULD — which it also is, and that is what caused the error: an item that appears in two places inherits the weaker priority unless someone checks. Built on Day 3 in `analytics/cadence.ts`.
 
@@ -359,7 +397,8 @@ Drawn straight from the brief's "what will hurt you", plus what the verification
 |---|---|
 | Ranking on raw followers or raw likes | Every comparison goes through `engagement.ts`. No raw-count sort anywhere in the UI. |
 | LLM citing a number that isn't in the data | `validate.ts`, built the same day as `recommend.ts` — never bolted on afterwards |
-| README implying seeded data is live | Provenance table at the top of the README; `isSynthetic` at row level; SEEDED badge in the UI |
+| README implying seeded data is live | Moot as of Day 4 — there is no seeded data. The guards stay anyway: provenance table at the top of the README, `isSynthetic` at row level, SEEDED badge in the UI, and a registry that refuses to ingest a flagged account. A removed guard is a regression nobody sees |
+| A platform quietly dropped instead of decided | X and Facebook stay declared in the roster and in the registry with their blockers. An absent platform gets rediscovered from first principles; a `PLANNED` one gets closed |
 | A single giant commit | Commit per working piece. Commit history is read as evidence of process. |
 | Committed `.env` | Already gitignored ✅ — verify once more before submitting |
 | Confident claims from six data points | Suppression thresholds enforced in `timing.ts` and `format.ts`, not just styled in CSS |
