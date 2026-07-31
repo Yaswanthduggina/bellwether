@@ -15,7 +15,8 @@
 // one, and a validator that never has to regex prose cannot be defeated by
 // prose. `responseSchema` is doing structural work.
 
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ override: true });
 import { GoogleGenAI, ThinkingLevel, type Schema } from "@google/genai";
 
 /**

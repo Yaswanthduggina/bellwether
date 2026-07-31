@@ -3,7 +3,8 @@
 // Kept deliberately boring. Everything interesting in this product is in
 // analytics/ and ai/; this file's job is to expose it and get out of the way.
 
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ override: true });
 import cors from "cors";
 import express, { type Express } from "express";
 import { accountsRouter } from "./api/accounts";
