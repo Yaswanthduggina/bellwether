@@ -1,0 +1,3832 @@
+{
+ "health": {
+  "status": "ok",
+  "database": "reachable",
+  "accounts": 16,
+  "posts": 940
+ },
+ "overview": {
+  "filter": {},
+  "accounts": 16,
+  "people": 4,
+  "principalName": "Shashi Tharoor",
+  "totalPosts": 940,
+  "principalPosts": 337,
+  "ratedPosts": 940,
+  "unratedPosts": 0,
+  "provenance": {
+   "livePosts": 108,
+   "seededPosts": 832,
+   "seededPct": 89,
+   "seededAccounts": [
+    "Shashi Tharoor",
+    "Shashi Tharoor",
+    "Shashi Tharoor",
+    "Kanhaiya Kumar",
+    "Kanhaiya Kumar",
+    "Kanhaiya Kumar",
+    "Priyanka Chaturvedi",
+    "Priyanka Chaturvedi",
+    "Priyanka Chaturvedi",
+    "Varun Gandhi",
+    "Varun Gandhi",
+    "Varun Gandhi",
+    "Varun Gandhi"
+   ]
+  },
+  "classification": {
+   "classified": 940,
+   "unclassified": 0,
+   "complete": true
+  },
+  "cadence": {
+   "principalPostsPerWeek": 2.89430389570076,
+   "peerMedianPostsPerWeek": 3.872109265869936,
+   "sentence": "Shashi Tharoor posts 2.9×/week across 37 posts, 1.34× less often than the peer median of 3.9×/week. He posts in 69% of weeks against a peer median of 100%. Longest silence: 8 days."
+  },
+  "platforms": [
+   "FACEBOOK",
+   "INSTAGRAM",
+   "X",
+   "YOUTUBE"
+  ]
+ },
+ "report": {
+  "generatedAt": "2026-07-31T06:02:54.097Z",
+  "principalName": "Shashi Tharoor",
+  "peerNames": [
+   "Kanhaiya Kumar",
+   "Priyanka Chaturvedi",
+   "Varun Gandhi"
+  ],
+  "window": {
+   "from": "2026-05-01T03:34:00.000Z",
+   "to": "2026-07-29T15:14:00.000Z",
+   "days": 89
+  },
+  "filter": {},
+  "corpusProvenance": {
+   "totalPosts": 940,
+   "livePosts": 108,
+   "seededPosts": 832,
+   "seededPct": 89
+  },
+  "platforms": [
+   {
+    "platform": "FACEBOOK",
+    "totalPosts": 263,
+    "provenance": "SEEDED",
+    "seededAccounts": [
+     "Shashi Tharoor",
+     "Kanhaiya Kumar",
+     "Priyanka Chaturvedi",
+     "Varun Gandhi"
+    ],
+    "cadence": {
+     "principalPostsPerWeek": 7.52,
+     "peerMedianPostsPerWeek": 4.86,
+     "principalVsPeers": 1.55,
+     "principalConsistencyPct": 100,
+     "peerConsistencyPct": 100,
+     "principalLongestSilenceDays": 5,
+     "sentence": "Shashi Tharoor posts 7.5×/week across 96 posts, 1.55× more often than the peer median of 4.9×/week. He posts in 100% of weeks against a peer median of 100%."
+    },
+    "formatMixDivergences": [
+     {
+      "mediaType": "REEL_SHORT_VIDEO",
+      "principalSharePct": 5,
+      "peerSharePct": 32
+     },
+     {
+      "mediaType": "LINK",
+      "principalSharePct": 21,
+      "peerSharePct": 0
+     },
+     {
+      "mediaType": "TEXT_ONLY",
+      "principalSharePct": 23,
+      "peerSharePct": 13
+     }
+    ],
+    "bases": [
+     {
+      "basis": "VIEWS",
+      "denominator": "views (realised audience)",
+      "principalRatedPosts": 17,
+      "principalMedianRatePct": 3.89,
+      "formats": [
+       {
+        "mediaType": "REEL_SHORT_VIDEO",
+        "n": 5,
+        "medianRatePct": 7.37,
+        "multipleOfOverall": 1.89,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "LONG_FORM_VIDEO",
+        "n": 12,
+        "medianRatePct": 3.76,
+        "multipleOfOverall": 0.97,
+        "outlierDriven": false
+       }
+      ],
+      "bestHours": [],
+      "timezone": "Asia/Kolkata",
+      "suppressedCells": 17,
+      "rank": {
+       "position": 4,
+       "outOf": 4
+      },
+      "peerBenchmarkRatePct": 10.53,
+      "principalVsPeers": 0.37,
+      "comparisonSentence": "Shashi Tharoor ranks 4 of 4 on median engagement rate (views-normalised), 2.71× behind the peer benchmark, across 17 posts.",
+      "peerWindows": [
+       {
+        "personName": "Kanhaiya Kumar",
+        "label": "19:00–21:59",
+        "n": 28,
+        "multipleOfOverall": 1.37
+       },
+       {
+        "personName": "Priyanka Chaturvedi",
+        "label": "20:00",
+        "n": 8,
+        "multipleOfOverall": 1.3
+       }
+      ],
+      "gaps": [
+       {
+        "dimension": "THEME",
+        "label": "ATTACK_REBUTTAL",
+        "kind": "ABSENT",
+        "peerLift": 1.59,
+        "peerAgreement": "2 of 2",
+        "principalN": 0,
+        "opportunity": 1.59,
+        "sentence": "Shashi Tharoor has no posts in the ATTACK_REBUTTAL theme, where peers earn 1.59× their own typical post — 2 of 2 peers clear the 1.2× bar here independently. Evidence: Priyanka Chaturvedi (n=9, 1.72×, SEEDED), Kanhaiya Kumar (n=19, 1.45×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar) — it demonstrates the pipeline, not a real-world finding.",
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar)."
+       },
+       {
+        "dimension": "HOUR",
+        "label": "20:00",
+        "kind": "ABSENT",
+        "peerLift": 1.34,
+        "peerAgreement": "2 of 2",
+        "principalN": 0,
+        "opportunity": 1.34,
+        "sentence": "Shashi Tharoor has no posts in the 20:00 hour, where peers earn 1.34× their own typical post — 2 of 2 peers clear the 1.2× bar here independently. Evidence: Kanhaiya Kumar (n=6, 1.37×, SEEDED), Priyanka Chaturvedi (n=8, 1.30×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi) — it demonstrates the pipeline, not a real-world finding.",
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi)."
+       }
+      ],
+      "overInvested": [],
+      "bestPosts": [
+       {
+        "id": "cms6d44wp00v830vtlhb5wfvx",
+        "postedAt": "2026-06-30T03:47:00.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 14.18,
+        "multipleOfMedian": 3.64,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] My detailed position on the new education funding formula, and why the per-student allocation needs revisiting before the next c"
+       },
+       {
+        "id": "cms6d46lx00vn30vt2uu9cehy",
+        "postedAt": "2026-05-22T02:54:00.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 8.44,
+        "multipleOfMedian": 2.17,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] The bridge sanctioned three years ago is now open to traffic. Eleven thousand people no longer take the long detour."
+       },
+       {
+        "id": "cms6d3yx700tw30vtj2z8bepo",
+        "postedAt": "2026-05-07T04:19:00.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 7.37,
+        "multipleOfMedian": 1.89,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] My conversation on the state of parliamentary debate, and why the quality of disagreement matters more than its volume. Full int"
+       }
+      ],
+      "worstPosts": [
+       {
+        "id": "cms6d3yr700tv30vtpnct6bjb",
+        "postedAt": "2026-06-28T06:36:00.000Z",
+        "mediaType": "LONG_FORM_VIDEO",
+        "ratePct": 2.65,
+        "multipleOfMedian": 0.68,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Warm greetings to all celebrating today. May the light find every home."
+       },
+       {
+        "id": "cms6d455r00va30vthf8x5jeg",
+        "postedAt": "2026-06-06T05:50:00.000Z",
+        "mediaType": "LONG_FORM_VIDEO",
+        "ratePct": 3.17,
+        "multipleOfMedian": 0.81,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Pleased to report that the scholarship backlog we raised last session has been cleared. 1,340 students paid out."
+       },
+       {
+        "id": "cms6d3y1t00tp30vtaw1a6anm",
+        "postedAt": "2026-05-01T07:29:00.000Z",
+        "mediaType": "LONG_FORM_VIDEO",
+        "ratePct": 3.22,
+        "multipleOfMedian": 0.83,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Our constituency office has now processed over nine thousand citizen grievances this year."
+       }
+      ]
+     },
+     {
+      "basis": "FOLLOWERS",
+      "denominator": "follower count (potential audience)",
+      "principalRatedPosts": 79,
+      "principalMedianRatePct": 0.74,
+      "formats": [
+       {
+        "mediaType": "CAROUSEL",
+        "n": 13,
+        "medianRatePct": 1.47,
+        "multipleOfOverall": 1.99,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "TEXT_ONLY",
+        "n": 22,
+        "medianRatePct": 0.97,
+        "multipleOfOverall": 1.31,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "SINGLE_IMAGE",
+        "n": 24,
+        "medianRatePct": 0.72,
+        "multipleOfOverall": 0.98,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "LINK",
+        "n": 20,
+        "medianRatePct": 0.28,
+        "multipleOfOverall": 0.39,
+        "outlierDriven": false
+       }
+      ],
+      "bestHours": [
+       {
+        "hour": 9,
+        "label": "09:00",
+        "n": 9,
+        "multipleOfOverall": 1.75
+       },
+       {
+        "hour": 12,
+        "label": "12:00",
+        "n": 7,
+        "multipleOfOverall": 1.38
+       },
+       {
+        "hour": 8,
+        "label": "08:00",
+        "n": 16,
+        "multipleOfOverall": 1.31
+       }
+      ],
+      "timezone": "Asia/Kolkata",
+      "suppressedCells": 34,
+      "rank": {
+       "position": 4,
+       "outOf": 4
+      },
+      "peerBenchmarkRatePct": 2.13,
+      "principalVsPeers": 0.35,
+      "comparisonSentence": "Shashi Tharoor ranks 4 of 4 on median engagement rate (followers-normalised), 2.89× behind the peer benchmark, across 79 posts.",
+      "peerWindows": [
+       {
+        "personName": "Varun Gandhi",
+        "label": "20:00–21:59",
+        "n": 11,
+        "multipleOfOverall": 1.89
+       },
+       {
+        "personName": "Priyanka Chaturvedi",
+        "label": "20:00",
+        "n": 10,
+        "multipleOfOverall": 1.36
+       },
+       {
+        "personName": "Kanhaiya Kumar",
+        "label": "20:00",
+        "n": 5,
+        "multipleOfOverall": 1.16
+       }
+      ],
+      "gaps": [
+       {
+        "dimension": "THEME",
+        "label": "ATTACK_REBUTTAL",
+        "kind": "ABSENT",
+        "peerLift": 1.45,
+        "peerAgreement": "2 of 2",
+        "principalN": 0,
+        "opportunity": 1.45,
+        "sentence": "Shashi Tharoor has no posts in the ATTACK_REBUTTAL theme, where peers earn 1.45× their own typical post — 2 of 2 peers clear the 1.2× bar here independently. Evidence: Priyanka Chaturvedi (n=15, 1.55×, SEEDED), Kanhaiya Kumar (n=10, 1.35×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar) — it demonstrates the pipeline, not a real-world finding.",
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar)."
+       },
+       {
+        "dimension": "HOUR",
+        "label": "20:00",
+        "kind": "ABSENT",
+        "peerLift": 1.36,
+        "peerAgreement": "2 of 3",
+        "principalN": 0,
+        "opportunity": 1.36,
+        "sentence": "Shashi Tharoor has no posts in the 20:00 hour, where peers earn 1.36× their own typical post — 2 of 3 peers clear the 1.2× bar here independently. Evidence: Varun Gandhi (n=5, 2.69×, SEEDED), Priyanka Chaturvedi (n=10, 1.36×, SEEDED), Kanhaiya Kumar (n=5, 1.16×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Varun Gandhi, Priyanka Chaturvedi, Kanhaiya Kumar) — it demonstrates the pipeline, not a real-world finding.",
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Varun Gandhi, Priyanka Chaturvedi, Kanhaiya Kumar)."
+       }
+      ],
+      "overInvested": [
+       {
+        "label": "LINK",
+        "n": 20,
+        "shareOfOutputPct": 25,
+        "lift": 0.39,
+        "sentence": "Shashi Tharoor spends 25% of his output on LINK (n=20), where a typical post earns 0.39× his own baseline."
+       },
+       {
+        "label": "FESTIVAL_GREETING",
+        "n": 13,
+        "shareOfOutputPct": 16,
+        "lift": 0.67,
+        "sentence": "Shashi Tharoor spends 16% of his output on FESTIVAL_GREETING (n=13), where a typical post earns 0.67× his own baseline."
+       },
+       {
+        "label": "16:00",
+        "n": 9,
+        "shareOfOutputPct": 11,
+        "lift": 0.72,
+        "sentence": "Shashi Tharoor spends 11% of his output on 16:00 (n=9), where a typical post earns 0.72× his own baseline."
+       }
+      ],
+      "bestPosts": [
+       {
+        "id": "cms6d47xw00vy30vtlxzvao3n",
+        "postedAt": "2026-07-08T05:56:00.000Z",
+        "mediaType": "TEXT_ONLY",
+        "ratePct": 5,
+        "multipleOfMedian": 6.8,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Spoke in the Standing Committee on the healthcare infrastructure gap in tier-two districts. Three specific recommendations submi"
+       },
+       {
+        "id": "cms6d3y9p00tr30vtq02m534t",
+        "postedAt": "2026-06-10T03:04:00.000Z",
+        "mediaType": "CAROUSEL",
+        "ratePct": 4.21,
+        "multipleOfMedian": 5.72,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Spoke in the Standing Committee on the healthcare infrastructure gap in tier-two districts. Three specific recommendations submi"
+       },
+       {
+        "id": "cms6d46i300vm30vtrrhrjbjv",
+        "postedAt": "2026-06-23T02:43:00.000Z",
+        "mediaType": "CAROUSEL",
+        "ratePct": 2.58,
+        "multipleOfMedian": 3.5,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Excerpts from this morning's interview on foreign policy and the shifting position in the region."
+       }
+      ],
+      "worstPosts": [
+       {
+        "id": "cms6d3vbv00t230vtmhkamt9q",
+        "postedAt": "2026-05-24T06:18:00.000Z",
+        "mediaType": "LINK",
+        "ratePct": 0.14,
+        "multipleOfMedian": 0.19,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Wishing you and your families a joyous festival. Celebrate safely."
+       },
+       {
+        "id": "cms6d45qc00vf30vtyglkdtew",
+        "postedAt": "2026-06-14T11:14:00.000Z",
+        "mediaType": "LINK",
+        "ratePct": 0.15,
+        "multipleOfMedian": 0.21,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] My detailed position on the new education funding formula, and why the per-student allocation needs revisiting before the next c"
+       },
+       {
+        "id": "cms6d45dq00vc30vtq7i3563z",
+        "postedAt": "2026-06-26T09:48:00.000Z",
+        "mediaType": "LINK",
+        "ratePct": 0.17,
+        "multipleOfMedian": 0.23,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] My conversation on the state of parliamentary debate, and why the quality of disagreement matters more than its volume. Full int"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "platform": "INSTAGRAM",
+    "totalPosts": 263,
+    "provenance": "SEEDED",
+    "seededAccounts": [
+     "Shashi Tharoor",
+     "Kanhaiya Kumar",
+     "Priyanka Chaturvedi",
+     "Varun Gandhi"
+    ],
+    "cadence": {
+     "principalPostsPerWeek": 7.53,
+     "peerMedianPostsPerWeek": 4.86,
+     "principalVsPeers": 1.55,
+     "principalConsistencyPct": 100,
+     "peerConsistencyPct": 92,
+     "principalLongestSilenceDays": 5,
+     "sentence": "Shashi Tharoor posts 7.5×/week across 96 posts, 1.55× more often than the peer median of 4.9×/week. He posts in 100% of weeks against a peer median of 92%."
+    },
+    "formatMixDivergences": [
+     {
+      "mediaType": "REEL_SHORT_VIDEO",
+      "principalSharePct": 10,
+      "peerSharePct": 52
+     },
+     {
+      "mediaType": "SINGLE_IMAGE",
+      "principalSharePct": 47,
+      "peerSharePct": 18
+     }
+    ],
+    "bases": [
+     {
+      "basis": "VIEWS",
+      "denominator": "views (realised audience)",
+      "principalRatedPosts": 23,
+      "principalMedianRatePct": 3.76,
+      "formats": [
+       {
+        "mediaType": "REEL_SHORT_VIDEO",
+        "n": 10,
+        "medianRatePct": 5.29,
+        "multipleOfOverall": 1.41,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "LONG_FORM_VIDEO",
+        "n": 13,
+        "medianRatePct": 3.25,
+        "multipleOfOverall": 0.86,
+        "outlierDriven": false
+       }
+      ],
+      "bestHours": [
+       {
+        "hour": 11,
+        "label": "11:00",
+        "n": 6,
+        "multipleOfOverall": 0.98
+       }
+      ],
+      "timezone": "Asia/Kolkata",
+      "suppressedCells": 18,
+      "rank": {
+       "position": 4,
+       "outOf": 4
+      },
+      "peerBenchmarkRatePct": 9.37,
+      "principalVsPeers": 0.4,
+      "comparisonSentence": "Shashi Tharoor ranks 4 of 4 on median engagement rate (views-normalised), 2.49× behind the peer benchmark, across 23 posts.",
+      "peerWindows": [
+       {
+        "personName": "Kanhaiya Kumar",
+        "label": "19:00–21:59",
+        "n": 31,
+        "multipleOfOverall": 1.23
+       },
+       {
+        "personName": "Priyanka Chaturvedi",
+        "label": "20:00–21:59",
+        "n": 22,
+        "multipleOfOverall": 1.1
+       }
+      ],
+      "gaps": [
+       {
+        "dimension": "THEME",
+        "label": "ATTACK_REBUTTAL",
+        "kind": "ABSENT",
+        "peerLift": 1.31,
+        "peerAgreement": "2 of 2",
+        "principalN": 0,
+        "opportunity": 1.31,
+        "sentence": "Shashi Tharoor has no posts in the ATTACK_REBUTTAL theme, where peers earn 1.31× their own typical post — 2 of 2 peers clear the 1.2× bar here independently. Evidence: Kanhaiya Kumar (n=20, 1.33×, SEEDED), Priyanka Chaturvedi (n=15, 1.28×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi) — it demonstrates the pipeline, not a real-world finding.",
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi)."
+       }
+      ],
+      "overInvested": [],
+      "bestPosts": [
+       {
+        "id": "cms6d3aj900ok30vt8olki18u",
+        "postedAt": "2026-05-14T07:28:00.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 8.72,
+        "multipleOfMedian": 2.32,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] The new water connection project has reached its final ward. Full coverage for the first time."
+       },
+       {
+        "id": "cms6d3lfn00qw30vtqu98234u",
+        "postedAt": "2026-06-26T10:18:00.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 7.42,
+        "multipleOfMedian": 1.97,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] My conversation on the state of parliamentary debate, and why the quality of disagreement matters more than its volume. Full int"
+       },
+       {
+        "id": "cms6d3cxo00p330vtu4a5p848",
+        "postedAt": "2026-06-21T06:28:00.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 7.03,
+        "multipleOfMedian": 1.87,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Spoke at the literature festival on language, politics and the uses of precision. Recording to follow."
+       }
+      ],
+      "worstPosts": [
+       {
+        "id": "cms6d3dqy00pa30vtdq3bogq0",
+        "postedAt": "2026-07-27T10:04:00.000Z",
+        "mediaType": "LONG_FORM_VIDEO",
+        "ratePct": 1.55,
+        "multipleOfMedian": 0.41,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] The new water connection project has reached its final ward. Full coverage for the first time."
+       },
+       {
+        "id": "cms6d3m3t00r230vtyv848e7y",
+        "postedAt": "2026-06-17T06:23:00.000Z",
+        "mediaType": "LONG_FORM_VIDEO",
+        "ratePct": 1.66,
+        "multipleOfMedian": 0.44,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] My detailed position on the new education funding formula, and why the per-student allocation needs revisiting before the next c"
+       },
+       {
+        "id": "cms6d390b00o830vt7e4qtbjn",
+        "postedAt": "2026-07-10T11:21:00.000Z",
+        "mediaType": "LONG_FORM_VIDEO",
+        "ratePct": 2.82,
+        "multipleOfMedian": 0.75,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] At the weekly grievance camp today. Forty-two cases heard, most on pension delays and ration card corrections."
+       }
+      ]
+     },
+     {
+      "basis": "FOLLOWERS",
+      "denominator": "follower count (potential audience)",
+      "principalRatedPosts": 73,
+      "principalMedianRatePct": 0.99,
+      "formats": [
+       {
+        "mediaType": "CAROUSEL",
+        "n": 28,
+        "medianRatePct": 1.38,
+        "multipleOfOverall": 1.4,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "SINGLE_IMAGE",
+        "n": 45,
+        "medianRatePct": 0.8,
+        "multipleOfOverall": 0.81,
+        "outlierDriven": false
+       }
+      ],
+      "bestHours": [
+       {
+        "hour": 13,
+        "label": "13:00",
+        "n": 14,
+        "multipleOfOverall": 1.26
+       },
+       {
+        "hour": 15,
+        "label": "15:00",
+        "n": 6,
+        "multipleOfOverall": 1.26
+       },
+       {
+        "hour": 10,
+        "label": "10:00",
+        "n": 11,
+        "multipleOfOverall": 1.05
+       }
+      ],
+      "timezone": "Asia/Kolkata",
+      "suppressedCells": 35,
+      "rank": {
+       "position": 4,
+       "outOf": 4
+      },
+      "peerBenchmarkRatePct": 2.31,
+      "principalVsPeers": 0.43,
+      "comparisonSentence": "Shashi Tharoor ranks 4 of 4 on median engagement rate (followers-normalised), 2.35× behind the peer benchmark, across 73 posts.",
+      "peerWindows": [
+       {
+        "personName": "Varun Gandhi",
+        "label": "20:00–21:59",
+        "n": 13,
+        "multipleOfOverall": 1.27
+       },
+       {
+        "personName": "Priyanka Chaturvedi",
+        "label": "20:00",
+        "n": 8,
+        "multipleOfOverall": 1.03
+       }
+      ],
+      "gaps": [],
+      "overInvested": [
+       {
+        "label": "SINGLE_IMAGE",
+        "n": 45,
+        "shareOfOutputPct": 62,
+        "lift": 0.81,
+        "sentence": "Shashi Tharoor spends 62% of his output on SINGLE_IMAGE (n=45), where a typical post earns 0.81× his own baseline."
+       },
+       {
+        "label": "Monday",
+        "n": 12,
+        "shareOfOutputPct": 16,
+        "lift": 0.83,
+        "sentence": "Shashi Tharoor spends 16% of his output on Monday (n=12), where a typical post earns 0.83× his own baseline."
+       },
+       {
+        "label": "16:00",
+        "n": 10,
+        "shareOfOutputPct": 14,
+        "lift": 0.78,
+        "sentence": "Shashi Tharoor spends 14% of his output on 16:00 (n=10), where a typical post earns 0.78× his own baseline."
+       }
+      ],
+      "bestPosts": [
+       {
+        "id": "cms6d3mym00r930vtywhpukky",
+        "postedAt": "2026-07-15T07:41:00.000Z",
+        "mediaType": "SINGLE_IMAGE",
+        "ratePct": 2.91,
+        "multipleOfMedian": 2.96,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Warm greetings to all celebrating today. May the light find every home."
+       },
+       {
+        "id": "cms6d3lvx00r030vtdp3ps2tq",
+        "postedAt": "2026-06-09T07:39:00.000Z",
+        "mediaType": "CAROUSEL",
+        "ratePct": 2.35,
+        "multipleOfMedian": 2.38,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] My conversation on the state of parliamentary debate, and why the quality of disagreement matters more than its volume. Full int"
+       },
+       {
+        "id": "cms6d3b5400oo30vtmm869f5j",
+        "postedAt": "2026-05-09T07:50:00.000Z",
+        "mediaType": "CAROUSEL",
+        "ratePct": 2.27,
+        "multipleOfMedian": 2.31,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Excerpts from this morning's interview on foreign policy and the shifting position in the region."
+       }
+      ],
+      "worstPosts": [
+       {
+        "id": "cms6d38dp00o330vt7ev1jov3",
+        "postedAt": "2026-05-29T06:10:00.000Z",
+        "mediaType": "SINGLE_IMAGE",
+        "ratePct": 0.26,
+        "multipleOfMedian": 0.26,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] My detailed position on the new education funding formula, and why the per-student allocation needs revisiting before the next c"
+       },
+       {
+        "id": "cms6d39vk00of30vtz0m3y10h",
+        "postedAt": "2026-07-04T08:07:00.000Z",
+        "mediaType": "SINGLE_IMAGE",
+        "ratePct": 0.31,
+        "multipleOfMedian": 0.31,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Walked the market road with local traders to see the encroachment problem first-hand rather than from a file."
+       },
+       {
+        "id": "cms6d399r00oa30vt0eet2ngz",
+        "postedAt": "2026-06-17T11:25:00.000Z",
+        "mediaType": "SINGLE_IMAGE",
+        "ratePct": 0.34,
+        "multipleOfMedian": 0.34,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] At the weekly grievance camp today. Forty-two cases heard, most on pension delays and ration card corrections."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "platform": "X",
+    "totalPosts": 275,
+    "provenance": "SEEDED",
+    "seededAccounts": [
+     "Shashi Tharoor",
+     "Kanhaiya Kumar",
+     "Priyanka Chaturvedi",
+     "Varun Gandhi"
+    ],
+    "cadence": {
+     "principalPostsPerWeek": 8.46,
+     "peerMedianPostsPerWeek": 4.86,
+     "principalVsPeers": 1.74,
+     "principalConsistencyPct": 100,
+     "peerConsistencyPct": 100,
+     "principalLongestSilenceDays": 4,
+     "sentence": "Shashi Tharoor posts 8.5×/week across 108 posts, 1.74× more often than the peer median of 4.9×/week. He posts in 100% of weeks against a peer median of 100%."
+    },
+    "formatMixDivergences": [
+     {
+      "mediaType": "REEL_SHORT_VIDEO",
+      "principalSharePct": 13,
+      "peerSharePct": 37
+     },
+     {
+      "mediaType": "LINK",
+      "principalSharePct": 19,
+      "peerSharePct": 0
+     },
+     {
+      "mediaType": "TEXT_ONLY",
+      "principalSharePct": 35,
+      "peerSharePct": 19
+     },
+     {
+      "mediaType": "CAROUSEL",
+      "principalSharePct": 12,
+      "peerSharePct": 23
+     }
+    ],
+    "bases": [
+     {
+      "basis": "VIEWS",
+      "denominator": "views (realised audience)",
+      "principalRatedPosts": 107,
+      "principalMedianRatePct": 3.76,
+      "formats": [
+       {
+        "mediaType": "REEL_SHORT_VIDEO",
+        "n": 14,
+        "medianRatePct": 6.84,
+        "multipleOfOverall": 1.82,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "CAROUSEL",
+        "n": 13,
+        "medianRatePct": 6.15,
+        "multipleOfOverall": 1.64,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "TEXT_ONLY",
+        "n": 37,
+        "medianRatePct": 3.47,
+        "multipleOfOverall": 0.92,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "SINGLE_IMAGE",
+        "n": 22,
+        "medianRatePct": 2.83,
+        "multipleOfOverall": 0.75,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "LINK",
+        "n": 21,
+        "medianRatePct": 2.43,
+        "multipleOfOverall": 0.65,
+        "outlierDriven": false
+       }
+      ],
+      "bestHours": [
+       {
+        "hour": 10,
+        "label": "10:00",
+        "n": 13,
+        "multipleOfOverall": 1.04
+       },
+       {
+        "hour": 11,
+        "label": "11:00",
+        "n": 11,
+        "multipleOfOverall": 1.02
+       },
+       {
+        "hour": 8,
+        "label": "08:00",
+        "n": 10,
+        "multipleOfOverall": 1.01
+       }
+      ],
+      "timezone": "Asia/Kolkata",
+      "suppressedCells": 39,
+      "rank": {
+       "position": 4,
+       "outOf": 4
+      },
+      "peerBenchmarkRatePct": 10.01,
+      "principalVsPeers": 0.38,
+      "comparisonSentence": "Shashi Tharoor ranks 4 of 4 on median engagement rate (views-normalised), 2.66× behind the peer benchmark, across 107 posts.",
+      "peerWindows": [
+       {
+        "personName": "Varun Gandhi",
+        "label": "19:00",
+        "n": 9,
+        "multipleOfOverall": 2.09
+       },
+       {
+        "personName": "Kanhaiya Kumar",
+        "label": "19:00–21:59",
+        "n": 37,
+        "multipleOfOverall": 1.48
+       },
+       {
+        "personName": "Priyanka Chaturvedi",
+        "label": "19:00–21:59",
+        "n": 39,
+        "multipleOfOverall": 1.42
+       }
+      ],
+      "gaps": [
+       {
+        "dimension": "HOUR",
+        "label": "20:00",
+        "kind": "THIN",
+        "peerLift": 1.48,
+        "peerAgreement": "2 of 2",
+        "principalN": 1,
+        "opportunity": 1.48,
+        "sentence": "Shashi Tharoor has only 1 post(s) in the 20:00 hour — below the 5-post bar for quoting a rate — while peers earn 1.48× their own typical post there. 2 of 2 peers clear the 1.2× bar here independently. Evidence: Kanhaiya Kumar (n=15, 1.55×, SEEDED), Priyanka Chaturvedi (n=13, 1.42×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi) — it demonstrates the pipeline, not a real-world finding.",
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi)."
+       },
+       {
+        "dimension": "HOUR",
+        "label": "19:00",
+        "kind": "ABSENT",
+        "peerLift": 1.48,
+        "peerAgreement": "3 of 3",
+        "principalN": 0,
+        "opportunity": 1.48,
+        "sentence": "Shashi Tharoor has no posts in the 19:00 hour, where peers earn 1.48× their own typical post — 3 of 3 peers clear the 1.2× bar here independently. Evidence: Varun Gandhi (n=9, 2.09×, SEEDED), Kanhaiya Kumar (n=14, 1.48×, SEEDED), Priyanka Chaturvedi (n=7, 1.45×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Varun Gandhi, Kanhaiya Kumar, Priyanka Chaturvedi) — it demonstrates the pipeline, not a real-world finding.",
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Varun Gandhi, Kanhaiya Kumar, Priyanka Chaturvedi)."
+       },
+       {
+        "dimension": "THEME",
+        "label": "PERSONAL_FAMILY",
+        "kind": "THIN",
+        "peerLift": 1.43,
+        "peerAgreement": "2 of 3",
+        "principalN": 2,
+        "opportunity": 1.43,
+        "sentence": "Shashi Tharoor has only 2 post(s) in the PERSONAL_FAMILY theme — below the 5-post bar for quoting a rate — while peers earn 1.43× their own typical post there. 2 of 3 peers clear the 1.2× bar here independently. Evidence: Varun Gandhi (n=13, 1.63×, SEEDED), Kanhaiya Kumar (n=14, 1.43×, SEEDED), Priyanka Chaturvedi (n=6, 0.69×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Varun Gandhi, Kanhaiya Kumar, Priyanka Chaturvedi) — it demonstrates the pipeline, not a real-world finding.",
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Varun Gandhi, Kanhaiya Kumar, Priyanka Chaturvedi)."
+       },
+       {
+        "dimension": "THEME",
+        "label": "ATTACK_REBUTTAL",
+        "kind": "THIN",
+        "peerLift": 1.37,
+        "peerAgreement": "2 of 2",
+        "principalN": 1,
+        "opportunity": 1.37,
+        "sentence": "Shashi Tharoor has only 1 post(s) in the ATTACK_REBUTTAL theme — below the 5-post bar for quoting a rate — while peers earn 1.37× their own typical post there. 2 of 2 peers clear the 1.2× bar here independently. Evidence: Priyanka Chaturvedi (n=25, 1.40×, SEEDED), Kanhaiya Kumar (n=20, 1.34×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar) — it demonstrates the pipeline, not a real-world finding.",
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar)."
+       }
+      ],
+      "overInvested": [
+       {
+        "label": "LINK",
+        "n": 21,
+        "shareOfOutputPct": 20,
+        "lift": 0.65,
+        "sentence": "Shashi Tharoor spends 20% of his output on LINK (n=21), where a typical post earns 0.65× his own baseline."
+       },
+       {
+        "label": "SINGLE_IMAGE",
+        "n": 22,
+        "shareOfOutputPct": 21,
+        "lift": 0.75,
+        "sentence": "Shashi Tharoor spends 21% of his output on SINGLE_IMAGE (n=22), where a typical post earns 0.75× his own baseline."
+       },
+       {
+        "label": "Saturday",
+        "n": 16,
+        "shareOfOutputPct": 15,
+        "lift": 0.64,
+        "sentence": "Shashi Tharoor spends 15% of his output on Saturday (n=16), where a typical post earns 0.64× his own baseline."
+       }
+      ],
+      "bestPosts": [
+       {
+        "id": "cms6d4izo00yc30vtvs8pszul",
+        "postedAt": "2026-06-01T02:46:00.000Z",
+        "mediaType": "CAROUSEL",
+        "ratePct": 11.87,
+        "multipleOfMedian": 3.16,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Spoke at the literature festival on language, politics and the uses of precision. Recording to follow."
+       },
+       {
+        "id": "cms6d4nr000zc30vt8fr4rerf",
+        "postedAt": "2026-07-01T04:39:00.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 11.3,
+        "multipleOfMedian": 3.01,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] On the panel this evening discussing the fiscal implications of the new scheme. Joining from Delhi."
+       },
+       {
+        "id": "cms6d4nyr00ze30vtxl7wpfxb",
+        "postedAt": "2026-05-01T07:08:00.000Z",
+        "mediaType": "TEXT_ONLY",
+        "ratePct": 9.77,
+        "multipleOfMedian": 2.6,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] On the panel this evening discussing the fiscal implications of the new scheme. Joining from Delhi."
+       }
+      ],
+      "worstPosts": [
+       {
+        "id": "cms6d4iin00y830vtpm4jd0at",
+        "postedAt": "2026-07-26T08:19:00.000Z",
+        "mediaType": "LINK",
+        "ratePct": 1.31,
+        "multipleOfMedian": 0.35,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Wishing you and your families a joyous festival. Celebrate safely."
+       },
+       {
+        "id": "cms6d4gxk00xv30vtdf81xspv",
+        "postedAt": "2026-06-13T05:06:00.000Z",
+        "mediaType": "SINGLE_IMAGE",
+        "ratePct": 1.55,
+        "multipleOfMedian": 0.41,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Raised the question of pending disbursements under the rural employment scheme in the House this morning. Awaiting a written rep"
+       },
+       {
+        "id": "cms6d4ra5010630vtoyjwwapi",
+        "postedAt": "2026-06-19T09:51:00.000Z",
+        "mediaType": "LINK",
+        "ratePct": 1.57,
+        "multipleOfMedian": 0.42,
+        "permalink": null,
+        "isSynthetic": true,
+        "captionExcerpt": "[synthetic] Wishing everyone peace and good health this festival season. May the year ahead be kinder than the one behind us."
+       }
+      ]
+     },
+     {
+      "basis": "FOLLOWERS",
+      "denominator": "follower count (potential audience)",
+      "principalRatedPosts": 1,
+      "principalMedianRatePct": 4.23,
+      "formats": [],
+      "bestHours": [],
+      "timezone": "Asia/Kolkata",
+      "suppressedCells": 1,
+      "rank": null,
+      "peerBenchmarkRatePct": null,
+      "principalVsPeers": null,
+      "comparisonSentence": "No comparison: the principal has fewer than 5 rated posts in this view.",
+      "peerWindows": [],
+      "gaps": [],
+      "overInvested": [],
+      "bestPosts": [
+       {
+        "id": "cms6dkmy300056gvtp24zuqw8",
+        "postedAt": "2026-06-24T19:50:00.000Z",
+        "mediaType": "TEXT_ONLY",
+        "ratePct": 4.23,
+        "multipleOfMedian": 1,
+        "permalink": "https://x.com/ShashiTharoor/status/csv005",
+        "isSynthetic": true,
+        "captionExcerpt": "Three separate figures for the same scheme, in three separate speeches, in one week. The House deserves to know which one is true."
+       }
+      ],
+      "worstPosts": [
+       {
+        "id": "cms6dkmy300056gvtp24zuqw8",
+        "postedAt": "2026-06-24T19:50:00.000Z",
+        "mediaType": "TEXT_ONLY",
+        "ratePct": 4.23,
+        "multipleOfMedian": 1,
+        "permalink": "https://x.com/ShashiTharoor/status/csv005",
+        "isSynthetic": true,
+        "captionExcerpt": "Three separate figures for the same scheme, in three separate speeches, in one week. The House deserves to know which one is true."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "platform": "YOUTUBE",
+    "totalPosts": 139,
+    "provenance": "MIXED",
+    "seededAccounts": [
+     "Varun Gandhi"
+    ],
+    "cadence": {
+     "principalPostsPerWeek": 2.92,
+     "peerMedianPostsPerWeek": 2.68,
+     "principalVsPeers": 1.09,
+     "principalConsistencyPct": 69,
+     "peerConsistencyPct": 92,
+     "principalLongestSilenceDays": 8,
+     "sentence": "Shashi Tharoor posts 2.9×/week across 37 posts, 1.09× more often than the peer median of 2.7×/week. He posts in 69% of weeks against a peer median of 92%. Longest silence: 8 days."
+    },
+    "formatMixDivergences": [
+     {
+      "mediaType": "REEL_SHORT_VIDEO",
+      "principalSharePct": 84,
+      "peerSharePct": 52
+     },
+     {
+      "mediaType": "LONG_FORM_VIDEO",
+      "principalSharePct": 16,
+      "peerSharePct": 48
+     }
+    ],
+    "bases": [
+     {
+      "basis": "VIEWS",
+      "denominator": "views (realised audience)",
+      "principalRatedPosts": 37,
+      "principalMedianRatePct": 3.8,
+      "formats": [
+       {
+        "mediaType": "REEL_SHORT_VIDEO",
+        "n": 31,
+        "medianRatePct": 3.95,
+        "multipleOfOverall": 1.04,
+        "outlierDriven": false
+       },
+       {
+        "mediaType": "LONG_FORM_VIDEO",
+        "n": 6,
+        "medianRatePct": 2.94,
+        "multipleOfOverall": 0.77,
+        "outlierDriven": false
+       }
+      ],
+      "bestHours": [
+       {
+        "hour": 18,
+        "label": "18:00",
+        "n": 11,
+        "multipleOfOverall": 1.11
+       },
+       {
+        "hour": 19,
+        "label": "19:00",
+        "n": 6,
+        "multipleOfOverall": 0.94
+       },
+       {
+        "hour": 12,
+        "label": "12:00",
+        "n": 8,
+        "multipleOfOverall": 0.81
+       }
+      ],
+      "timezone": "Asia/Kolkata",
+      "suppressedCells": 26,
+      "rank": {
+       "position": 4,
+       "outOf": 4
+      },
+      "peerBenchmarkRatePct": 6.2,
+      "principalVsPeers": 0.61,
+      "comparisonSentence": "Shashi Tharoor ranks 4 of 4 on median engagement rate (views-normalised), 1.63× behind the peer benchmark, across 37 posts. NOTE: this comparison mixes live and seeded accounts — seeded: Varun Gandhi.",
+      "peerWindows": [
+       {
+        "personName": "Priyanka Chaturvedi",
+        "label": "10:00",
+        "n": 5,
+        "multipleOfOverall": 1.4
+       },
+       {
+        "personName": "Varun Gandhi",
+        "label": "21:00",
+        "n": 5,
+        "multipleOfOverall": 1.2
+       },
+       {
+        "personName": "Varun Gandhi",
+        "label": "19:00",
+        "n": 7,
+        "multipleOfOverall": 1.13
+       },
+       {
+        "personName": "Kanhaiya Kumar",
+        "label": "19:00–21:59",
+        "n": 17,
+        "multipleOfOverall": 1.08
+       }
+      ],
+      "gaps": [
+       {
+        "dimension": "FORMAT",
+        "label": "REEL_SHORT_VIDEO",
+        "kind": "UNDERPERFORMING",
+        "peerLift": 1.43,
+        "peerAgreement": "2 of 3",
+        "principalN": 31,
+        "opportunity": 1.38,
+        "sentence": "In the REEL_SHORT_VIDEO format, Shashi Tharoor earns 1.04× his own baseline across 31 posts, against 1.43× for the peer set — a 1.38× shortfall. 2 of 3 peers clear the 1.2× bar here independently. Evidence: Priyanka Chaturvedi (n=8, 1.45×), Varun Gandhi (n=16, 1.43×, SEEDED), Kanhaiya Kumar (n=25, 1.08×). NOTE: this figure mixes live and seeded peers — seeded: Varun Gandhi.",
+        "provenanceCaveat": "Mixes live and seeded peers — seeded: Varun Gandhi."
+       }
+      ],
+      "overInvested": [
+       {
+        "label": "Thursday",
+        "n": 10,
+        "shareOfOutputPct": 27,
+        "lift": 0.8,
+        "sentence": "Shashi Tharoor spends 27% of his output on Thursday (n=10), where a typical post earns 0.80× his own baseline."
+       },
+       {
+        "label": "12:00",
+        "n": 8,
+        "shareOfOutputPct": 22,
+        "lift": 0.81,
+        "sentence": "Shashi Tharoor spends 22% of his output on 12:00 (n=8), where a typical post earns 0.81× his own baseline."
+       },
+       {
+        "label": "LONG_FORM_VIDEO",
+        "n": 6,
+        "shareOfOutputPct": 16,
+        "lift": 0.77,
+        "sentence": "Shashi Tharoor spends 16% of his output on LONG_FORM_VIDEO (n=6), where a typical post earns 0.77× his own baseline."
+       }
+      ],
+      "bestPosts": [
+       {
+        "id": "cms6euula00nvc4vtboijf0ax",
+        "postedAt": "2026-07-25T13:51:39.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 7.13,
+        "multipleOfMedian": 1.88,
+        "permalink": "https://www.youtube.com/watch?v=jIF37Il52Ks",
+        "isSynthetic": false,
+        "captionExcerpt": "“Dear Gen Z, I am So Proud Of You” - Dr Shashi Tharoor\n\nThe Education Minister’s resignation is a significant step, but accountability canno"
+       },
+       {
+        "id": "cms6euvcp00o9c4vtvps0ubb3",
+        "postedAt": "2026-07-07T12:39:43.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 6.47,
+        "multipleOfMedian": 1.7,
+        "permalink": "https://www.youtube.com/watch?v=YjwfLbknRQU",
+        "isSynthetic": false,
+        "captionExcerpt": "Shashi Tharoor Simplifies English!\n\nIf someone who teaches is a teacher, why isn’t someone who cooks a cooker? Here’s why.\n\n#shashitharoor #"
+       },
+       {
+        "id": "cms6euv7100o6c4vtj694ruou",
+        "postedAt": "2026-07-14T16:42:33.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 5.84,
+        "multipleOfMedian": 1.54,
+        "permalink": "https://www.youtube.com/watch?v=gzmTErb69fU",
+        "isSynthetic": false,
+        "captionExcerpt": "Shashi Tharoor on Civic Nationalism\n\n#shashitharoor #india #indianpolitics #unityindiversity #democracy #constitution #colonialism #constitu"
+       }
+      ],
+      "worstPosts": [
+       {
+        "id": "cms6euvxz00okc4vtv3gmezo2",
+        "postedAt": "2026-06-12T12:50:35.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 1.89,
+        "multipleOfMedian": 0.5,
+        "permalink": "https://www.youtube.com/watch?v=SN5bvReaOds",
+        "isSynthetic": false,
+        "captionExcerpt": "Shashi Tharoor: Is Thailand Currently Cheaper Than Visiting India?\n\nDr. Shashi Tharoor addresses the Thailand vs. India tourism debate, call"
+       },
+       {
+        "id": "cms6euwhe00ouc4vtmw2quraz",
+        "postedAt": "2026-06-03T06:47:29.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 2.12,
+        "multipleOfMedian": 0.56,
+        "permalink": "https://www.youtube.com/watch?v=t8EUp_jkVWk",
+        "isSynthetic": false,
+        "captionExcerpt": "History Isn’t Always One Story\n\nIslam in India: Sword vs. Trade? Dr. Shashi Tharoor explains why the history of faith in the South tells a v"
+       },
+       {
+        "id": "cms6euvgr00obc4vtzue7ck0w",
+        "postedAt": "2026-06-28T06:54:53.000Z",
+        "mediaType": "REEL_SHORT_VIDEO",
+        "ratePct": 2.3,
+        "multipleOfMedian": 0.61,
+        "permalink": "https://www.youtube.com/watch?v=0BJ8-3hPtrY",
+        "isSynthetic": false,
+        "captionExcerpt": "Shashi Tharoor Accidentally Matched a Peacock!\n\nCoincidence or perfect color coordination? You decide! 🦚\n\n#shashitharoor #india #funny #blu"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "notes": [
+   "832 of 940 posts in this report are seeded, not fetched. Any finding resting on them demonstrates that the pipeline works, not that the finding is true of the real world."
+  ],
+  "truncations": []
+ },
+ "timing": {
+  "filter": {},
+  "accounts": [
+   {
+    "accountId": "cms6d05ar000330vtu6djff73",
+    "personName": "Shashi Tharoor",
+    "platform": "YOUTUBE",
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": false,
+    "byBasis": {
+     "VIEWS": {
+      "basis": "VIEWS",
+      "timezone": "Asia/Kolkata",
+      "grid": [
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.04293300735728128,
+         "median": 0.049867146192866155,
+         "stdev": 0.014068710761764991,
+         "q1": 0.038305195678524424,
+         "q3": 0.05102788845383058,
+         "iqr": 0.012722692775306153,
+         "min": 0.026743245164182694,
+         "max": 0.052188630714794994,
+         "meanMedianRatio": 0.8609477508745658,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.04293300735728128,
+        "multipleOfOverall": 1.3119269013012806,
+        "dayOfWeek": 3,
+        "hour": 18
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.03708688061560451,
+         "median": 0.0344712501191952,
+         "stdev": 0.015532420841469661,
+         "q1": 0.028749794042879882,
+         "q3": 0.04411615194012448,
+         "iqr": 0.015366357897244595,
+         "min": 0.02302833796656457,
+         "max": 0.05376105376105376,
+         "meanMedianRatio": 1.07587860861921,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.03708688061560451,
+        "multipleOfOverall": 0.9068848692072684,
+        "dayOfWeek": 0,
+        "hour": 12
+       }
+      ],
+      "byHour": [
+       {
+        "n": 11,
+        "distribution": {
+         "n": 11,
+         "mean": 0.04139196154615531,
+         "median": 0.04220494645783316,
+         "stdev": 0.012881528863529466,
+         "q1": 0.03412681025438799,
+         "q3": 0.050099587058632974,
+         "iqr": 0.015972776804244984,
+         "min": 0.018876115202682474,
+         "max": 0.06472346390879996,
+         "meanMedianRatio": 0.9807372125802813,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04139196154615531,
+        "multipleOfOverall": 1.1103463673630587,
+        "hour": 18
+       },
+       {
+        "n": 6,
+        "distribution": {
+         "n": 6,
+         "mean": 0.04055477812654252,
+         "median": 0.035795085916194264,
+         "stdev": 0.015685092667678497,
+         "q1": 0.032251803810467494,
+         "q3": 0.03971424278890308,
+         "iqr": 0.007462438978435584,
+         "min": 0.028330190296588377,
+         "max": 0.0713169684419136,
+         "meanMedianRatio": 1.1329705485689279,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04055477812654252,
+        "multipleOfOverall": 0.9417129259055913,
+        "hour": 19
+       },
+       {
+        "n": 8,
+        "distribution": {
+         "n": 8,
+         "mean": 0.032546465587098124,
+         "median": 0.03075177436857108,
+         "stdev": 0.010440909762780372,
+         "q1": 0.025847261992925318,
+         "q3": 0.03574822101041022,
+         "iqr": 0.0099009590174849,
+         "min": 0.02124149709372847,
+         "max": 0.05376105376105376,
+         "meanMedianRatio": 1.0583605744831834,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.032546465587098124,
+        "multipleOfOverall": 0.8090312587939333,
+        "hour": 12
+       }
+      ],
+      "byDay": [
+       {
+        "n": 8,
+        "distribution": {
+         "n": 8,
+         "mean": 0.041838135953776084,
+         "median": 0.04792280696823964,
+         "stdev": 0.012267211433768225,
+         "q1": 0.0336663750555376,
+         "q3": 0.050447517323348366,
+         "iqr": 0.016781142267810766,
+         "min": 0.02124149709372847,
+         "max": 0.0528448695088345,
+         "meanMedianRatio": 0.873031831827044,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.041838135953776084,
+        "multipleOfOverall": 1.2607743664404085,
+        "dayOfWeek": 3
+       },
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.0460433490111773,
+         "median": 0.046331514400431845,
+         "stdev": 0.018348348904605533,
+         "q1": 0.03241319643489503,
+         "q3": 0.059961666976714116,
+         "iqr": 0.027548470541819088,
+         "min": 0.026786903335045565,
+         "max": 0.06472346390879996,
+         "meanMedianRatio": 0.9937803589417776,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.0460433490111773,
+        "multipleOfOverall": 1.2189099389178546,
+        "dayOfWeek": 2
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.04169648192240711,
+         "median": 0.04411176758029408,
+         "stdev": 0.005302727448494466,
+         "q1": 0.03986392719668001,
+         "q3": 0.0447366794770777,
+         "iqr": 0.004872752280397685,
+         "min": 0.03561608681306595,
+         "max": 0.04536159137386131,
+         "meanMedianRatio": 0.945246228152373,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.04169648192240711,
+        "multipleOfOverall": 1.1605118594257238,
+        "dayOfWeek": 1
+       },
+       {
+        "n": 5,
+        "distribution": {
+         "n": 5,
+         "mean": 0.04551378674000724,
+         "median": 0.039579133684055266,
+         "stdev": 0.016399796786482415,
+         "q1": 0.038010613353079106,
+         "q3": 0.050332027924399794,
+         "iqr": 0.012321414571320688,
+         "min": 0.028330190296588377,
+         "max": 0.0713169684419136,
+         "meanMedianRatio": 1.1499439857205058,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04551378674000724,
+        "multipleOfOverall": 1.0412653254607138,
+        "dayOfWeek": 6
+       },
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.03805540097306086,
+         "median": 0.03771610608231256,
+         "stdev": 0.012829244906160438,
+         "q1": 0.03161052208103754,
+         "q3": 0.044160984974335876,
+         "iqr": 0.012550462893298336,
+         "min": 0.02302833796656457,
+         "max": 0.05376105376105376,
+         "meanMedianRatio": 1.0089960212225464,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.03805540097306086,
+        "multipleOfOverall": 0.9922519726785022,
+        "dayOfWeek": 0
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.03144652373732062,
+         "median": 0.03171477820094429,
+         "stdev": 0.012438450988204591,
+         "q1": 0.02529544670181338,
+         "q3": 0.03773172800463969,
+         "iqr": 0.01243628130282631,
+         "min": 0.018876115202682474,
+         "max": 0.04374867780833509,
+         "meanMedianRatio": 0.9915416572701845,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.03144652373732062,
+        "multipleOfOverall": 0.8343663888384791,
+        "dayOfWeek": 5
+       },
+       {
+        "n": 10,
+        "distribution": {
+         "n": 10,
+         "mean": 0.03248254125383723,
+         "median": 0.030459573339566275,
+         "stdev": 0.006495773399555762,
+         "q1": 0.027632285103197277,
+         "q3": 0.03807988009713428,
+         "iqr": 0.010447594993937007,
+         "min": 0.023637957779726174,
+         "max": 0.04220494645783316,
+         "meanMedianRatio": 1.0664148473689607,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.03248254125383723,
+        "multipleOfOverall": 0.801343905099044,
+        "dayOfWeek": 4
+       }
+      ],
+      "overall": {
+       "n": 37,
+       "mean": 0.03899793110229062,
+       "median": 0.038010613353079106,
+       "stdev": 0.012331896884731944,
+       "q1": 0.029045643153526972,
+       "q3": 0.04766337739713275,
+       "iqr": 0.01861773424360578,
+       "min": 0.018876115202682474,
+       "max": 0.0713169684419136,
+       "meanMedianRatio": 1.0259747913047432,
+       "outlierDriven": false
+      },
+      "ratedPosts": 37,
+      "suppressedCells": 26,
+      "suppressedPosts": 31
+     },
+     "FOLLOWERS": null
+    }
+   },
+   {
+    "accountId": "cms6d0522000130vtv3bus307",
+    "personName": "Shashi Tharoor",
+    "platform": "INSTAGRAM",
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "byBasis": {
+     "VIEWS": {
+      "basis": "VIEWS",
+      "timezone": "Asia/Kolkata",
+      "grid": [],
+      "byHour": [
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.045116993238162255,
+         "median": 0.04398935219257802,
+         "stdev": 0.011166263992553025,
+         "q1": 0.03601080361500772,
+         "q3": 0.05309554181573256,
+         "iqr": 0.01708473820072484,
+         "min": 0.035020206561967915,
+         "max": 0.057469062005525075,
+         "meanMedianRatio": 1.025634408996241,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.045116993238162255,
+        "multipleOfOverall": 1.1696689725218123,
+        "hour": 14
+       },
+       {
+        "n": 6,
+        "distribution": {
+         "n": 6,
+         "mean": 0.039135051082445256,
+         "median": 0.036818550285028624,
+         "stdev": 0.017564052274908534,
+         "q1": 0.0332741995161904,
+         "q3": 0.04079741922840739,
+         "iqr": 0.007523219712216991,
+         "min": 0.01664343495717026,
+         "max": 0.07031331283133274,
+         "meanMedianRatio": 1.0629166759550166,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.039135051082445256,
+        "multipleOfOverall": 0.9789986379680814,
+        "hour": 11
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.03194690971190245,
+         "median": 0.0298441770170644,
+         "stdev": 0.005155357984364759,
+         "q1": 0.029009712368760286,
+         "q3": 0.03383274070762559,
+         "iqr": 0.004823028338865304,
+         "min": 0.028175247720456167,
+         "max": 0.037821304398186775,
+         "meanMedianRatio": 1.0704570507551856,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.03194690971190245,
+        "multipleOfOverall": 0.7935513056543381,
+        "hour": 16
+       }
+      ],
+      "byDay": [
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.03919106924338304,
+         "median": 0.037821304398186775,
+         "stdev": 0.0025591179518501075,
+         "q1": 0.03771484091658016,
+         "q3": 0.03998241514758778,
+         "iqr": 0.002267574231007624,
+         "min": 0.03760837743497354,
+         "max": 0.0421435258969888,
+         "meanMedianRatio": 1.0362167531498976,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.03919106924338304,
+        "multipleOfOverall": 1.0056616897014872,
+        "dayOfWeek": 2
+       },
+       {
+        "n": 5,
+        "distribution": {
+         "n": 5,
+         "mean": 0.04135504274545519,
+         "median": 0.03567851759363363,
+         "stdev": 0.01642002166424403,
+         "q1": 0.035020206561967915,
+         "q3": 0.03634100263268765,
+         "iqr": 0.0013207960707197347,
+         "min": 0.029422174107654034,
+         "max": 0.07031331283133274,
+         "meanMedianRatio": 1.159102046124093,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04135504274545519,
+        "multipleOfOverall": 0.9486853735001803,
+        "dayOfWeek": 0
+       },
+       {
+        "n": 9,
+        "distribution": {
+         "n": 9,
+         "mean": 0.04309571594541762,
+         "median": 0.03268135901723111,
+         "stdev": 0.016040186939681463,
+         "q1": 0.031162425952478884,
+         "q3": 0.051637701752468394,
+         "iqr": 0.02047527579998951,
+         "min": 0.028175247720456167,
+         "max": 0.07417068222165864,
+         "meanMedianRatio": 1.3186635207763415,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04309571594541762,
+        "multipleOfOverall": 0.8689914653653578,
+        "dayOfWeek": 5
+       }
+      ],
+      "overall": {
+       "n": 23,
+       "mean": 0.04203475841789151,
+       "median": 0.03760837743497354,
+       "stdev": 0.017538927643300978,
+       "q1": 0.03181759305476077,
+       "q3": 0.05094286470865082,
+       "iqr": 0.019125271653890052,
+       "min": 0.015549540372532188,
+       "max": 0.08715253790139935,
+       "meanMedianRatio": 1.1176966751775284,
+       "outlierDriven": false
+      },
+      "ratedPosts": 23,
+      "suppressedCells": 18,
+      "suppressedPosts": 23
+     },
+     "FOLLOWERS": {
+      "basis": "FOLLOWERS",
+      "timezone": "Asia/Kolkata",
+      "grid": [
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.012471296296296298,
+         "median": 0.012234444444444444,
+         "stdev": 0.001885910260401609,
+         "q1": 0.011474722222222223,
+         "q3": 0.013349444444444445,
+         "iqr": 0.001874722222222222,
+         "min": 0.010715,
+         "max": 0.014464444444444445,
+         "meanMedianRatio": 1.0193594284503378,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.012471296296296298,
+        "multipleOfOverall": 1.2414454027848245,
+        "dayOfWeek": 5,
+        "hour": 10
+       },
+       {
+        "n": 5,
+        "distribution": {
+         "n": 5,
+         "mean": 0.013617333333333334,
+         "median": 0.011916666666666667,
+         "stdev": 0.009363025269182928,
+         "q1": 0.009643333333333334,
+         "q3": 0.013294444444444444,
+         "iqr": 0.00365111111111111,
+         "min": 0.004088333333333334,
+         "max": 0.02914388888888889,
+         "meanMedianRatio": 1.1427132867132868,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.013617333333333334,
+        "multipleOfOverall": 1.2092000676475565,
+        "dayOfWeek": 3,
+        "hour": 13
+       },
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.011470555555555557,
+         "median": 0.010022777777777778,
+         "stdev": 0.00844243588442053,
+         "q1": 0.006421527777777779,
+         "q3": 0.015071805555555557,
+         "iqr": 0.008650277777777778,
+         "min": 0.0030944444444444444,
+         "max": 0.022742222222222223,
+         "meanMedianRatio": 1.1444487556122167,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.011470555555555557,
+        "multipleOfOverall": 1.0170246349850613,
+        "dayOfWeek": 6,
+        "hour": 13
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.007933148148148148,
+         "median": 0.009855,
+         "stdev": 0.0039001836508410813,
+         "q1": 0.00665,
+         "q3": 0.010177222222222223,
+         "iqr": 0.0035272222222222233,
+         "min": 0.003445,
+         "max": 0.010499444444444445,
+         "meanMedianRatio": 0.8049871281733281,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.007933148148148148,
+        "multipleOfOverall": 1,
+        "dayOfWeek": 0,
+        "hour": 10
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.007905,
+         "median": 0.00819111111111111,
+         "stdev": 0.00208836244843882,
+         "q1": 0.006939722222222222,
+         "q3": 0.009013333333333333,
+         "iqr": 0.002073611111111111,
+         "min": 0.0056883333333333334,
+         "max": 0.009835555555555556,
+         "meanMedianRatio": 0.9650705371676616,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.007905,
+        "multipleOfOverall": 0.8311629742375557,
+        "dayOfWeek": 6,
+        "hour": 16
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.010949074074074075,
+         "median": 0.008012222222222223,
+         "stdev": 0.006475658847583623,
+         "q1": 0.007237222222222223,
+         "q3": 0.0131925,
+         "iqr": 0.005955277777777776,
+         "min": 0.0064622222222222225,
+         "max": 0.018372777777777776,
+         "meanMedianRatio": 1.3665464799149447,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.010949074074074075,
+        "multipleOfOverall": 0.8130108799819608,
+        "dayOfWeek": 4,
+        "hour": 8
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.005531851851851853,
+         "median": 0.004908333333333333,
+         "stdev": 0.0025009346606728326,
+         "q1": 0.004155,
+         "q3": 0.006596944444444445,
+         "iqr": 0.0024419444444444454,
+         "min": 0.0034016666666666666,
+         "max": 0.008285555555555556,
+         "meanMedianRatio": 1.1270326353518207,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.005531851851851853,
+        "multipleOfOverall": 0.49805513275832913,
+        "dayOfWeek": 1,
+        "hour": 11
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.007061481481481481,
+         "median": 0.0045583333333333335,
+         "stdev": 0.005105064488937823,
+         "q1": 0.004124722222222222,
+         "q3": 0.008746666666666666,
+         "iqr": 0.004621944444444444,
+         "min": 0.003691111111111111,
+         "max": 0.012935,
+         "meanMedianRatio": 1.5491367052610197,
+         "outlierDriven": true
+        },
+        "confidence": "LOW",
+        "headline": 0.0045583333333333335,
+        "multipleOfOverall": 0.4625401657365128,
+        "dayOfWeek": 0,
+        "hour": 15
+       }
+      ],
+      "byHour": [
+       {
+        "n": 14,
+        "distribution": {
+         "n": 14,
+         "mean": 0.013914325396825395,
+         "median": 0.012410000000000001,
+         "stdev": 0.007624606041785358,
+         "q1": 0.009083333333333334,
+         "q3": 0.01934027777777778,
+         "iqr": 0.010256944444444445,
+         "min": 0.0030944444444444444,
+         "max": 0.02914388888888889,
+         "meanMedianRatio": 1.121218807157566,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.013914325396825395,
+        "multipleOfOverall": 1.2592592592592595,
+        "hour": 13
+       },
+       {
+        "n": 6,
+        "distribution": {
+         "n": 6,
+         "mean": 0.010427314814814815,
+         "median": 0.012385833333333334,
+         "stdev": 0.005022362036115149,
+         "q1": 0.006377916666666667,
+         "q3": 0.014030416666666667,
+         "iqr": 0.0076525,
+         "min": 0.003691111111111111,
+         "max": 0.015147222222222222,
+         "meanMedianRatio": 0.8418743038268033,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.010427314814814815,
+        "multipleOfOverall": 1.2568070353458483,
+        "hour": 15
+       },
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.013574722222222222,
+         "median": 0.012245277777777779,
+         "stdev": 0.0058948256674990615,
+         "q1": 0.010475694444444444,
+         "q3": 0.015344305555555555,
+         "iqr": 0.004868611111111112,
+         "min": 0.007997777777777777,
+         "max": 0.021810555555555555,
+         "meanMedianRatio": 1.1085679286799899,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.013574722222222222,
+        "multipleOfOverall": 1.2425446755735952,
+        "hour": 9
+       },
+       {
+        "n": 11,
+        "distribution": {
+         "n": 11,
+         "mean": 0.010644343434343435,
+         "median": 0.010361666666666667,
+         "stdev": 0.00460934340827881,
+         "q1": 0.008449444444444445,
+         "q3": 0.011474722222222223,
+         "iqr": 0.0030252777777777778,
+         "min": 0.003445,
+         "max": 0.02156111111111111,
+         "meanMedianRatio": 1.027281013447975,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.010644343434343435,
+        "multipleOfOverall": 1.0514121427363436,
+        "hour": 10
+       },
+       {
+        "n": 7,
+        "distribution": {
+         "n": 7,
+         "mean": 0.011477380952380952,
+         "median": 0.009987222222222222,
+         "stdev": 0.004415468562330222,
+         "q1": 0.008303333333333333,
+         "q3": 0.014911944444444445,
+         "iqr": 0.006608611111111112,
+         "min": 0.00649,
+         "max": 0.017433888888888888,
+         "meanMedianRatio": 1.1492065257988382,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.011477380952380952,
+        "multipleOfOverall": 1.0134167653193529,
+        "hour": 14
+       },
+       {
+        "n": 5,
+        "distribution": {
+         "n": 5,
+         "mean": 0.009739222222222222,
+         "median": 0.009966666666666667,
+         "stdev": 0.0029997316392316514,
+         "q1": 0.007567222222222223,
+         "q3": 0.012007222222222223,
+         "iqr": 0.00444,
+         "min": 0.00597,
+         "max": 0.013185,
+         "meanMedianRatio": 0.9771794871794871,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.009739222222222222,
+        "multipleOfOverall": 1.0113309656688654,
+        "hour": 12
+       },
+       {
+        "n": 9,
+        "distribution": {
+         "n": 9,
+         "mean": 0.010424691358024691,
+         "median": 0.008094444444444444,
+         "stdev": 0.005625996174554711,
+         "q1": 0.0064622222222222225,
+         "q3": 0.015402222222222222,
+         "iqr": 0.00894,
+         "min": 0.003671666666666667,
+         "max": 0.018372777777777776,
+         "meanMedianRatio": 1.2878822542515063,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.010424691358024691,
+        "multipleOfOverall": 0.8213540785839112,
+        "hour": 8
+       },
+       {
+        "n": 10,
+        "distribution": {
+         "n": 10,
+         "mean": 0.009208166666666667,
+         "median": 0.007705,
+         "stdev": 0.005577813560765158,
+         "q1": 0.0057475,
+         "q3": 0.009739305555555557,
+         "iqr": 0.003991805555555557,
+         "min": 0.003372222222222222,
+         "max": 0.021892222222222223,
+         "meanMedianRatio": 1.1950897685485615,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.009208166666666667,
+        "multipleOfOverall": 0.7818366311516998,
+        "hour": 16
+       },
+       {
+        "n": 7,
+        "distribution": {
+         "n": 7,
+         "mean": 0.007749761904761904,
+         "median": 0.005126111111111111,
+         "stdev": 0.0065522442661712765,
+         "q1": 0.004155,
+         "q3": 0.008228611111111112,
+         "iqr": 0.004073611111111112,
+         "min": 0.0025844444444444443,
+         "max": 0.021770555555555557,
+         "meanMedianRatio": 1.5118208982953754,
+         "outlierDriven": true
+        },
+        "confidence": "OK",
+        "headline": 0.005126111111111111,
+        "multipleOfOverall": 0.5201533344607926,
+        "hour": 11
+       }
+      ],
+      "byDay": [
+       {
+        "n": 6,
+        "distribution": {
+         "n": 6,
+         "mean": 0.013559722222222223,
+         "median": 0.013350277777777777,
+         "stdev": 0.005910396978060915,
+         "q1": 0.009085416666666667,
+         "q3": 0.01737847222222222,
+         "iqr": 0.008293055555555552,
+         "min": 0.0064622222222222225,
+         "max": 0.021810555555555555,
+         "meanMedianRatio": 1.0156883959967542,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.013559722222222223,
+        "multipleOfOverall": 1.3546705000281865,
+        "dayOfWeek": 4
+       },
+       {
+        "n": 10,
+        "distribution": {
+         "n": 10,
+         "mean": 0.011350666666666667,
+         "median": 0.011918888888888889,
+         "stdev": 0.005636745288600476,
+         "q1": 0.0071225,
+         "q3": 0.015213194444444446,
+         "iqr": 0.008090694444444445,
+         "min": 0.0025844444444444443,
+         "max": 0.02061111111111111,
+         "meanMedianRatio": 0.9523259065908456,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.011350666666666667,
+        "multipleOfOverall": 1.209425559501663,
+        "dayOfWeek": 5
+       },
+       {
+        "n": 12,
+        "distribution": {
+         "n": 12,
+         "mean": 0.011698333333333333,
+         "median": 0.011139166666666667,
+         "stdev": 0.007523637013901404,
+         "q1": 0.004866666666666667,
+         "q3": 0.015655555555555555,
+         "iqr": 0.010788888888888888,
+         "min": 0.003372222222222222,
+         "max": 0.02914388888888889,
+         "meanMedianRatio": 1.050198249420214,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.011698333333333333,
+        "multipleOfOverall": 1.13030610519195,
+        "dayOfWeek": 3
+       },
+       {
+        "n": 9,
+        "distribution": {
+         "n": 9,
+         "mean": 0.013535555555555556,
+         "median": 0.009987222222222222,
+         "stdev": 0.006886881909708603,
+         "q1": 0.008896666666666667,
+         "q3": 0.021770555555555557,
+         "iqr": 0.01287388888888889,
+         "min": 0.00597,
+         "max": 0.023491111111111112,
+         "meanMedianRatio": 1.3552873115647772,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.013535555555555556,
+        "multipleOfOverall": 1.0134167653193529,
+        "dayOfWeek": 2
+       },
+       {
+        "n": 12,
+        "distribution": {
+         "n": 12,
+         "mean": 0.010359259259259257,
+         "median": 0.008685833333333334,
+         "stdev": 0.005365036561166773,
+         "q1": 0.007788055555555555,
+         "q3": 0.01200625,
+         "iqr": 0.0042181944444444446,
+         "min": 0.0030944444444444444,
+         "max": 0.022742222222222223,
+         "meanMedianRatio": 1.1926615284573643,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.010359259259259257,
+        "multipleOfOverall": 0.8813630982580756,
+        "dayOfWeek": 6
+       },
+       {
+        "n": 12,
+        "distribution": {
+         "n": 12,
+         "mean": 0.008322453703703703,
+         "median": 0.008452222222222222,
+         "stdev": 0.003718513873061239,
+         "q1": 0.004923333333333333,
+         "q3": 0.010099861111111112,
+         "iqr": 0.005176527777777778,
+         "min": 0.003445,
+         "max": 0.015402222222222222,
+         "meanMedianRatio": 0.9846468165286358,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.008322453703703703,
+        "multipleOfOverall": 0.8576582670951013,
+        "dayOfWeek": 0
+       },
+       {
+        "n": 12,
+        "distribution": {
+         "n": 12,
+         "mean": 0.00972462962962963,
+         "median": 0.00819,
+         "stdev": 0.004894897067626264,
+         "q1": 0.0069120833333333334,
+         "q3": 0.012301666666666667,
+         "iqr": 0.005389583333333334,
+         "min": 0.0034016666666666666,
+         "max": 0.02156111111111111,
+         "meanMedianRatio": 1.1873784651562431,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.00972462962962963,
+        "multipleOfOverall": 0.8310502283105022,
+        "dayOfWeek": 1
+       }
+      ],
+      "overall": {
+       "n": 73,
+       "mean": 0.010930700152207002,
+       "median": 0.009855,
+       "stdev": 0.00578476477318054,
+       "q1": 0.007052777777777778,
+       "q3": 0.013294444444444444,
+       "iqr": 0.006241666666666666,
+       "min": 0.0025844444444444443,
+       "max": 0.02914388888888889,
+       "meanMedianRatio": 1.1091527298028414,
+       "outlierDriven": false
+      },
+      "ratedPosts": 73,
+      "suppressedCells": 35,
+      "suppressedPosts": 46
+     }
+    }
+   },
+   {
+    "accountId": "cms6d056e000230vthrvqwwq0",
+    "personName": "Shashi Tharoor",
+    "platform": "FACEBOOK",
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "byBasis": {
+     "VIEWS": {
+      "basis": "VIEWS",
+      "timezone": "Asia/Kolkata",
+      "grid": [],
+      "byHour": [
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.07436258466251712,
+         "median": 0.0592358327365452,
+         "stdev": 0.04762776113210515,
+         "q1": 0.04288450584323637,
+         "q3": 0.09071391155582595,
+         "iqr": 0.047829405712589576,
+         "min": 0.03718101003244875,
+         "max": 0.14179766314452932,
+         "meanMedianRatio": 1.255364890255684,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.07436258466251712,
+        "multipleOfOverall": 1.5215090617065847,
+        "hour": 9
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.06009832435960052,
+         "median": 0.056986341012764834,
+         "stdev": 0.02288129751883428,
+         "q1": 0.047959315739229055,
+         "q3": 0.07068134130655414,
+         "iqr": 0.022722025567325083,
+         "min": 0.038932290465693284,
+         "max": 0.08437634160034345,
+         "meanMedianRatio": 1.0546092851642923,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.06009832435960052,
+        "multipleOfOverall": 1.4637294731729331,
+        "hour": 8
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.03628048170186146,
+         "median": 0.03572686866496829,
+         "stdev": 0.0020101685819871574,
+         "q1": 0.035166000553578505,
+         "q3": 0.037118156331697835,
+         "iqr": 0.00195215577811933,
+         "min": 0.03460513244218871,
+         "max": 0.03850944399842738,
+         "meanMedianRatio": 1.015495705545446,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.03628048170186146,
+        "multipleOfOverall": 0.9176667552208474,
+        "hour": 15
+       }
+      ],
+      "byDay": [
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.04494449613111917,
+         "median": 0.04478567111349891,
+         "stdev": 0.013340357838326631,
+         "q1": 0.038234965512179905,
+         "q3": 0.051574614241248304,
+         "iqr": 0.013339648729068398,
+         "min": 0.03168425991086089,
+         "max": 0.0583635573689977,
+         "meanMedianRatio": 1.0035463355504433,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.04494449613111917,
+        "multipleOfOverall": 1.1503477082336977,
+        "dayOfWeek": 6
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.04907447242249117,
+         "median": 0.038932290465693284,
+         "stdev": 0.021423732942355615,
+         "q1": 0.036768711453941,
+         "q3": 0.05630914241264239,
+         "iqr": 0.019540430958701394,
+         "min": 0.03460513244218871,
+         "max": 0.0736859943595915,
+         "meanMedianRatio": 1.2605082268595285,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.04907447242249117,
+        "multipleOfOverall": 1,
+        "dayOfWeek": 4
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.043563613465513684,
+         "median": 0.03797763071880793,
+         "stdev": 0.011678771063838534,
+         "q1": 0.036852249691888106,
+         "q3": 0.04748198586578638,
+         "iqr": 0.010629736173898272,
+         "min": 0.03572686866496829,
+         "max": 0.056986341012764834,
+         "meanMedianRatio": 1.147086130466253,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.043563613465513684,
+        "multipleOfOverall": 0.9754789729690682,
+        "dayOfWeek": 3
+       }
+      ],
+      "overall": {
+       "n": 17,
+       "mean": 0.050536028062732455,
+       "median": 0.038932290465693284,
+       "stdev": 0.02811386827891079,
+       "q1": 0.03572686866496829,
+       "q3": 0.056986341012764834,
+       "iqr": 0.021259472347796543,
+       "min": 0.026489588894821142,
+       "max": 0.14179766314452932,
+       "meanMedianRatio": 1.2980491889441814,
+       "outlierDriven": false
+      },
+      "ratedPosts": 17,
+      "suppressedCells": 17,
+      "suppressedPosts": 17
+     },
+     "FOLLOWERS": {
+      "basis": "FOLLOWERS",
+      "timezone": "Asia/Kolkata",
+      "grid": [
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.016397592592592592,
+         "median": 0.021401666666666666,
+         "stdev": 0.008874513381431212,
+         "q1": 0.013776388888888888,
+         "q3": 0.021520833333333333,
+         "iqr": 0.007744444444444444,
+         "min": 0.0061511111111111115,
+         "max": 0.02164,
+         "meanMedianRatio": 0.7661829729425711,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.016397592592592592,
+        "multipleOfOverall": 2.9098119193292544,
+        "dayOfWeek": 4,
+        "hour": 9
+       },
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.014100972222222223,
+         "median": 0.0135125,
+         "stdev": 0.009493452263514555,
+         "q1": 0.008479027777777778,
+         "q3": 0.019134444444444447,
+         "iqr": 0.010655416666666669,
+         "min": 0.0036044444444444444,
+         "max": 0.025774444444444444,
+         "meanMedianRatio": 1.0435502107102477,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.014100972222222223,
+        "multipleOfOverall": 1.83718558803535,
+        "dayOfWeek": 2,
+        "hour": 8
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.009045,
+         "median": 0.009211111111111111,
+         "stdev": 0.002061414547894626,
+         "q1": 0.008058333333333334,
+         "q3": 0.010114722222222223,
+         "iqr": 0.002056388888888889,
+         "min": 0.006905555555555555,
+         "max": 0.011018333333333333,
+         "meanMedianRatio": 0.9819662243667068,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.009045,
+        "multipleOfOverall": 1.2523604501850591,
+        "dayOfWeek": 5,
+        "hour": 8
+       },
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.01607125,
+         "median": 0.008647777777777779,
+         "stdev": 0.017682047080755364,
+         "q1": 0.004986388888888889,
+         "q3": 0.01973263888888889,
+         "iqr": 0.01474625,
+         "min": 0.004905555555555555,
+         "max": 0.042083888888888886,
+         "meanMedianRatio": 1.8584254143646406,
+         "outlierDriven": true
+        },
+        "confidence": "LOW",
+        "headline": 0.008647777777777779,
+        "multipleOfOverall": 1.1757685625802554,
+        "dayOfWeek": 3,
+        "hour": 8
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.007073148148148148,
+         "median": 0.0066122222222222225,
+         "stdev": 0.0016062244217431491,
+         "q1": 0.00618,
+         "q3": 0.007735833333333333,
+         "iqr": 0.0015558333333333335,
+         "min": 0.005747777777777778,
+         "max": 0.008859444444444444,
+         "meanMedianRatio": 1.0697081722959725,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.007073148148148148,
+        "multipleOfOverall": 0.8990104992824232,
+        "dayOfWeek": 1,
+        "hour": 14
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.0073429629629629635,
+         "median": 0.006158333333333333,
+         "stdev": 0.0026133994897458972,
+         "q1": 0.0058449999999999995,
+         "q3": 0.008248611111111111,
+         "iqr": 0.0024036111111111116,
+         "min": 0.0055316666666666665,
+         "max": 0.010338888888888889,
+         "meanMedianRatio": 1.1923620508194257,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.0073429629629629635,
+        "multipleOfOverall": 0.8372988896442329,
+        "dayOfWeek": 0,
+        "hour": 14
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.0049900000000000005,
+         "median": 0.004943333333333333,
+         "stdev": 0.0024775518706184416,
+         "q1": 0.0037397222222222224,
+         "q3": 0.006216944444444445,
+         "iqr": 0.0024772222222222227,
+         "min": 0.002536111111111111,
+         "max": 0.007490555555555556,
+         "meanMedianRatio": 1.00944032366824,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.0049900000000000005,
+        "multipleOfOverall": 0.6721051438930432,
+        "dayOfWeek": 5,
+        "hour": 9
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.005382407407407408,
+         "median": 0.004357222222222222,
+         "stdev": 0.0046036453059375305,
+         "q1": 0.0028675000000000003,
+         "q3": 0.007384722222222222,
+         "iqr": 0.004517222222222222,
+         "min": 0.0013777777777777777,
+         "max": 0.010412222222222222,
+         "meanMedianRatio": 1.235284117472056,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.005382407407407408,
+        "multipleOfOverall": 0.5924163456454414,
+        "dayOfWeek": 0,
+        "hour": 11
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.0034135185185185184,
+         "median": 0.002052777777777778,
+         "stdev": 0.0028076171926406782,
+         "q1": 0.0017991666666666668,
+         "q3": 0.0043475,
+         "iqr": 0.002548333333333333,
+         "min": 0.0015455555555555557,
+         "max": 0.006642222222222222,
+         "meanMedianRatio": 1.6628777627424445,
+         "outlierDriven": true
+        },
+        "confidence": "LOW",
+        "headline": 0.002052777777777778,
+        "multipleOfOverall": 0.279099629881411,
+        "dayOfWeek": 0,
+        "hour": 16
+       }
+      ],
+      "byHour": [
+       {
+        "n": 9,
+        "distribution": {
+         "n": 9,
+         "mean": 0.01194141975308642,
+         "median": 0.012903333333333333,
+         "stdev": 0.007044512295453505,
+         "q1": 0.0061511111111111115,
+         "q3": 0.015686111111111112,
+         "iqr": 0.009535000000000002,
+         "min": 0.002536111111111111,
+         "max": 0.02164,
+         "meanMedianRatio": 0.9254523187615412,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.01194141975308642,
+        "multipleOfOverall": 1.7543621119419894,
+        "hour": 9
+       },
+       {
+        "n": 7,
+        "distribution": {
+         "n": 7,
+         "mean": 0.008177539682539684,
+         "median": 0.010164444444444445,
+         "stdev": 0.005359364836079749,
+         "q1": 0.0030458333333333336,
+         "q3": 0.011702777777777777,
+         "iqr": 0.008656944444444443,
+         "min": 0.0021138888888888887,
+         "max": 0.015467222222222222,
+         "meanMedianRatio": 0.8045240177400214,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.008177539682539684,
+        "multipleOfOverall": 1.3819774907470352,
+        "hour": 12
+       },
+       {
+        "n": 16,
+        "distribution": {
+         "n": 16,
+         "mean": 0.011831840277777778,
+         "median": 0.0096575,
+         "stdev": 0.010086912656663505,
+         "q1": 0.004986388888888889,
+         "q3": 0.01357486111111111,
+         "iqr": 0.008588472222222221,
+         "min": 0.002828888888888889,
+         "max": 0.042083888888888886,
+         "meanMedianRatio": 1.2251452526821411,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.011831840277777778,
+        "multipleOfOverall": 1.3130523453433036,
+        "hour": 8
+       },
+       {
+        "n": 7,
+        "distribution": {
+         "n": 7,
+         "mean": 0.010965317460317462,
+         "median": 0.009586666666666667,
+         "stdev": 0.0038401679122606423,
+         "q1": 0.008313333333333332,
+         "q3": 0.013434166666666667,
+         "iqr": 0.005120833333333335,
+         "min": 0.006439444444444445,
+         "max": 0.017236111111111112,
+         "meanMedianRatio": 1.1438091926617657,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.010965317460317462,
+        "multipleOfOverall": 1.303421708588262,
+        "hour": 10
+       },
+       {
+        "n": 5,
+        "distribution": {
+         "n": 5,
+         "mean": 0.008265666666666668,
+         "median": 0.009116666666666667,
+         "stdev": 0.005586765120011118,
+         "q1": 0.0034355555555555554,
+         "q3": 0.012386666666666667,
+         "iqr": 0.008951111111111111,
+         "min": 0.0017216666666666667,
+         "max": 0.014667777777777778,
+         "meanMedianRatio": 0.9066544789762341,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.008265666666666668,
+        "multipleOfOverall": 1.2395196011783367,
+        "hour": 15
+       },
+       {
+        "n": 11,
+        "distribution": {
+         "n": 11,
+         "mean": 0.010078131313131315,
+         "median": 0.006392222222222222,
+         "stdev": 0.013548141887250884,
+         "q1": 0.004644722222222222,
+         "q3": 0.008995555555555555,
+         "iqr": 0.004350833333333333,
+         "min": 0.0013777777777777777,
+         "max": 0.050034444444444444,
+         "meanMedianRatio": 1.5766240538533258,
+         "outlierDriven": true
+        },
+        "confidence": "OK",
+        "headline": 0.006392222222222222,
+        "multipleOfOverall": 0.8690988745373517,
+        "hour": 11
+       },
+       {
+        "n": 9,
+        "distribution": {
+         "n": 9,
+         "mean": 0.006461172839506173,
+         "median": 0.006158333333333333,
+         "stdev": 0.0025597254091202872,
+         "q1": 0.0055316666666666665,
+         "q3": 0.008696111111111111,
+         "iqr": 0.0031644444444444446,
+         "min": 0.0019644444444444444,
+         "max": 0.010338888888888889,
+         "meanMedianRatio": 1.0491755625720443,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.006461172839506173,
+        "multipleOfOverall": 0.8372988896442329,
+        "hour": 14
+       },
+       {
+        "n": 9,
+        "distribution": {
+         "n": 9,
+         "mean": 0.00692283950617284,
+         "median": 0.0053055555555555555,
+         "stdev": 0.005459124571181379,
+         "q1": 0.0038477777777777777,
+         "q3": 0.007097222222222223,
+         "iqr": 0.003249444444444445,
+         "min": 0.0015455555555555557,
+         "max": 0.016775,
+         "meanMedianRatio": 1.304828388598022,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.00692283950617284,
+        "multipleOfOverall": 0.7213535765541204,
+        "hour": 16
+       },
+       {
+        "n": 6,
+        "distribution": {
+         "n": 6,
+         "mean": 0.005047222222222222,
+         "median": 0.004535,
+         "stdev": 0.0024859023500184317,
+         "q1": 0.0032569444444444443,
+         "q3": 0.006680555555555556,
+         "iqr": 0.0034236111111111116,
+         "min": 0.00234,
+         "max": 0.008646666666666667,
+         "meanMedianRatio": 1.112948670831802,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.005047222222222222,
+        "multipleOfOverall": 0.6165873555404486,
+        "hour": 13
+       }
+      ],
+      "byDay": [
+       {
+        "n": 12,
+        "distribution": {
+         "n": 12,
+         "mean": 0.010509907407407407,
+         "median": 0.010506666666666668,
+         "stdev": 0.006801136053486371,
+         "q1": 0.005212222222222222,
+         "q3": 0.013705694444444444,
+         "iqr": 0.008493472222222222,
+         "min": 0.0019644444444444444,
+         "max": 0.02164,
+         "meanMedianRatio": 1.0003084461364917,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.010509907407407407,
+        "multipleOfOverall": 1.4285066847949242,
+        "dayOfWeek": 4
+       },
+       {
+        "n": 11,
+        "distribution": {
+         "n": 11,
+         "mean": 0.010603383838383839,
+         "median": 0.009116666666666667,
+         "stdev": 0.006698934853855985,
+         "q1": 0.006132222222222222,
+         "q3": 0.013553611111111112,
+         "iqr": 0.00742138888888889,
+         "min": 0.0028716666666666665,
+         "max": 0.025774444444444444,
+         "meanMedianRatio": 1.1630768378483187,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.010603383838383839,
+        "multipleOfOverall": 1.2395196011783367,
+        "dayOfWeek": 2
+       },
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.009441805555555554,
+         "median": 0.008883333333333333,
+         "stdev": 0.0024639369854172395,
+         "q1": 0.008260972222222222,
+         "q3": 0.010064166666666666,
+         "iqr": 0.001803194444444444,
+         "min": 0.007097222222222223,
+         "max": 0.012903333333333333,
+         "meanMedianRatio": 1.0628674171357095,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.009441805555555554,
+        "multipleOfOverall": 1.2077951506911397,
+        "dayOfWeek": 6
+       },
+       {
+        "n": 11,
+        "distribution": {
+         "n": 11,
+         "mean": 0.01448520202020202,
+         "median": 0.008696111111111111,
+         "stdev": 0.016304043167174268,
+         "q1": 0.004573611111111112,
+         "q3": 0.014528611111111112,
+         "iqr": 0.009955,
+         "min": 0.0022905555555555557,
+         "max": 0.050034444444444444,
+         "meanMedianRatio": 1.6657103198341299,
+         "outlierDriven": true
+        },
+        "confidence": "OK",
+        "headline": 0.008696111111111111,
+        "multipleOfOverall": 1.1823400558954602,
+        "dayOfWeek": 3
+       },
+       {
+        "n": 10,
+        "distribution": {
+         "n": 10,
+         "mean": 0.008113555555555556,
+         "median": 0.0066144444444444445,
+         "stdev": 0.004811487256131124,
+         "q1": 0.004365694444444445,
+         "q3": 0.012577361111111112,
+         "iqr": 0.008211666666666667,
+         "min": 0.00234,
+         "max": 0.015134444444444445,
+         "meanMedianRatio": 1.2266420292289604,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.008113555555555556,
+        "multipleOfOverall": 0.8993126369061107,
+        "dayOfWeek": 1
+       },
+       {
+        "n": 16,
+        "distribution": {
+         "n": 16,
+         "mean": 0.006526562500000001,
+         "median": 0.006415833333333333,
+         "stdev": 0.003428206937650638,
+         "q1": 0.004271527777777778,
+         "q3": 0.007612361111111111,
+         "iqr": 0.0033408333333333337,
+         "min": 0.0017216666666666667,
+         "max": 0.015467222222222222,
+         "meanMedianRatio": 1.0172587349006366,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.006526562500000001,
+        "multipleOfOverall": 0.8723090867890323,
+        "dayOfWeek": 5
+       },
+       {
+        "n": 15,
+        "distribution": {
+         "n": 15,
+         "mean": 0.007219222222222223,
+         "median": 0.006158333333333333,
+         "stdev": 0.005005680779928614,
+         "q1": 0.0031619444444444447,
+         "q3": 0.010375555555555555,
+         "iqr": 0.00721361111111111,
+         "min": 0.0013777777777777777,
+         "max": 0.017236111111111112,
+         "meanMedianRatio": 1.1722688317546235,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.007219222222222223,
+        "multipleOfOverall": 0.8372988896442329,
+        "dayOfWeek": 0
+       }
+      ],
+      "overall": {
+       "n": 79,
+       "mean": 0.009287461322081575,
+       "median": 0.007355,
+       "stdev": 0.007928850449456968,
+       "q1": 0.004385,
+       "q3": 0.012324444444444443,
+       "iqr": 0.007939444444444443,
+       "min": 0.0013777777777777777,
+       "max": 0.050034444444444444,
+       "meanMedianRatio": 1.2627411722748572,
+       "outlierDriven": false
+      },
+      "ratedPosts": 79,
+      "suppressedCells": 34,
+      "suppressedPosts": 50
+     }
+    }
+   },
+   {
+    "accountId": "cms6d04xw000030vtab21zseb",
+    "personName": "Shashi Tharoor",
+    "platform": "X",
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "byBasis": {
+     "VIEWS": {
+      "basis": "VIEWS",
+      "timezone": "Asia/Kolkata",
+      "grid": [
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.06022335705960755,
+         "median": 0.062019312014399516,
+         "stdev": 0.02709628364268896,
+         "q1": 0.04714654178712638,
+         "q3": 0.07419814980948472,
+         "iqr": 0.027051608022358342,
+         "min": 0.03227377155985324,
+         "max": 0.08637698760456991,
+         "meanMedianRatio": 0.9710420045553717,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.06022335705960755,
+        "multipleOfOverall": 1.6500091549393718,
+        "dayOfWeek": 3,
+        "hour": 9
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.048712273843883776,
+         "median": 0.055869209620605195,
+         "stdev": 0.01753074319145882,
+         "q1": 0.04230225996340373,
+         "q3": 0.05870075561272454,
+         "iqr": 0.01639849564932081,
+         "min": 0.02873531030620226,
+         "max": 0.06153230160484388,
+         "meanMedianRatio": 0.871898388659469,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.048712273843883776,
+        "multipleOfOverall": 1.4863871326373654,
+        "dayOfWeek": 3,
+        "hour": 13
+       },
+       {
+        "n": 5,
+        "distribution": {
+         "n": 5,
+         "mean": 0.056622689907676674,
+         "median": 0.052131978328701305,
+         "stdev": 0.034680008367969986,
+         "q1": 0.04179959936770352,
+         "q3": 0.05675228407314535,
+         "iqr": 0.01495268470544183,
+         "min": 0.019380577194483647,
+         "max": 0.11304901057434952,
+         "meanMedianRatio": 1.086141207814149,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.056622689907676674,
+        "multipleOfOverall": 1.3869589763828167,
+        "dayOfWeek": 3,
+        "hour": 10
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.05348999197945903,
+         "median": 0.05008961153937509,
+         "stdev": 0.017099053516465665,
+         "q1": 0.04421811423738831,
+         "q3": 0.06106167950148777,
+         "iqr": 0.016843565264099455,
+         "min": 0.038346616935401534,
+         "max": 0.07203374746360044,
+         "meanMedianRatio": 1.067885941527235,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.05348999197945903,
+        "multipleOfOverall": 1.3326222901043563,
+        "dayOfWeek": 4,
+        "hour": 11
+       },
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.0487121682890976,
+         "median": 0.049173065235349145,
+         "stdev": 0.027088811821222924,
+         "q1": 0.02885391385456401,
+         "q3": 0.06903131966988274,
+         "iqr": 0.04017740581531873,
+         "min": 0.019988777413263607,
+         "max": 0.07651376527242851,
+         "meanMedianRatio": 0.9906270446219769,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.0487121682890976,
+        "multipleOfOverall": 1.3082377920593355,
+        "dayOfWeek": 5,
+        "hour": 9
+       },
+       {
+        "n": 5,
+        "distribution": {
+         "n": 5,
+         "mean": 0.04538067217939436,
+         "median": 0.040456377243942014,
+         "stdev": 0.030691908788185517,
+         "q1": 0.025513414564384187,
+         "q3": 0.050349151332891584,
+         "iqr": 0.024835736768507397,
+         "min": 0.015745694809332203,
+         "max": 0.0948387229464218,
+         "meanMedianRatio": 1.1217186330293505,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04538067217939436,
+        "multipleOfOverall": 1.0763323658393136,
+        "dayOfWeek": 5,
+        "hour": 15
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.03838008312832539,
+         "median": 0.04044354541403663,
+         "stdev": 0.01946505177005337,
+         "q1": 0.029204524230700114,
+         "q3": 0.04858737316880628,
+         "iqr": 0.019382848938106163,
+         "min": 0.0179655030473636,
+         "max": 0.05673120092357593,
+         "meanMedianRatio": 0.9489791939705889,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.03838008312832539,
+        "multipleOfOverall": 1.075990978033954,
+        "dayOfWeek": 3,
+        "hour": 15
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.04807024233540791,
+         "median": 0.039250695503105296,
+         "stdev": 0.019357490979104337,
+         "q1": 0.03697190083938959,
+         "q3": 0.054758810415274924,
+         "iqr": 0.017786909575885336,
+         "min": 0.03469310617567388,
+         "max": 0.07026692532744455,
+         "meanMedianRatio": 1.2246978485159545,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.04807024233540791,
+        "multipleOfOverall": 1.0442554877555654,
+        "dayOfWeek": 0,
+        "hour": 10
+       },
+       {
+        "n": 6,
+        "distribution": {
+         "n": 6,
+         "mean": 0.04506266110779808,
+         "median": 0.03720812934471845,
+         "stdev": 0.026963094671031376,
+         "q1": 0.025714350979099295,
+         "q3": 0.05958629951759666,
+         "iqr": 0.03387194853849737,
+         "min": 0.0185333290335064,
+         "max": 0.08849759782472956,
+         "meanMedianRatio": 1.2110971957313557,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04506266110779808,
+        "multipleOfOverall": 0.9899134973103129,
+        "dayOfWeek": 2,
+        "hour": 12
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.03446817000649428,
+         "median": 0.03420760320087049,
+         "stdev": 0.016700281828342257,
+         "q1": 0.026053649707687896,
+         "q3": 0.04275240690248877,
+         "iqr": 0.016698757194800875,
+         "min": 0.017899696214505302,
+         "max": 0.051297210604107045,
+         "meanMedianRatio": 1.0076172190168868,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.03446817000649428,
+        "multipleOfOverall": 0.9100852076021883,
+        "dayOfWeek": 6,
+        "hour": 12
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.025537495680636516,
+         "median": 0.0289469132678951,
+         "stdev": 0.01110678030670433,
+         "q1": 0.021036288819555535,
+         "q3": 0.03174341133534679,
+         "iqr": 0.010707122515791256,
+         "min": 0.013125664371215973,
+         "max": 0.03453990940279848,
+         "meanMedianRatio": 0.8822182677750323,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.025537495680636516,
+        "multipleOfOverall": 0.7701257938522995,
+        "dayOfWeek": 0,
+        "hour": 13
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.02511779463520933,
+         "median": 0.02519241929877171,
+         "stdev": 0.0019188678649243235,
+         "q1": 0.024177561175969586,
+         "q3": 0.026095340426230258,
+         "iqr": 0.0019177792502606712,
+         "min": 0.023162703053167463,
+         "max": 0.026998261553688806,
+         "meanMedianRatio": 0.9970378127373413,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.02511779463520933,
+        "multipleOfOverall": 0.6702383681456112,
+        "dayOfWeek": 0,
+        "hour": 9
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.040050019790389725,
+         "median": 0.024037435850547306,
+         "stdev": 0.02861201439025413,
+         "q1": 0.023533428694816748,
+         "q3": 0.0485603189160415,
+         "iqr": 0.02502689022122475,
+         "min": 0.023029421539086194,
+         "max": 0.07308320198153569,
+         "meanMedianRatio": 1.6661519156785531,
+         "outlierDriven": true
+        },
+        "confidence": "LOW",
+        "headline": 0.024037435850547306,
+        "multipleOfOverall": 0.6395103061682187,
+        "dayOfWeek": 2,
+        "hour": 14
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.022950672721284624,
+         "median": 0.018526629916100452,
+         "stdev": 0.009724337444899202,
+         "q1": 0.01737578009366483,
+         "q3": 0.026313543946312336,
+         "iqr": 0.008937763852647506,
+         "min": 0.016224930271229208,
+         "max": 0.034100457976524216,
+         "meanMedianRatio": 1.2387937161382754,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.022950672721284624,
+        "multipleOfOverall": 0.4928966152452952,
+        "dayOfWeek": 2,
+        "hour": 15
+       },
+       {
+        "n": 3,
+        "distribution": {
+         "n": 3,
+         "mean": 0.01810804563698688,
+         "median": 0.01826160712335549,
+         "stdev": 0.0016681202162508852,
+         "q1": 0.017315030691015285,
+         "q3": 0.018977841326142778,
+         "iqr": 0.001662810635127493,
+         "min": 0.01636845425867508,
+         "max": 0.019694075528930065,
+         "meanMedianRatio": 0.9915910201478261,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.01810804563698688,
+        "multipleOfOverall": 0.4858457464095484,
+        "dayOfWeek": 6,
+        "hour": 11
+       }
+      ],
+      "byHour": [
+       {
+        "n": 13,
+        "distribution": {
+         "n": 13,
+         "mean": 0.04374820649909475,
+         "median": 0.039250695503105296,
+         "stdev": 0.026723608109539408,
+         "q1": 0.022920167852879487,
+         "q3": 0.05234766188576763,
+         "iqr": 0.029427494032888142,
+         "min": 0.015549586279849377,
+         "max": 0.11304901057434952,
+         "meanMedianRatio": 1.1145842370011925,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04374820649909475,
+        "multipleOfOverall": 1.0442554877555654,
+        "hour": 10
+       },
+       {
+        "n": 11,
+        "distribution": {
+         "n": 11,
+         "mean": 0.04316608316386521,
+         "median": 0.038346616935401534,
+         "stdev": 0.025076301430165857,
+         "q1": 0.023909828393839767,
+         "q3": 0.05682315843596477,
+         "iqr": 0.032913330042125,
+         "min": 0.01636845425867508,
+         "max": 0.09551909154796033,
+         "meanMedianRatio": 1.125681653653633,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04316608316386521,
+        "multipleOfOverall": 1.0202026908920767,
+        "hour": 11
+       },
+       {
+        "n": 10,
+        "distribution": {
+         "n": 10,
+         "mean": 0.05227232763220685,
+         "median": 0.037903978756395174,
+         "stdev": 0.03078588517841148,
+         "q1": 0.033253829026638156,
+         "q3": 0.05675916781406399,
+         "iqr": 0.023505338787425833,
+         "min": 0.024348847414749995,
+         "max": 0.11865307146335345,
+         "meanMedianRatio": 1.3790723123858717,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.05227232763220685,
+        "multipleOfOverall": 1.0084264066353823,
+        "hour": 8
+       },
+       {
+        "n": 4,
+        "distribution": {
+         "n": 4,
+         "mean": 0.044139424187651724,
+         "median": 0.035044835157427824,
+         "stdev": 0.023986898338861484,
+         "q1": 0.029206314467544497,
+         "q3": 0.049977944877535055,
+         "iqr": 0.020771630409990558,
+         "min": 0.02734159549933429,
+         "max": 0.07912643093641696,
+         "meanMedianRatio": 1.259512963589908,
+         "outlierDriven": false
+        },
+        "confidence": "LOW",
+        "headline": 0.044139424187651724,
+        "multipleOfOverall": 0.9323595661569343,
+        "hour": 16
+       },
+       {
+        "n": 16,
+        "distribution": {
+         "n": 16,
+         "mean": 0.04318213209850649,
+         "median": 0.0348971090913553,
+         "stdev": 0.02315806386576884,
+         "q1": 0.030569178300610032,
+         "q3": 0.05175370460399631,
+         "iqr": 0.021184526303386277,
+         "min": 0.017899696214505302,
+         "max": 0.09772490253453131,
+         "meanMedianRatio": 1.2374128752459772,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04318213209850649,
+        "multipleOfOverall": 0.9284293490434931,
+        "hour": 12
+       },
+       {
+        "n": 11,
+        "distribution": {
+         "n": 11,
+         "mean": 0.04235333681464865,
+         "median": 0.03453990940279848,
+         "stdev": 0.022961886054282996,
+         "q1": 0.02656375027466308,
+         "q3": 0.05686997856798697,
+         "iqr": 0.03030622829332389,
+         "min": 0.013125664371215973,
+         "max": 0.09056842402743802,
+         "meanMedianRatio": 1.226214473255599,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04235333681464865,
+        "multipleOfOverall": 0.9189261356553245,
+        "hour": 13
+       },
+       {
+        "n": 8,
+        "distribution": {
+         "n": 8,
+         "mean": 0.038804480061819,
+         "median": 0.03306273228662335,
+         "stdev": 0.020090254615824574,
+         "q1": 0.023785432272682025,
+         "q3": 0.05018361001980196,
+         "iqr": 0.026398177747119937,
+         "min": 0.017210522347488263,
+         "max": 0.07308320198153569,
+         "meanMedianRatio": 1.1736622286815257,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.038804480061819,
+        "multipleOfOverall": 0.8796261872039451,
+        "hour": 14
+       },
+       {
+        "n": 14,
+        "distribution": {
+         "n": 14,
+         "mean": 0.03784957680254726,
+         "median": 0.03180813917151405,
+         "stdev": 0.0227644750456712,
+         "q1": 0.019755842698972896,
+         "q3": 0.04787595781065419,
+         "iqr": 0.028120115111681297,
+         "min": 0.015745694809332203,
+         "max": 0.0948387229464218,
+         "meanMedianRatio": 1.1899337021401004,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.03784957680254726,
+        "multipleOfOverall": 0.8462480335544237,
+        "hour": 15
+       },
+       {
+        "n": 12,
+        "distribution": {
+         "n": 12,
+         "mean": 0.041485825310971364,
+         "median": 0.030191349225684037,
+         "stdev": 0.02420276052235901,
+         "q1": 0.024684990237370648,
+         "q3": 0.06314877679472483,
+         "iqr": 0.03846378655735418,
+         "min": 0.018384036374444704,
+         "max": 0.08637698760456991,
+         "meanMedianRatio": 1.374096434076521,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.041485825310971364,
+        "multipleOfOverall": 0.8032337187291629,
+        "hour": 9
+       }
+      ],
+      "byDay": [
+       {
+        "n": 11,
+        "distribution": {
+         "n": 11,
+         "mean": 0.050844580003847416,
+         "median": 0.05008961153937509,
+         "stdev": 0.017896817729703158,
+         "q1": 0.03526808585618167,
+         "q3": 0.06333346157677175,
+         "iqr": 0.028065375720590077,
+         "min": 0.030981262615445523,
+         "max": 0.0815090909090909,
+         "meanMedianRatio": 1.0150723561487165,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.050844580003847416,
+        "multipleOfOverall": 1.3326222901043563,
+        "dayOfWeek": 4
+       },
+       {
+        "n": 17,
+        "distribution": {
+         "n": 17,
+         "mean": 0.049195883145485196,
+         "median": 0.04179959936770352,
+         "stdev": 0.023839636886068032,
+         "q1": 0.03558661498184011,
+         "q3": 0.05675228407314535,
+         "iqr": 0.02116566909130524,
+         "min": 0.0179655030473636,
+         "max": 0.11304901057434952,
+         "meanMedianRatio": 1.1769462839276976,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.049195883145485196,
+        "multipleOfOverall": 1.1120684733409416,
+        "dayOfWeek": 3
+       },
+       {
+        "n": 19,
+        "distribution": {
+         "n": 19,
+         "mean": 0.050157399839254685,
+         "median": 0.040456377243942014,
+         "stdev": 0.026863688690930008,
+         "q1": 0.026427505031859238,
+         "q3": 0.06504693823412763,
+         "iqr": 0.03861943320226839,
+         "min": 0.015745694809332203,
+         "max": 0.09772490253453131,
+         "meanMedianRatio": 1.2397897008132461,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.050157399839254685,
+        "multipleOfOverall": 1.0763323658393136,
+        "dayOfWeek": 5
+       },
+       {
+        "n": 19,
+        "distribution": {
+         "n": 19,
+         "mean": 0.04368781232776612,
+         "median": 0.04026178285790775,
+         "stdev": 0.02413376324107301,
+         "q1": 0.023533428694816748,
+         "q3": 0.05612790957623269,
+         "iqr": 0.03259448088141594,
+         "min": 0.016224930271229208,
+         "max": 0.09551909154796033,
+         "meanMedianRatio": 1.0850938340696323,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04368781232776612,
+        "multipleOfOverall": 1.0711552281377248,
+        "dayOfWeek": 2
+       },
+       {
+        "n": 16,
+        "distribution": {
+         "n": 16,
+         "mean": 0.04199809293860376,
+         "median": 0.03697190083938959,
+         "stdev": 0.018505149391477307,
+         "q1": 0.028459750339343524,
+         "q3": 0.05485675776884002,
+         "iqr": 0.026397007429496494,
+         "min": 0.013125664371215973,
+         "max": 0.07912643093641696,
+         "meanMedianRatio": 1.1359462723068678,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.04199809293860376,
+        "multipleOfOverall": 0.9836286936936626,
+        "dayOfWeek": 0
+       },
+       {
+        "n": 9,
+        "distribution": {
+         "n": 9,
+         "mean": 0.047419569166393824,
+         "median": 0.03321753063622026,
+         "stdev": 0.03453753030820099,
+         "q1": 0.028125581258749473,
+         "q3": 0.052660493827160496,
+         "iqr": 0.024534912568411022,
+         "min": 0.016907037276734045,
+         "max": 0.11865307146335345,
+         "meanMedianRatio": 1.4275464869952652,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.047419569166393824,
+        "multipleOfOverall": 0.883744560750964,
+        "dayOfWeek": 1
+       },
+       {
+        "n": 16,
+        "distribution": {
+         "n": 16,
+         "mean": 0.02690051412276834,
+         "median": 0.02389616423117011,
+         "stdev": 0.01091959917947791,
+         "q1": 0.018171129396142946,
+         "q3": 0.030922816392928546,
+         "iqr": 0.0127516869967856,
+         "min": 0.015549586279849377,
+         "max": 0.051297210604107045,
+         "meanMedianRatio": 1.1257251943255129,
+         "outlierDriven": false
+        },
+        "confidence": "OK",
+        "headline": 0.02690051412276834,
+        "multipleOfOverall": 0.6357518080853738,
+        "dayOfWeek": 6
+       }
+      ],
+      "overall": {
+       "n": 107,
+       "mean": 0.043998441683817426,
+       "median": 0.03758725327598462,
+       "stdev": 0.023548821730220215,
+       "q1": 0.02535291693157795,
+       "q3": 0.05763058678363202,
+       "iqr": 0.03227766985205407,
+       "min": 0.013125664371215973,
+       "max": 0.11865307146335345,
+       "meanMedianRatio": 1.1705681540696422,
+       "outlierDriven": false
+      },
+      "ratedPosts": 107,
+      "suppressedCells": 39,
+      "suppressedPosts": 54
+     },
+     "FOLLOWERS": {
+      "basis": "FOLLOWERS",
+      "timezone": "Asia/Kolkata",
+      "grid": [],
+      "byHour": [],
+      "byDay": [],
+      "overall": {
+       "n": 1,
+       "mean": 0.04234444444444444,
+       "median": 0.04234444444444444,
+       "stdev": null,
+       "q1": 0.04234444444444444,
+       "q3": 0.04234444444444444,
+       "iqr": 0,
+       "min": 0.04234444444444444,
+       "max": 0.04234444444444444,
+       "meanMedianRatio": 1,
+       "outlierDriven": false
+      },
+      "ratedPosts": 1,
+      "suppressedCells": 1,
+      "suppressedPosts": 1
+     }
+    }
+   }
+  ]
+ },
+ "accounts": {
+  "accounts": [
+   {
+    "id": "cms6d0522000130vtv3bus307",
+    "personName": "Shashi Tharoor",
+    "role": "PRINCIPAL",
+    "platform": "INSTAGRAM",
+    "handle": "shashitharoor",
+    "displayName": "Shashi Tharoor",
+    "followerCount": 1800000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 96,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d056e000230vthrvqwwq0",
+    "personName": "Shashi Tharoor",
+    "role": "PRINCIPAL",
+    "platform": "FACEBOOK",
+    "handle": "ShashiTharoor",
+    "displayName": "Shashi Tharoor",
+    "followerCount": 1800000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 96,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d04xw000030vtab21zseb",
+    "personName": "Shashi Tharoor",
+    "role": "PRINCIPAL",
+    "platform": "X",
+    "handle": "ShashiTharoor",
+    "displayName": "Shashi Tharoor",
+    "followerCount": 1800000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 108,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d05ar000330vtu6djff73",
+    "personName": "Shashi Tharoor",
+    "role": "PRINCIPAL",
+    "platform": "YOUTUBE",
+    "handle": "ShashiTharoorOfficial",
+    "displayName": "Shashi Tharoor",
+    "followerCount": 835000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": false,
+    "postCount": 37,
+    "liveAdapterAvailable": true
+   },
+   {
+    "id": "cms6d06er000d30vtojvqezr6",
+    "personName": "Kanhaiya Kumar",
+    "role": "COMPETITOR",
+    "platform": "INSTAGRAM",
+    "handle": "kanhaiyakumar",
+    "displayName": "Kanhaiya Kumar",
+    "followerCount": 900000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 74,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d06j8000e30vtpsq221vu",
+    "personName": "Kanhaiya Kumar",
+    "role": "COMPETITOR",
+    "platform": "FACEBOOK",
+    "handle": "kanhaiyakumar",
+    "displayName": "Kanhaiya Kumar",
+    "followerCount": 900000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 74,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d06ao000c30vtvqkwneib",
+    "personName": "Kanhaiya Kumar",
+    "role": "COMPETITOR",
+    "platform": "X",
+    "handle": "kanhaiyakumar",
+    "displayName": "Kanhaiya Kumar",
+    "followerCount": 900000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 74,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d06nd000f30vt1flmjemg",
+    "personName": "Kanhaiya Kumar",
+    "role": "COMPETITOR",
+    "platform": "YOUTUBE",
+    "handle": "KanhaiyaKumar",
+    "displayName": "Kanhaiya Kumar",
+    "followerCount": 3710000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": false,
+    "postCount": 34,
+    "liveAdapterAvailable": true
+   },
+   {
+    "id": "cms6d05is000530vt795nll3p",
+    "personName": "Priyanka Chaturvedi",
+    "role": "COMPETITOR",
+    "platform": "INSTAGRAM",
+    "handle": "priyankac19",
+    "displayName": "Priyanka Chaturvedi",
+    "followerCount": 1100000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 62,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d05mp000630vtsjk60o6i",
+    "personName": "Priyanka Chaturvedi",
+    "role": "COMPETITOR",
+    "platform": "FACEBOOK",
+    "handle": "priyankachaturvedi",
+    "displayName": "Priyanka Chaturvedi",
+    "followerCount": 1100000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 62,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d05ep000430vtheabikty",
+    "personName": "Priyanka Chaturvedi",
+    "role": "COMPETITOR",
+    "platform": "X",
+    "handle": "priyankac19",
+    "displayName": "Priyanka Chaturvedi",
+    "followerCount": 1100000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 62,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6etbon0007c4vtziflqvno",
+    "personName": "Priyanka Chaturvedi",
+    "role": "COMPETITOR",
+    "platform": "YOUTUBE",
+    "handle": "PriyankaChaturvediOfficial",
+    "displayName": "Priyanka Chaturvedi",
+    "followerCount": 42700,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": false,
+    "postCount": 37,
+    "liveAdapterAvailable": true
+   },
+   {
+    "id": "cms6d05yb000930vtag4ns397",
+    "personName": "Varun Gandhi",
+    "role": "COMPETITOR",
+    "platform": "INSTAGRAM",
+    "handle": "varunferozegandhi",
+    "displayName": "Varun Gandhi",
+    "followerCount": 1400000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 31,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d062c000a30vtqe8e3aew",
+    "personName": "Varun Gandhi",
+    "role": "COMPETITOR",
+    "platform": "FACEBOOK",
+    "handle": "VarunGandhiOfficial",
+    "displayName": "Varun Gandhi",
+    "followerCount": 1400000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 31,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d05ug000830vta9rggbqb",
+    "personName": "Varun Gandhi",
+    "role": "COMPETITOR",
+    "platform": "X",
+    "handle": "varungandhi80",
+    "displayName": "Varun Gandhi",
+    "followerCount": 1400000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 31,
+    "liveAdapterAvailable": false
+   },
+   {
+    "id": "cms6d066m000b30vtpwl9l2bx",
+    "personName": "Varun Gandhi",
+    "role": "COMPETITOR",
+    "platform": "YOUTUBE",
+    "handle": "VarunGandhi",
+    "displayName": "Varun Gandhi",
+    "followerCount": 1400000,
+    "timezone": "Asia/Kolkata",
+    "isSynthetic": true,
+    "postCount": 31,
+    "liveAdapterAvailable": true
+   }
+  ]
+ }
+}

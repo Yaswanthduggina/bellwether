@@ -278,7 +278,12 @@ Module D — classification:
 
 - Alignment, not position. `responseSchema` constrains shape but **not count or order**; a positional zip of results to posts would shift every label by one and write a whole batch of confidently wrong themes with no error. Out-of-order, skipped, duplicated, out-of-range and non-integer indices are all pinned.
 
-Still to write (Day 3): the recommendation validator — a fabricated number and a non-existent `post_id` must both be rejected.
+Module D — the recommendation validator (`src/__tests__/validate.test.ts`):
+
+- A fabricated number and a non-existent `post_id` are both rejected, as promised above.
+- A number lifted from a post **caption** is rejected too. `collectEvidence` deliberately leaves captions unindexed, so a rationale quoting "₹5,000 crore" out of a post fails — that figure is a claim about the world this system has not verified and cannot check.
+- The counterweight: a figure that appears **only inside the report's own pre-written prose** is accepted. Every number the model can see must be a number the validator accepts, or the only way to make the pipeline pass is to loosen the validator until it stops checking. Building this found a second live instance of that break — a gap's hour exists only in its `label` (`"20:00"`), which was unindexed, so the model would have been rejected for naming the very hour it was told about.
+- Verified on the real 940-post corpus rather than only on fixtures: every numeric literal in the report's own prose validates, across three filters, zero failures.
 
 **The round-trip tests are the ones worth reading.** Every multiplier the seed generator plants — format quality, the 7–9pm IST peak, the midweek lift, the theme ranking — is an exported constant, so the analytics tests run the real generator through the real pipeline and assert the engine **recovered a pattern that was deliberately put there**. That is a much stronger claim than "it computed a number without crashing."
 
@@ -290,7 +295,10 @@ One of them earned its keep: pooling format statistics across accounts turned ou
 
 <!-- UPDATE THIS TABLE AS YOU BUILD — it is the first thing a reviewer reads -->
 
-**Day 3 of 4 in progress.** Ingestion runs end to end — **940 posts** in Postgres across four platforms, **108 of them live** from the YouTube Data API. Every number the product shows is computed and tested, the REST API is up, and theme classification is running. `npm test` → **265 passing**, `tsc --noEmit` clean.
+**Day 3 of 4 complete.** Ingestion runs end to end — **940 posts** in Postgres across four platforms, **108 of them live** from the YouTube Data API. Every number the product shows is computed and tested, the REST API is up, all 940 posts are classified, the grounded recommendation layer is in, and the portal runs in a browser.
+
+`cd server && npm test` → **293 passing**, `tsc --noEmit` clean.
+`cd client && npm test` → **10 passing**, `npm run build` clean.
 
 | Module | Status |
 |---|---|
@@ -308,9 +316,9 @@ One of them earned its keep: pooling format statistics across accounts turned ou
 | C — Gap analysis (formats · hours · days · themes) | ✅ Done |
 | C — Comparison: cadence, format mix, best windows | ✅ Done |
 | API — Express routes, accounts CRUD, shared filters | ✅ Done |
-| D — Theme classification | 🔨 **450 of 940 classified** — free-tier quota exhausted mid-run, see below |
-| D — Grounded recommendations + validator | ⬜ — next |
-| E — React portal | ⬜ — `client/` is still an empty directory |
+| D — Theme classification | ✅ Done — **940 of 940 classified** |
+| D — Grounded recommendations + validator | ✅ Done — generator, pure validator, retry-then-drop, drop count reported |
+| E — React portal — dashboard, filters, accounts CRUD | ✅ Done — recommendations panel at the top, SEEDED badges throughout |
 | Docs — README / DECISIONS.md / sample report / video | 🔨 README + `DECISIONS.md` current; report and video pending |
 
 **Corpus as ingested** (`npm run seed && npm run ingest -- --platform=YOUTUBE`):
