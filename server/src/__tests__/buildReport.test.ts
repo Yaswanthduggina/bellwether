@@ -137,6 +137,43 @@ describe("collectEvidence — what the validator will accept", () => {
         expect(evidence.numbers.has(1.63)).toBe(true);
     });
 
+    it("indexes the hour a gap is about, which exists only in its label", () => {
+        // THE SECOND INSTANCE OF THE SAME REGRESSION, found by validate.test.ts.
+        //
+        // `ReportGap` carries no numeric hour field — the hour lives in
+        // `label: "18:00"` and nowhere else. While labels were unindexed, a
+        // model could read "peers earn 1.43× at 18:00" out of its own evidence
+        // and be rejected as a fabricator for writing 18:00 back.
+        //
+        // That is not a cosmetic rejection. A timing recommendation cannot be
+        // written without naming the hour, and timing is the one thing the
+        // principal's own corpus cannot produce (gaps.ts) — so the hole sat
+        // exactly on this product's most important output.
+        const withHourLabel = structuredClone(report) as AnalyticsReport;
+        withHourLabel.platforms[0]!.bases[0]!.gaps[0] = {
+            ...withHourLabel.platforms[0]!.bases[0]!.gaps[0]!,
+            dimension: "HOUR",
+            label: "18:00",
+        };
+
+        expect(collectEvidence(withHourLabel).numbers.has(18)).toBe(true);
+    });
+
+    it("indexes peer agreement counts", () => {
+        // "2 of 3" is two computed counts. A model writing "2 of 3 peers agree"
+        // is restating verified evidence.
+        expect(evidence.numbers.has(2)).toBe(true);
+        expect(evidence.numbers.has(3)).toBe(true);
+    });
+
+    it("still refuses to index numbers that come from post captions", () => {
+        // The counterweight to the two tests above. Widening what counts as
+        // indexable prose must not reach captions: "₹5000 crore" is a claim
+        // about the world this system has not verified and cannot check.
+        expect(evidence.numbers.has(5000)).toBe(false);
+        expect(evidence.numbers.has(250)).toBe(false);
+    });
+
     it("indexes per-peer figures that exist nowhere but the prose", () => {
         // "Priyanka Chaturvedi (n=8, 1.45×)" — these appear in no structured
         // field, and indexing the sentence is the only thing making them citable.

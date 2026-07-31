@@ -477,6 +477,23 @@ export interface Evidence {
 }
 
 /**
+ * Every numeric literal in a string, as it was WRITTEN.
+ *
+ * Exported because `validate.ts` must use this exact function rather than its
+ * own. Indexing and checking are two halves of one contract, and two regexes
+ * that agree today drift apart the first time either is edited — at which point
+ * the validator starts rejecting numbers that ARE in the evidence, which is the
+ * pressure that gets validators loosened until they stop checking.
+ *
+ * The strings are returned unparsed because the written form carries the
+ * PRECISION, and `validate.ts` needs that to tell a legitimate coarser
+ * restatement of a verified figure from a fabricated one.
+ */
+export function numericLiterals(text: string): string[] {
+    return text.match(/-?\d+(?:\.\d+)?/g) ?? [];
+}
+
+/**
  * Walk the report and index every number and post id in it.
  *
  * Generic rather than a hand-maintained list of fields, for one reason: a
@@ -510,8 +527,37 @@ export function collectEvidence(report: AnalyticsReport): Evidence {
         else numbers.set(value, [path]);
     };
 
-    /** Prose this module composed from verified figures. Numeric literals count. */
-    const PROSE_KEYS = new Set(["sentence", "comparisonSentence", "provenanceCaveat", "notes", "truncations"]);
+    /**
+     * Prose this module composed from verified figures. Numeric literals count.
+     *
+     * `label` and `peerAgreement` are here rather than on the opaque list, and
+     * the reason is a second instance of the same invariant break the doc
+     * comment below describes — caught by the validator's own tests.
+     *
+     * A `ReportGap` has no numeric hour field. The hour a gap is ABOUT exists
+     * only inside its label, as "20:00". With labels unindexed, the model could
+     * read "peers earn 1.72× at 20:00" straight out of its evidence and be
+     * rejected as a fabricator the moment it wrote 20:00 back — and a timing
+     * recommendation cannot be written without naming the hour. That is the
+     * single most important recommendation this product makes, because the
+     * principal's own corpus cannot produce one (see gaps.ts).
+     *
+     * `peerAgreement` is "2 of 3": two computed counts, and a model writing
+     * "2 of 3 peers agree" is restating verified evidence, not inventing it.
+     *
+     * Neither addition meaningfully widens the accepted set — labels are
+     * otherwise enum names with no digits in them — and both close a hole where
+     * the model is punished for reading what it was given.
+     */
+    const PROSE_KEYS = new Set([
+        "sentence",
+        "comparisonSentence",
+        "provenanceCaveat",
+        "notes",
+        "truncations",
+        "label",
+        "peerAgreement",
+    ]);
 
     /**
      * Fields whose digits are not claims about performance.
@@ -527,10 +573,8 @@ export function collectEvidence(report: AnalyticsReport): Evidence {
         "postedAt",
         "permalink",
         "captionExcerpt",
-        "label",
         "timezone",
         "denominator",
-        "peerAgreement",
         "mediaType",
         "dimension",
         "kind",
@@ -538,10 +582,8 @@ export function collectEvidence(report: AnalyticsReport): Evidence {
         "basis",
     ]);
 
-    const NUMERIC_LITERAL = /-?\d+(?:\.\d+)?/g;
-
     const recordProse = (text: string, path: string) => {
-        for (const match of text.match(NUMERIC_LITERAL) ?? []) record(Number(match), path);
+        for (const match of numericLiterals(text)) record(Number(match), path);
     };
 
     const walk = (node: unknown, path: string) => {

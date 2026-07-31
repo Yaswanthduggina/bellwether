@@ -15,7 +15,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "classify": "tsx src/scripts/classify.ts"
+    "classify": "tsx src/scripts/classify.ts",
+    "recommend": "tsx src/scripts/recommend.ts"
   },
   "keywords": [],
   "author": "",

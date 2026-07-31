@@ -1,8 +1,5 @@
 // The AI routes.
 //
-// `GET /api/ai/recommendations` lands here on Day 3's second half, alongside
-// recommend.ts and validate.ts. Classification is complete.
-//
 // One thing this file gets right that is easy to get wrong: a missing API key
 // is a 503 with instructions, not a 500. The analytics half of this product
 // works fully without any key at all, so "no key" is a degraded-but-expected
@@ -10,8 +7,22 @@
 
 import { Router } from "express";
 import { classificationStatus, classifyPosts, MIN_CONFIDENCE } from "../ai/classify";
-import { CLASSIFY_MODEL, hasApiKey, MissingApiKeyError } from "../ai/gemini";
+import { CLASSIFY_MODEL, hasApiKey, MissingApiKeyError, QuotaExhaustedError, RECOMMEND_MODEL } from "../ai/gemini";
+import { generateRecommendations, MAX_RECOMMENDATIONS } from "../ai/recommend";
+import { MIN_RECOMMENDATION_N } from "../ai/validate";
+import { parseFilter } from "./filters";
 import { ApiError, route } from "./http";
+
+/** A spent quota is not a bug, so it is not a 500. 503 with what to do about it. */
+function asApiError(error: unknown): ApiError | null {
+    if (error instanceof MissingApiKeyError) return new ApiError(503, "NO_API_KEY", error.message);
+    if (error instanceof QuotaExhaustedError) {
+        return new ApiError(503, "QUOTA_EXHAUSTED", error.message, {
+            note: "Every analytics route still works — only the AI layer is affected.",
+        });
+    }
+    return null;
+}
 
 export const aiRouter: Router = Router();
 
@@ -73,10 +84,51 @@ aiRouter.post(
 
             res.json({ report, status: await classificationStatus() });
         } catch (error) {
-            if (error instanceof MissingApiKeyError) {
-                throw new ApiError(503, "NO_API_KEY", error.message);
-            }
-            throw error;
+            throw asApiError(error) ?? error;
+        }
+    }),
+);
+
+/**
+ * FR12 — the ranked, grounded, validated recommendations. Question 4.
+ *
+ * A GET that costs money and takes ~20 seconds, which is a fair objection. It is
+ * a GET anyway because it is idempotent in the sense that matters — it writes
+ * nothing, and calling it twice leaves the system exactly as it was. Caching is
+ * the obvious next step and is deliberately absent: a cache keyed on the filter
+ * would need invalidating on every ingestion, and shipping a stale-recommendation
+ * bug is worse than shipping a slow endpoint.
+ *
+ * Takes the same filter block as every analytics route (FR16), so the panel can
+ * be re-run for one platform.
+ */
+aiRouter.get(
+    "/recommendations",
+    route(async (req, res) => {
+        const filter = parseFilter(req);
+
+        if (!hasApiKey()) {
+            throw new ApiError(
+                503,
+                "NO_API_KEY",
+                "No Gemini API key is configured, so recommendations cannot be generated. Set GEMINI_API_KEY in server/.env.",
+                {
+                    note:
+                        "Every analytics route works without a key. GET /api/analytics/report returns the exact " +
+                        "document the recommendation model would have been given.",
+                },
+            );
+        }
+
+        try {
+            const run = await generateRecommendations(filter);
+            res.json({
+                ...run,
+                limits: { maxRecommendations: MAX_RECOMMENDATIONS, minSampleSize: MIN_RECOMMENDATION_N },
+                model: RECOMMEND_MODEL,
+            });
+        } catch (error) {
+            throw asApiError(error) ?? error;
         }
     }),
 );
