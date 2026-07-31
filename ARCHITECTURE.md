@@ -266,7 +266,7 @@ Goal: **submittable by evening, with hours to spare.**
 
 - [ ] Filters (FR16) · Markdown export (FR17) · theme × format (FR18) — in that order, stop when time runs out
 - [ ] Finish `README.md` status table and limitations · write `DECISIONS.md`
-- [ ] Generate the sample report for Tharoor — written for a comms manager, not a reviewer
+- [ ] Generate the sample report for the principal — written for a comms manager, not a reviewer
 - [ ] **Clean-clone test**: fresh folder, `git clone`, follow the README verbatim, confirm it runs
 - [ ] Record the 5–8 min video — demo the four questions, then 2 min on what's next and what you'd do differently
 - [ ] Confirm no `.env` and no keys anywhere in git history

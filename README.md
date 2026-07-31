@@ -41,36 +41,38 @@ No live-account data was scraped from behind a login wall, and no platform authe
 
 ## Who we track, and why
 
-**Principal:** **Shashi Tharoor** — sitting Lok Sabha MP (Thiruvananthapuram), unusually active and multi-platform, with a confirmed "Shashi Tharoor Official" YouTube channel. He posts in volume on both tracked platforms, which means the format and timing analysis has something to actually chew on.
+**Principal:** **Narendra Modi** — Prime Minister, and the highest-volume, highest-reach political account in the country on both tracked platforms. Volume is the practical requirement here: without it there is nothing for format or timing analysis to chew on.
 
 **Peer set:**
 
 | Account | Office / tier | Why they're a fair comparison |
 |---|---|---|
-| Priyanka Chaturvedi | Rajya Sabha MP | National-profile parliamentarian, very active on X, confirmed active YouTube channel, heavy media-appearance content |
-| Varun Gandhi | Former Lok Sabha MP | Comparable national profile and communication style — long-form written positions, policy-forward content. Instagram only: no YouTube channel resolves to him |
-| Kanhaiya Kumar | National politician, contested Lok Sabha | Different generational and format mix (video-heavy, rally-forward) — deliberately included so the format gap analysis has genuine contrast |
+| Rahul Gandhi | Leader of the Opposition, Lok Sabha | The direct counterpart to the principal and the most natural comparison in the set |
+| Amit Shah | Union Home Minister | Same party as the principal, comparable office — the within-party control that lets the principal's format and timing choices read as *choices* rather than party house style |
+| Arvind Kejriwal | Former Chief Minister of Delhi, national party leader | Different format and cadence mix, deliberately included so the gap analysis has genuine contrast rather than three variations of one posting style |
 
 **Handles were verified before the first ingest**, because a wrong handle is the one error the pipeline cannot catch for you — it either fails the run, or resolves to a stranger's account and attributes their posts to a politician. `npm run ingest -- --check-handles` resolves every handle against its live source and writes nothing.
 
-Resolved against the live sources on 31 Jul 2026 — these are measured, not estimates from a third-party stats site:
+Resolved against the live sources on 1 Aug 2026 — measured, not estimates from a third-party stats site:
 
 | Account | Platform | Followers | Resolved name |
 |---|---|---|---|
-| [`@shashitharoor`](https://www.instagram.com/shashitharoor/) | Instagram | **2,299,726** | Shashi Tharoor |
-| `@ShashiTharoorOfficial` | YouTube | 836,000 | Dr. Shashi Tharoor Official |
-| [`@kanhaiyakumar`](https://www.instagram.com/kanhaiyakumar/) | Instagram | **1,508,085** | Kanhaiya Kumar |
-| `@KanhaiyaKumar` | YouTube | 3,710,000 | Kanhaiya Kumar |
-| [`@ferozevarungandhi`](https://www.instagram.com/ferozevarungandhi/) | Instagram | **838,354** | Varun Gandhi |
-| [`@priyankac19`](https://www.instagram.com/priyankac19/) | Instagram | **382,514** | Priyanka Chaturvedi |
-| `@PriyankaChaturvediOfficial` | YouTube | 42,700 | Priyanka Chaturvedi Official |
+| [`@narendramodi`](https://www.instagram.com/narendramodi/) | Instagram | **105,630,443** | Narendra Modi |
+| `@narendramodi` | YouTube | 31,200,000 | Narendra Modi |
+| [`@amitshahofficial`](https://www.instagram.com/amitshahofficial/) | Instagram | **35,502,552** | Amit Shah |
+| `@AmitShah` | YouTube | 723,000 | Amit Shah |
+| [`@rahulgandhi`](https://www.instagram.com/rahulgandhi/) | Instagram | **14,914,042** | Rahul Gandhi |
+| `@RahulGandhi` | YouTube | 10,800,000 | Rahul Gandhi |
+| [`@arvindkejriwal`](https://www.instagram.com/arvindkejriwal/) | Instagram | **4,060,543** | Arvind Kejriwal |
+| `@ArvindKejriwal` | YouTube | 1,090,000 | Arvind Kejriwal |
 
-Two things follow from that table:
+**The handle that nearly poisoned this roster.** The obvious first guess for Amit Shah on Instagram is `@amitshah`. It *resolves* — to a namesake with **322 followers**. Ingesting it would have attached a private individual's posts to a Union Minister and produced a real-looking row of near-zero engagement: a fabricated finding, arrived at honestly, and one no downstream gate would have caught, because 322 is a perfectly valid follower count. The correct handle is `@amitshahofficial`. His YouTube channel needed the same treatment in reverse — 723K subscribers looks anomalously low for a Home Minister, so the channel was resolved for its *description* ("Official YouTube Channel of Amit Shah") before being trusted rather than being rejected on the number alone.
 
-- **The Instagram spread is 6.0×** (383K to 2.30M), comfortably inside the one order of magnitude the peer set was chosen for. YouTube's 87× subscriber spread is the outlier, and it is harmless only because YouTube engagement is normalised by *views*, not subscribers.
-- **Varun Gandhi has 28 Instagram posts in the account's entire life**, so a 90-day window may legitimately return zero. That is a real finding about how he uses the platform, not a bug — the sample-size gates exclude him with a stated reason rather than drawing conclusions from two posts. He also uses several handles; [`@therealvarungandhi`](https://www.instagram.com/therealvarungandhi/) (4K followers, 70 posts) claims to be official, but `@ferozevarungandhi` carries the reach and the [Lok Sabha's spelling of his name](https://sansad.in/ls/members/biography/4277?from=members). This is the one judgement call in the roster.
+That is the second time a plausible handle has resolved to the wrong account in this project. It is the entire argument for `--check-handles`: resolving a handle and **reading what came back** costs one cheap call, and is the only thing standing between a typo and a chart about a stranger.
 
-**On comparability:** the brief warns against benchmarking a 20M-follower national figure against a first-term MLA. These four are all national-profile parliamentary-tier figures — but their follower counts are *not* identical, and that is precisely why **nothing in this portal ranks on raw followers or raw likes**. Every cross-account comparison runs on a normalised engagement rate with an explicit denominator. See below.
+**On comparability — the known weakness of this roster.** The brief warns against benchmarking a 20M-follower national figure against a first-term MLA. All four here are national-tier figures, but the spread is **26× on Instagram** (4.06M–105.6M) and **43× on YouTube** (723K–31.2M). An earlier roster was deliberately chosen to sit inside roughly one order of magnitude; this one does not meet that bar, and the principal is an order of magnitude above every peer on both platforms.
+
+What makes it workable is that **nothing in this portal ranks on raw followers or raw likes** — every cross-account comparison runs on a normalised engagement rate with an explicit denominator (views on YouTube, followers elsewhere). What that does *not* fix: an account with 105M followers has a structurally lower engagement rate than one with 4M, close to mechanically. So a "the principal underperforms his peers on rate" finding from this roster deserves that caveat, and the per-account format and timing analysis — which compares an account against **itself** — carries more weight here than the cross-account rate comparison does.
 
 ---
 
@@ -377,21 +379,48 @@ The Day 4 change: **the synthetic corpus is gone.** Instagram now comes from Api
 | Facebook | 263 | seeded | declared, **not ingested** — adapter planned |
 | YouTube | 108 live + 31 seeded | mixed | **live only** — the seeded account had no real channel and was dropped |
 
-**Corpus as it stands now** — measured, from the live run on 31 Jul 2026:
+**Corpus as it stands now** — measured, from the live run on 1 Aug 2026:
 
 | Account | Platform | Posts (90d) | Source |
 |---|---|---|---|
-| Priyanka Chaturvedi | YouTube | 39 | `youtube_api` |
-| Shashi Tharoor | YouTube | 38 | `youtube_api` |
-| Kanhaiya Kumar | Instagram | 39 | `apify_instagram` |
-| Priyanka Chaturvedi | Instagram | 36 | `apify_instagram` |
-| Kanhaiya Kumar | YouTube | 35 | `youtube_api` |
-| Shashi Tharoor | Instagram | 27 | `apify_instagram` |
-| **Varun Gandhi** | Instagram | **1** | `apify_instagram` |
+| Narendra Modi | YouTube | 839 | `youtube_api` |
+| Rahul Gandhi | YouTube | 190 | `youtube_api` |
+| Rahul Gandhi | Instagram | 184 | `apify_instagram` |
+| Narendra Modi | Instagram | 160 | `apify_instagram` |
+| Arvind Kejriwal | Instagram | 139 | `apify_instagram` |
+| Arvind Kejriwal | YouTube | 136 | `youtube_api` |
+| Amit Shah | YouTube | 48 | `youtube_api` |
+| Amit Shah | Instagram | 29 | `apify_instagram` |
 
-**215 posts, 215 of them real, 0 synthetic, 0 failed rows.** Instagram 103, YouTube 112. The reconcile purged 232 generated posts and pruned 10 accounts that are no longer tracked (the X and Facebook rosters, the dormant `@VarunGandhi` YouTube channel, and a mistyped Instagram handle). Theme classification ran clean over the new corpus — 5 batches, 0 failures — and the recommendation layer produced **6 recommendations, 6 accepted, 0 dropped by the validator**.
+**1,725 posts, all of them real, 0 synthetic, 0 failed rows.** Instagram 512, YouTube 1,213. Every account reaches back 84–90 days, so the window is genuinely covered rather than nominally requested. The reconcile pruned 5 accounts that were no longer in the roster, removing 458 posts with them.
 
-Varun Gandhi's single post is the predicted consequence of a 28-post account meeting a 90-day window. It is a fact about how he uses Instagram, and the sample-size gates exclude him from figures rather than quoting a rate from one post.
+### The bug that hid inside a successful run
+
+The first pull of this roster returned **500** posts for Modi's YouTube and **55** for his Instagram, and both runs were recorded `success`. They were not.
+
+`MAX_PAGES = 10` in `youtubeAdapter.ts` capped paging at exactly 500 videos. Modi uploads ~10/day, so 500 videos reached only **48 of the 90 days** requested — and the loop simply stopped, with nothing recording that it had run out of pages rather than out of window. Instagram truncated the same way against `APIFY_RESULTS_LIMIT`, covering 41 days.
+
+The missing rows were not the damage. **Cadence divides by the window that was asked for**, so the 42 unfetched days registered as weeks in which the Prime Minister posted nothing:
+
+| | Truncated pull | Full 90 days |
+|---|---|---|
+| Cadence | 39.1×/week | **12.5×/week** |
+| vs. peer median | 3.64× more often | **1.16× — essentially level** |
+| Weeks with any post | 62% | **100%** |
+
+The truncated version is a confident, quotable, completely false finding: *the principal posts in bursts and goes silent for a third of the year.* It would have survived every sample-size gate in the product, because the gates check whether there are enough posts — not whether the window they are divided by was actually fetched.
+
+Two changes followed. `MAX_PAGES` is now 60 (3,000 videos), and — the part that matters — **exhausting the page budget before reaching the window edge now throws and fails the run.** A partial window is not a smaller answer, it is a wrong one, so it is no longer allowed to masquerade as a complete pull. This is the same principle already applied to a failed Apify scrape, which ingests nothing rather than writing the partial page it managed to collect.
+
+**One run failed and was retried, which is the interesting part.** Rahul Gandhi's Instagram pull died mid-roster on `Monthly usage hard limit exceeded` — the Apify account was out of credit. The pipeline treated it as a **failed run and ingested nothing**, rather than writing the partial page it had already scraped. That is the design working: a partial scrape written as a complete one would have shown Rahul Gandhi posting a fraction of his real volume, and every cadence and share-of-output figure involving him would have been wrong with nothing on screen admitting it. Re-run against a funded account, the same handle returned 184 posts.
+
+**The volume asymmetry is real and worth reading before any cross-account conclusion.** Modi's YouTube alone is 839 posts against Amit Shah's 29 on Instagram — a 29× range across the corpus. That is a genuine finding about how these four operate rather than a sampling artefact, but it means per-account sample sizes differ by an order of magnitude, and the sample-size gates will include and exclude accounts unevenly because of it.
+
+**End-to-end result on this corpus.** All **1,725 posts are classified — 100% coverage, 0 low-confidence**, and the recommendation layer produced **6 recommendations, all 6 accepted, 0 dropped by the validator and 0 requiring repair**, citing 143 distinct figures and 20 real post IDs. A sample:
+
+> **Stop publishing SINGLE_IMAGE posts on Instagram and replace them with CAROUSEL posts.** Narendra Modi spends 25% of his Instagram output on SINGLE_IMAGE across 23 posts, where a typical post earns 0.49× his own baseline. In contrast, CAROUSEL posts earn 1.22× his own baseline across 68 posts. — *confidence HIGH, n=23*
+
+Note what the model is *not* doing there: it is not comparing Modi to a peer on raw reach, which the 26× follower spread would make meaningless. It compares each format against **his own baseline**, which is the comparison this roster actually supports. The one recommendation resting on a thin sample (an hour-of-day suggestion at n=7) came back **MEDIUM**, not HIGH, without being asked.
 
 ---
 
@@ -399,7 +428,8 @@ Varun Gandhi's single post is the predicted consequence of a 28-post account mee
 
 Stated plainly rather than buried.
 
-- **Gap analysis currently returns nothing, and that is the gates working, not a bug.** A gap is only reported where **two or more peers** each clear **n ≥ 5** in the same bucket. The seeded corpus had 940 posts and cleared that bar easily; four real people over 90 real days produce 215 posts, which spread across format × hour × day × theme buckets rarely does. The evidence paths that feed recommendations still fire — peer hour windows, format mixes and cadence all produce cited figures — but the dedicated `gaps` array is empty. The honest options are more peers or a longer window, **not** a lower bar: dropping `MIN_GAP_N` would manufacture findings from three posts, which is the exact failure this product is built against.
+- **Gap analysis is sparse, and that is the gates working rather than a bug.** A gap is only reported where **two or more peers** each clear **n ≥ 5** in the same bucket. At 1,725 posts the corpus now clears that bar occasionally — Instagram's followers-basis panel reports a Tuesday gap, which reached the recommendations — but most format × hour × day × theme buckets still do not, and the YouTube panels report none. The other evidence paths fire regardless: peer hour windows, format mixes, over-investment and cadence all produce cited figures. The honest fixes are more peers or a longer window, **not** a lower bar — dropping `MIN_GAP_N` would manufacture findings from three posts, which is the exact failure this product is built against.
+- **The AI layer's binding constraint is the Gemini free tier, not the code.** Classification is roughly one request per 25 posts, so a 1,725-post corpus is ~70 requests and exhausts a free-tier key's daily allowance well before it finishes; reaching 100% coverage took four keys across one day. Two things follow. Classification is **incremental and resumable**, so a run that stops at a quota wall keeps everything it wrote and continues from there. And the UI's Classify button **paces itself** (one batch every 8 seconds, with exponential backoff on 429) because Gemini's per-minute limit and its daily limit return an identical error — firing batches back-to-back trips the per-minute one after about eight of them, which reads as "quota exhausted" when eight seconds of patience would have cleared it. Recommendations, by contrast, cost **one or two requests**, so generating them first and classifying with what remains is the right order on a constrained key.
 - **Two platforms carry data, not four.** X and Facebook are declared in the roster and visible in the adapter registry with their blockers, but neither is ingested and neither is approximated. Any conclusion here describes Instagram and YouTube behaviour only — a comms team's X strategy is outside what this data can speak to, and the product says so rather than implying coverage it does not have.
 - **Instagram data is scraped, not served by an API.** Apify reads the public profile surface, which means it is subject to what Instagram renders publicly and can change shape without notice. Two consequences: a failed or partial scrape is treated as a **failed run** rather than as "posted nothing" (a silent zero would read as a finding), and shares and saves are unavailable, so Instagram engagement is computed from likes, comments and — on Reels — plays.
 - **Instagram follower counts are a scraped scalar.** They are the engagement denominator for photos and carousels, which have no view count. A hidden or unreadable count leaves the previous stored value in place rather than overwriting it with a guess.

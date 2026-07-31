@@ -305,6 +305,62 @@ export interface NewAccount {
     ingestNow?: boolean;
 }
 
+/**
+ * One account's fetch, as the run log recorded it.
+ *
+ * `partial` is a distinct status from `success` on purpose — a run that dropped
+ * half its rows must not read as clean. The optional fields are not laziness:
+ * when the per-platform route catches a throw it has no run to report, so it
+ * returns `{status: "failed", error}` and nothing else. Modelling that honestly
+ * is better than defaulting `rowsFetched` to 0 and implying a run happened.
+ */
+export interface IngestResult {
+    accountId: string;
+    handle: string;
+    platform: string;
+    status: "success" | "partial" | "failed";
+    source?: string;
+    runId?: string;
+    rowsFetched?: number;
+    rowsFailed?: number;
+    error?: string;
+}
+
+export interface ClassifyReport {
+    candidates: number;
+    classified: number;
+    /** Written as OTHER because the model's confidence was below the threshold. */
+    lowConfidence: number;
+    /** No caption to read — written as OTHER without spending a call. */
+    unclassifiable: number;
+    /**
+     * Sent but not returned by the model. Left UNCLASSIFIED rather than
+     * defaulted, so these posts stay in the pool and a later pass retries them.
+     * The reason a progress loop must terminate on lack of progress rather than
+     * on `unclassified === 0`, which these can prevent from ever being reached.
+     */
+    missing: number;
+    discardedResults: number;
+    batches: number;
+    /** A failed batch leaves its posts unclassified for the next pass. */
+    failedBatches: { batch: number; error: string }[];
+    distribution: Record<string, number>;
+    usage: { promptTokens: number; outputTokens: number; thoughtTokens: number };
+    /** Quota is a wall, not weather: every remaining batch would fail the same way. */
+    stoppedEarly?: { reason: string; message: string; remaining: number };
+}
+
+export interface ClassifyRun {
+    report: ClassifyReport;
+    status: {
+        total: number;
+        classified: number;
+        unclassified: number;
+        lowConfidence: number;
+        distribution: Record<string, number>;
+    };
+}
+
 // ── The calls ────────────────────────────────────────────────────────────
 
 export const api = {
@@ -312,7 +368,15 @@ export const api = {
 
     accounts: () => get<{ accounts: Account[] }>("/api/accounts"),
     createAccount: (body: NewAccount) =>
-        request<{ account: Account; note: string | null }>("/api/accounts", {
+        // `ingestion` is present only when `ingestNow` was sent, and is the
+        // failure shape rather than a result when the fetch threw — the account
+        // is still created in that case, which is why the server reports the two
+        // outcomes separately instead of collapsing them into one error.
+        request<{
+            account: Account;
+            note: string | null;
+            ingestion: IngestResult | { status: string; error?: string } | null;
+        }>("/api/accounts", {
             method: "POST",
             body: JSON.stringify(body),
         }),
@@ -325,6 +389,37 @@ export const api = {
     overview: (filter: Filter) => get<Overview>("/api/analytics/overview", filter),
     report: (filter: Filter) => get<Report>("/api/analytics/report", filter),
     timing: (filter: Filter) => get<TimingResponse>("/api/analytics/timing", filter),
+
+    // ── The writes that used to be terminal-only ─────────────────────────
+    // These three routes existed on the server from the start; nothing in the
+    // client called them, so refreshing a corpus meant `npm run ingest` at a
+    // prompt. For anyone who is not the person who wrote the repo, a capability
+    // reachable only from a checkout is not a capability.
+    //
+    // All three are slow and synchronous — a fetch can take tens of seconds, a
+    // full classification pass minutes. `fetch` has no default timeout, so these
+    // wait rather than aborting; the callers are responsible for saying so.
+
+    /** Refresh one account (`accountId`), one platform, or everything (`{}`). */
+    ingest: (body: { accountId?: string; platform?: string; sinceDays?: number }) =>
+        request<{ results: IngestResult[] }>("/api/ingest", {
+            method: "POST",
+            body: JSON.stringify(body),
+        }),
+
+    /** FR3 — push a CSV/JSON export's text at one account. */
+    importFile: (body: { accountId: string; content: string; filename: string }) =>
+        request<{ result: IngestResult }>("/api/import", {
+            method: "POST",
+            body: JSON.stringify(body),
+        }),
+
+    /** FR11 — assign themes. Incremental unless `force`; `limit` caps one pass. */
+    classify: (body: { force?: boolean; limit?: number; accountId?: string; platform?: string }) =>
+        request<ClassifyRun>("/api/ai/classify", {
+            method: "POST",
+            body: JSON.stringify(body),
+        }),
 
     recommendations: (filter: Filter) => get<RecommendationRun>("/api/ai/recommendations", filter),
     classification: () => get<ClassificationStatus>("/api/ai/classify"),

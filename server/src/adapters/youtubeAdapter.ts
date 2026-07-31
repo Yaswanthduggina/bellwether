@@ -35,8 +35,26 @@ const API_ROOT = "https://www.googleapis.com/youtube/v3";
  */
 const SHORTS_MAX_SECONDS = 180;
 
-/** Guard against a pathological channel paging forever. 10 pages = 500 videos. */
-const MAX_PAGES = 10;
+/**
+ * Guard against a channel paging forever. 60 pages = 3,000 videos.
+ *
+ * This was 10 pages (500 videos) and it silently truncated the most important
+ * account in the roster. Narendra Modi uploads ~10/day, so 500 videos covered
+ * only 48 of the 90 days requested — and because the loop simply stopped, the
+ * run was recorded as `success` with a full-looking 500 rows.
+ *
+ * The damage was not the missing rows. It was that cadence divides by the
+ * REQUESTED window: 500 posts over an assumed 90 days reported 39.1 posts/week
+ * against a true ~73, and the 42 unfetched days registered as weeks in which he
+ * posted nothing — producing "posts in 62% of weeks, against a peer median of
+ * 96%". A fabricated finding about a politician going quiet, arrived at
+ * honestly, and indistinguishable on a dashboard from a real one.
+ *
+ * 3,000 is ~33 days of headroom above Modi's rate at a 90-day window. The cap
+ * still exists, but crossing it now fails the run rather than trimming it — see
+ * the throw below.
+ */
+const MAX_PAGES = 60;
 
 interface YouTubeChannel {
     id: string;
@@ -214,6 +232,24 @@ export function createYouTubeAdapter(): SocialAdapter {
 
                 pageToken = response.nextPageToken;
                 if (!pageToken) break;
+            }
+
+            // Ran out of pages before running out of window, and the channel has
+            // more to give. Loud, because the alternative is what actually
+            // happened once: a short corpus that looks complete, feeding a
+            // cadence figure that reads as a real finding about posting silence.
+            //
+            // Failing the whole run is the right severity. Every downstream
+            // number is computed against the window that was ASKED for, so a
+            // partial window is not a smaller answer — it is a wrong one.
+            if (!reachedWindowEdge && pageToken) {
+                throw new Error(
+                    `YouTube channel "${accountHandle}" has more than ${MAX_PAGES * 50} videos inside the requested ` +
+                        `window — paging stopped before reaching ${sinceDate.toISOString().slice(0, 10)}, so this pull ` +
+                        `would cover only part of it. Cadence and share-of-output figures divide by the requested ` +
+                        `window, so a partial pull reports the missing days as silence. Narrow the window ` +
+                        `(--days=30) or raise MAX_PAGES in youtubeAdapter.ts.`,
+                );
             }
 
             if (videoIds.length === 0) return [];

@@ -3,21 +3,40 @@
 //
 // WHY THESE FOUR
 //
-// The brief warns that benchmarking a 20M-follower national figure against a
-// first-term MLA produces a chart that is technically correct and completely
-// useless. So the peer set is chosen for *comparability of office and reach*, not
-// for name recognition: four national-profile parliamentary-tier figures, all
-// India-based, all active across multiple platforms, within roughly one order of
-// magnitude of each other on audience size.
+// Four national-tier Indian political figures: the Prime Minister as principal,
+// against the Leader of the Opposition, the Union Home Minister, and a former
+// Chief Minister who leads a national party. Comparable by office and by the fact
+// that all four run genuinely active multi-platform operations — without volume
+// there is nothing for format or timing analysis to chew on.
 //
-// They are NOT identical in follower count, and that is the point — it is exactly
-// why nothing in this product ranks on raw followers or raw likes. Every
+// THE FOLLOWER SPREAD IS THE KNOWN WEAKNESS OF THIS SET, and it is recorded
+// rather than glossed. Measured 1 Aug 2026:
+//
+//   Instagram   4.06M – 105.6M    26x spread
+//   YouTube     0.72M –  31.2M    43x spread
+//
+// An earlier roster was deliberately chosen to sit inside roughly ONE order of
+// magnitude, because the brief warns that benchmarking a national figure against
+// a first-term MLA produces a chart that is technically correct and useless. This
+// set does not meet that bar: the principal is an order of magnitude above every
+// peer on both live platforms.
+//
+// What makes it defensible is the same thing that made the spread tolerable
+// before — nothing in this product ranks on raw followers or raw likes. Every
 // cross-account comparison runs through a normalised engagement rate with an
-// explicit denominator. See the engagement-rate section of the README.
+// explicit denominator: views on YouTube, followers elsewhere. See the
+// engagement-rate section of the README.
 //
-// Contrast is deliberate too. Kanhaiya Kumar is video-native where Tharoor is
-// text-forward; Varun Gandhi posts a fraction as often. A peer set that all
-// behaved identically would make gap analysis (a Module C MUST) vacuous.
+// What it does NOT fix: an account with 105M followers has a structurally
+// different engagement rate from one with 4M — very large audiences engage at a
+// lower rate almost mechanically. So a "the principal underperforms his peers on
+// rate" finding from this roster should be read with that in mind, and the
+// per-account format and timing analysis (which compares an account against
+// ITSELF) carries more weight here than the cross-account rate comparison does.
+//
+// Contrast is deliberate too. Kejriwal's format and cadence mix differs sharply
+// from the principal's, and Amit Shah is a same-party control — a peer set that
+// all behaved identically would make gap analysis (a Module C MUST) vacuous.
 //
 // ─────────────────────────────────────────────────────────────────────────
 // DECLARED vs TRACKED
@@ -44,47 +63,40 @@
 // therefore throw on an unresolved handle instead of returning an empty list, and
 // `npm run ingest -- --check-handles` resolves every handle without writing a row.
 //
-// YouTube — verified against the Data API:
+// YouTube — every channel below resolved against the Data API on 1 Aug 2026 and
+// confirmed by its own description, not by subscriber count alone:
 //
-//   @ShashiTharoorOfficial       "Dr. Shashi Tharoor Official"    835K subs   LIVE
-//   @PriyankaChaturvediOfficial  "Priyanka Chaturvedi Official"    42.7K subs LIVE
-//   @KanhaiyaKumar               "Kanhaiya Kumar"                  3.71M subs LIVE
-//   @VarunGandhi                 0 subscribers, one 2023 upload    SQUATTER
+//   @narendramodi     "Narendra Modi"     31.2M subs  "Official YouTube channel of Shri Narendra Modi, PM of India"
+//   @RahulGandhi      "Rahul Gandhi"      10.8M subs  "Leader of Opposition, Lok Sabha | INC | MP, Raebareli"
+//   @ArvindKejriwal   "Arvind Kejriwal"    1.09M subs
+//   @AmitShah         "Amit Shah"          723K subs  "Official YouTube Channel of Amit Shah"
 //
-// The first guess for Priyanka Chaturvedi (@PriyankaChaturvedi) did not resolve
-// at all. Worse, @VarunGandhi DOES resolve — to a dormant channel with no
-// subscribers whose only upload is a 2023 "Happy Independence Day" post.
-// Ingesting it would have produced a real-looking row of near-zero engagement
-// attributed to a sitting politician: a fabricated finding, arrived at honestly.
-// No alternative handle resolves, so Varun Gandhi has NO YouTube entry.
+// @AmitShah is the one that needed checking rather than assuming. 723K subs is an
+// order of magnitude below the other three and looks anomalous for a Home
+// Minister, so it was resolved for its DESCRIPTION before being trusted — it
+// self-identifies as the official channel. @AmitShahOfficial does not exist.
 //
-// Instagram — resolved against the live source on 31 Jul 2026, measured rather
+// Instagram — resolved against the live source on 1 Aug 2026, measured rather
 // than taken from a stats site:
 //
-//   @shashitharoor       2,299,726 followers   ~2,125 posts   INC MP, Thiruvananthapuram
-//   @kanhaiyakumar       1,508,085 followers                  AICC/NSUI, ex-JNUSU president
-//   @ferozevarungandhi     838,354 followers   28 posts       MP, Lok Sabha 2009-2024
-//   @priyankac19           382,514 followers   ~866 posts     former MP, Shiv Sena (UBT)
+//   @narendramodi        105,630,443 followers   PM of India
+//   @amitshahofficial     35,502,552 followers   Union Home Minister
+//   @rahulgandhi          14,914,042 followers   Leader of the Opposition
+//   @arvindkejriwal        4,060,543 followers   former CM, Delhi
 //
-// Two things that follow from that table, both load-bearing:
+// ⚠ THE HANDLE THAT NEARLY POISONED THIS ROSTER. The obvious first guess for
+// Amit Shah on Instagram is @amitshah. It RESOLVES — to a namesake with 322
+// followers. Ingesting it would have attached a private individual's posts to a
+// Union Minister and produced a real-looking row of near-zero engagement: a
+// fabricated finding, arrived at honestly, and one no downstream gate would have
+// caught because 322 is a perfectly valid follower count. The correct handle is
+// @amitshahofficial, at 35.5M.
 //
-// ① The Instagram spread is 383K–2.30M — 6.0x, comfortably inside the one
-//    order of magnitude the peer set was chosen for. (YouTube's 87x spread is the
-//    outlier, and it is harmless there only because YouTube engagement is
-//    normalised by views rather than subscribers.)
-//
-// ② @ferozevarungandhi has 28 posts in the account's entire life, so a 90-day
-//    window may legitimately return ZERO. That is a real finding about how he
-//    uses the platform, not a bug — the sample-size gates in format.ts, timing.ts
-//    and gaps.ts will exclude him with a stated reason rather than reporting
-//    conclusions from two posts. If a fuller peer is wanted on Instagram, the
-//    honest fix is to swap the person, not to lower the gates.
-//
-// Varun Gandhi is the awkward one here too. He appears under several handles:
-// @therealvarungandhi (4K followers, 70 posts, bio claims official) and
-// @ferozevarungandhi (839K, MP bio, 28 posts). Feroze Varun Gandhi is his name as
-// recorded by the Lok Sabha, and the reach is consistent with the peer set, so
-// that is the handle tracked. It is the one judgement call in this list.
+// That is the second time a plausible handle has resolved to the wrong account in
+// this project (the first was a dormant @VarunGandhi YouTube channel under the
+// previous roster). It is the argument for `--check-handles` existing at all:
+// resolving a handle and READING WHAT CAME BACK costs one cheap call, and is the
+// only thing standing between a typo and a chart about a stranger.
 // ─────────────────────────────────────────────────────────────────────────
 
 import { hasLiveAdapter } from "../adapters";
@@ -130,43 +142,43 @@ function forPerson(
 
 /** Everyone we intend to cover, on every platform, regardless of adapter status. */
 export const DECLARED_ACCOUNTS: TrackedAccount[] = [
-    // PRINCIPAL — sitting Lok Sabha MP (Thiruvananthapuram). Chosen for genuine
-    // multi-platform activity: without volume there is nothing for format or
-    // timing analysis to chew on.
-    ...forPerson("Shashi Tharoor", "PRINCIPAL", "Shashi Tharoor", {
-        INSTAGRAM: "shashitharoor",
-        YOUTUBE: "ShashiTharoorOfficial",
-        X: "ShashiTharoor",
-        FACEBOOK: "ShashiTharoor",
+    // PRINCIPAL — Prime Minister. The highest-volume, highest-reach political
+    // account in the country on every platform here, which is what makes the
+    // follower spread below a real analytical issue rather than a footnote.
+    ...forPerson("Narendra Modi", "PRINCIPAL", "Narendra Modi", {
+        INSTAGRAM: "narendramodi",
+        YOUTUBE: "narendramodi",
+        X: "narendramodi",
+        FACEBOOK: "narendramodi",
     }),
 
-    // Rajya Sabha MP. National profile, very active, heavy media-appearance and
-    // rebuttal content — the closest behavioural comparison to the principal.
-    ...forPerson("Priyanka Chaturvedi", "COMPETITOR", "Priyanka Chaturvedi", {
-        INSTAGRAM: "priyankac19",
-        YOUTUBE: "PriyankaChaturvediOfficial",
-        X: "priyankac19",
-        FACEBOOK: "priyankachaturvedi",
+    // Leader of the Opposition, Lok Sabha. The direct counterpart to the
+    // principal and the most natural comparison in the set.
+    ...forPerson("Rahul Gandhi", "COMPETITOR", "Rahul Gandhi", {
+        INSTAGRAM: "rahulgandhi",
+        YOUTUBE: "RahulGandhi",
+        X: "RahulGandhi",
+        FACEBOOK: "rahulgandhi",
     }),
 
-    // Former Lok Sabha MP. Comparable national profile, long-form written
-    // positions — a like-for-like test of whether the principal's format mix is
-    // actually working for him. No YouTube entry: see the handle notes above.
-    ...forPerson("Varun Gandhi", "COMPETITOR", "Varun Gandhi", {
-        INSTAGRAM: "ferozevarungandhi",
-        X: "varungandhi80",
-        FACEBOOK: "VarunGandhiOfficial",
+    // Union Home Minister. Same party as the principal, comparable office and
+    // reach — the within-party control against which the principal's own format
+    // and timing choices can be read as choices rather than as party house style.
+    ...forPerson("Amit Shah", "COMPETITOR", "Amit Shah", {
+        INSTAGRAM: "amitshahofficial",
+        YOUTUBE: "AmitShah",
+        X: "AmitShah",
+        FACEBOOK: "amitshahofficial",
     }),
 
-    // National politician, contested Lok Sabha. Included for contrast: a
-    // different generational and format mix (video-heavy, ground-level), so the
-    // gap analysis has something real to find rather than four variations of one
-    // posting style.
-    ...forPerson("Kanhaiya Kumar", "COMPETITOR", "Kanhaiya Kumar", {
-        INSTAGRAM: "kanhaiyakumar",
-        YOUTUBE: "KanhaiyaKumar",
-        X: "kanhaiyakumar",
-        FACEBOOK: "kanhaiyakumar",
+    // Former Chief Minister of Delhi, national party leader. Included for
+    // contrast: a different format and cadence mix, so gap analysis has
+    // something real to find rather than three variations of one posting style.
+    ...forPerson("Arvind Kejriwal", "COMPETITOR", "Arvind Kejriwal", {
+        INSTAGRAM: "arvindkejriwal",
+        YOUTUBE: "ArvindKejriwal",
+        X: "ArvindKejriwal",
+        FACEBOOK: "AAPKaArvind",
     }),
 ];
 
@@ -186,4 +198,4 @@ export const PLANNED_ACCOUNTS: TrackedAccount[] = DECLARED_ACCOUNTS.filter(
     (account) => !hasLiveAdapter(account.platform),
 );
 
-export const PRINCIPAL_NAME = "Shashi Tharoor";
+export const PRINCIPAL_NAME = "Narendra Modi";
