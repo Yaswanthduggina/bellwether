@@ -92,17 +92,19 @@ The Graph API was never the alternative for Instagram. It reads accounts you adm
 - **The corpus is smaller and less even.** Varun Gandhi has 28 Instagram posts in the account's lifetime, so a 90-day window may return zero for him. Sample-size gates exclude him with a reason rather than reporting from two posts.
 - **A per-result bill.** Apify charges per scraped item, so a full refresh has a real cost and `APIFY_RESULTS_LIMIT` is a cost knob, not a tuning knob.
 - **A scraped source is less stable than an API.** Instagram can change its public surface without notice. The mitigation is that a failed or partial scrape is treated as a **failed run**, never as "posted nothing" — a silent zero would read as a finding.
-- **The strongest analytics tests would have died with it** — which is why the generator survives as §1.7.
+- **The strongest analytics tests would have died with it** — which is why the *planted patterns* survive as §1.7, though the adapter does not.
 
-### 1.7 The seed generator stays in the tree, as a test fixture only
+### 1.7 The seed adapter is deleted; its planted patterns survive as a test fixture
 
-**Chosen:** `seedAdapter.ts` and its tests remain; no ingestion path imports it. The adapter registry throws on an account flagged `isSynthetic` rather than serving it.
+**Chosen:** `seedAdapter.ts` and `seedAdapter.test.ts` are gone. The planted multipliers, the per-account profiles and the reach-first generative model moved to `src/__tests__/fixtures/plantedCorpus.ts`, which emits plain analytics rows — no `SocialAdapter` implementation, no `RawPost`, no export from `src/adapters`, and nothing the production build compiles.
 
-**Rejected:** deleting it with the seeded corpus; leaving it wired up "just in case".
+**Rejected:** keeping the adapter in the tree but unreferenced; deleting the planted patterns outright along with it.
 
-**Why:** the round-trip tests are the best evidence in the repo that the analytics engine finds what is actually there — they plant known constants and assert the engine recovers them. Deleting the generator would have removed that evidence to remove code that no longer produces a stored row. Leaving it *callable* would have been worse than deleting it: one `isSynthetic` flag set by hand and generated rows are back in a corpus the UI presents as real.
+**Why:** two things were tangled together and only one was worth keeping. The valuable half is the *corpus with known answers* — the round-trip tests plant known constants and assert the engine recovers them, which is the best evidence in the repo that the analytics engine finds what is actually there rather than merely returning a number. The dangerous half was the *adapter shape*: anything implementing `SocialAdapter` can be pointed at the ingestion pipeline, and one `isSynthetic` flag set by hand would put generated rows back into a corpus the UI presents as real. Separating them keeps the evidence and removes the hazard.
 
-**Cost:** a reader who greps for "seed" finds a generator and has to be told it is inert. That is what the comment at the top of `adapters/index.ts` is for, and it is a cheaper cost than either alternative.
+Keeping it "inert but present" was the previous position, and it was the weaker one: an unreferenced adapter is one import away from being referenced, and it left a reader who greps for "seed" needing to be told the generator was inert. A fixture under `__tests__` needs no such disclaimer — its location is the disclaimer.
+
+**Cost:** the fixture duplicates the platform/format matrix that the real adapters also encode, so a new media type has to be added in two places. Accepted: the alternative couples test fixtures to production adapter code, which is how a fixture change quietly becomes a product change. The captions were dropped rather than moved — no test read them, and invented political prose is exactly the artefact that should not survive in a repo whose rule is that displayed data is real.
 
 ### 1.8 X and Facebook stay visible as `PLANNED`, not deleted
 

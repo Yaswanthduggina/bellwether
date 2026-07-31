@@ -10,9 +10,11 @@
 //   PLANNED   the platform is in scope, the adapter is not built, and the reason
 //             it is not built is recorded next to it
 //
-// Nothing generates data any more. The seed adapter still exists in the tree
-// (seedAdapter.ts, and the tests that pin its behaviour) but no ingestion path
-// reaches it, so a corpus the UI presents as real is real all the way down.
+// Nothing generates data any more. There is no seed adapter: the generator was
+// deleted along with the seeded corpus, and the only thing that survives it is a
+// test fixture under `__tests__/fixtures/plantedCorpus.ts`, which emits plain
+// analytics rows, implements no adapter interface, and cannot be routed to from
+// here. A corpus the UI presents as real is real all the way down.
 //
 // Account.isSynthetic is still read here rather than ignored. An account carrying
 // the flag is a leftover from the seeded era, and serving it live would silently

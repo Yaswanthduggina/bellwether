@@ -7,7 +7,7 @@
 // +5:30 that happens to be right for India.
 
 import { describe, expect, it } from "vitest";
-import { createSeedAdapter, DAY_QUALITY, HOUR_QUALITY } from "../adapters/seedAdapter";
+import { DAY_QUALITY, HOUR_QUALITY, plantedCorpus } from "./fixtures/plantedCorpus";
 import { MixedBasisError, rateAll, type EngagementBasis, type RatedPost } from "../analytics/engagement";
 import {
     analyseTiming,
@@ -209,35 +209,19 @@ describe("analyseTiming — the basis guard and empty input", () => {
 // ── Round trip: does the engine find the planted clock? ──────────────────
 
 describe("round trip — the engine recovers the planted timing pattern", () => {
-    const since = () => new Date(Date.now() - 90 * 86_400_000);
-
-    async function ratedXPostsFor(handle: string): Promise<RatedPost<TimingPost>[]> {
-        const adapter = createSeedAdapter("X");
-        const meta = await adapter.fetchAccountMeta(handle);
-        const raw = await adapter.fetchPosts(handle, since());
-
-        const posts: TimingPost[] = raw.map((p) => ({
-            platform: p.platform,
-            mediaType: p.mediaType,
-            postedAt: new Date(p.postedAt),
-            likes: p.metrics.likes,
-            comments: p.metrics.comments,
-            shares: p.metrics.shares,
-            views: p.metrics.views,
-            saves: p.metrics.saves,
-        }));
-
-        return rateAll(posts, { followerCount: meta.followerCount }).rated;
+    function ratedXPostsFor(handle: string): RatedPost<TimingPost>[] {
+        const { followerCount, posts } = plantedCorpus("X", handle);
+        return rateAll(posts, { followerCount }).rated;
     }
 
-    it("finds the evening peak for an account that posts both evening and midday", async () => {
-        // priyankac19 posts at 18–21 and at 13. The generator plants HOUR_QUALITY
+    it("finds the evening peak for an account that posts both evening and midday", () => {
+        // priyankac19 posts at 18–21 and at 13. The fixture plants HOUR_QUALITY
         // 1.85 at 20:00 against 1.15 at 13:00, so the engine should rank the
         // evening hours above the midday one. Tested within a single account, so
         // the account's own themes and formats cannot explain the difference.
         expect(HOUR_QUALITY[20]).toBeGreaterThan(HOUR_QUALITY[13]);
 
-        const analysis = analyseTiming(await ratedXPostsFor("priyankac19"), IST, "round trip")!;
+        const analysis = analyseTiming(ratedXPostsFor("priyankac19"), IST, "round trip")!;
         const hours = analysis.byHour.map((h) => h.hour);
 
         expect(hours.length).toBeGreaterThan(1);
@@ -245,28 +229,26 @@ describe("round trip — the engine recovers the planted timing pattern", () => 
         expect(hours.indexOf(13)).toBeGreaterThan(0); // 13:00 is not the best hour
     });
 
-    it("converts to IST such that the recovered hours are the ones the generator planted", async () => {
-        // The generator places posts at specific LOCAL hours. If the conversion in
-        // timing.ts disagreed with the one in the generator by even an hour, the
+    it("converts to IST such that the recovered hours are the ones the fixture planted", () => {
+        // The fixture places posts at specific LOCAL hours. If the conversion in
+        // timing.ts disagreed with the one in the fixture by even an hour, the
         // recovered set would not be a subset of the planted set — this is the
         // end-to-end check on the timezone handling.
         const PLANTED_HOURS = new Set([18, 19, 20, 21, 13]); // priyankac19's postingHours
 
-        const analysis = analyseTiming(await ratedXPostsFor("priyankac19"), IST, "round trip")!;
+        const analysis = analyseTiming(ratedXPostsFor("priyankac19"), IST, "round trip")!;
 
         for (const bucket of analysis.byHour) {
             expect(PLANTED_HOURS.has(bucket.hour)).toBe(true);
         }
     });
 
-    it("finds the midweek lift when day-of-week is pooled across accounts", async () => {
+    it("finds the midweek lift when day-of-week is pooled across accounts", () => {
         // Pooling is legitimate HERE and not for formats: posting day is drawn
-        // uniformly at random by the generator, so it is uncorrelated with which
+        // uniformly at random by the fixture, so it is uncorrelated with which
         // account posted — unlike format choice, which is an account habit. See
         // the confound test in format.test.ts.
-        const pooled = (
-            await Promise.all(["ShashiTharoor", "priyankac19", "varungandhi", "kanhaiyakumar"].map(ratedXPostsFor))
-        ).flat();
+        const pooled = ["ShashiTharoor", "priyankac19", "varungandhi", "kanhaiyakumar"].flatMap(ratedXPostsFor);
 
         const analysis = analyseTiming(pooled, IST, "round trip: pooled days")!;
         const medianFor = (day: number) => analysis.byDay.find((d) => d.dayOfWeek === day)?.distribution.median ?? 0;
@@ -283,11 +265,11 @@ describe("round trip — the engine recovers the planted timing pattern", () => 
         expect(avg(midweek)).toBeGreaterThan(avg(weekend));
     });
 
-    it("suppresses most of a real 7x24 grid, and says so", async () => {
+    it("suppresses most of a real 7x24 grid, and says so", () => {
         // The honest consequence of 168 cells and fewer than 100 posts. This is
         // asserted rather than hidden, because it is the reason the marginals
         // exist and the reason a recommendation must never cite a grid cell.
-        const analysis = analyseTiming(await ratedXPostsFor("priyankac19"), IST, "round trip")!;
+        const analysis = analyseTiming(ratedXPostsFor("priyankac19"), IST, "round trip")!;
 
         // More of the grid is thrown away than survives.
         expect(analysis.suppressedCells).toBeGreaterThan(analysis.grid.length);

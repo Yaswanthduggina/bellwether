@@ -53,7 +53,6 @@ server/src/
 │   ├── youtubeAdapter.ts   #   YouTube Data API v3                       ✅ done — 108 live posts
 │   ├── apifyAdapter.ts     #   Instagram via Apify actors                ✅ done
 │   ├── fileAdapter.ts      #   CSV/JSON import — a MUST, not a nicety    ✅ done
-│   ├── seedAdapter.ts      #   generator — TEST FIXTURES ONLY now        ⚪ retired from ingestion
 │   ├── xAdapter.ts         #   X                                         🟡 planned — blocker in the registry
 │   ├── facebookAdapter.ts  #   Facebook                                  🟡 planned — blocker in the registry
 │   └── index.ts            #   registry: platform → LIVE | PLANNED       ✅ done
@@ -342,7 +341,7 @@ The seed generator needs *deliberately planted* patterns — reels beating stati
 
 **Resolution.** The generator was rewritten to model reach first (`reach = followers × reachFactor(format)`, then `interactions = reach × BASE_ER × format × hour × day × theme × noise`). The ordering is the load-bearing part: engagement *rate* is interactions ÷ reach, so deriving reach **from** interactions would have cancelled the planted signal back out to noise no matter how much structure the raw counts appeared to carry.
 
-Planted constants, all exported from `seedAdapter.ts` and all fair game as test fixtures:
+Planted constants, all exported from `src/__tests__/fixtures/plantedCorpus.ts`. The generator itself was deleted with the seeded corpus (DECISIONS §1.7) — what survives is the fixture, which emits plain analytics rows and implements no adapter interface, so it can be read by tests but never routed to by ingestion:
 
 | Pattern | Planted as |
 |---|---|

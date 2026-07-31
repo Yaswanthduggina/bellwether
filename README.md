@@ -33,7 +33,7 @@ The provenance machinery is still in place and still enforced, because a claim i
 - `Account.isSynthetic` and `Post.isSynthetic` are booleans on every row — now `false` on every row
 - The adapter registry refuses to serve an account flagged `isSynthetic`; there is no code path left that writes a generated post
 - The UI shows a **SEEDED** badge anywhere synthetic data contributes to a number, so a regression would be visible rather than silent
-- `seedAdapter.ts` remains in the tree with its tests, unreferenced by the ingestion path — kept as the CSV/JSON fallback's sibling and as the record of how the corpus used to be filled
+- There is no generator left in `src/`. `seedAdapter.ts` was deleted, not merely unwired — an adapter that is one import away from being callable is a weaker guarantee than one that does not exist. Its *planted patterns* survive as a test fixture (`src/__tests__/fixtures/plantedCorpus.ts`), which emits plain analytics rows rather than implementing the adapter interface, so the round-trip tests keep their known-answer corpus while ingestion has nothing to reach for
 
 No live-account data was scraped from behind a login wall, and no platform authentication or rate limit was circumvented. Only public accounts and public content. See [Ethics & scope](#ethics--scope).
 

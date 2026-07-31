@@ -1,8 +1,9 @@
-// `npm run import -- --file=data/imports/sample_x_posts.csv`
+// `npm run import -- --file=<path to a platform export>.csv`
 //
-// Routes a CSV/JSON export through the identical pipeline the live and seed
-// adapters use — normalise, upsert, run log. Imported rows are indistinguishable
-// downstream, which is the payoff of the adapter contract.
+// Routes a CSV/JSON export through the identical pipeline the live adapters use
+// — normalise, upsert, run log. Imported rows are indistinguishable downstream,
+// which is the payoff of the adapter contract. No sample file ships with the
+// repo: the only data that enters the corpus is a real export the user supplies.
 //
 // Accounts must already exist. Ingestion refreshes the roster, it does not define
 // it: which accounts are tracked is a user decision (FR1), and letting a dropped

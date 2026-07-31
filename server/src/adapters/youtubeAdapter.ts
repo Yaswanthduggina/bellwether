@@ -57,8 +57,9 @@ function apiKey(): string {
     const key = process.env["YOUTUBE_API_KEY"];
     if (!key) {
         throw new Error(
-            "YOUTUBE_API_KEY is not set. Either add it to .env, or mark the YouTube " +
-                "accounts isSynthetic=true so they are served by the seed adapter and labelled as seeded.",
+            "YOUTUBE_API_KEY is not set. Add it to .env, or import the account's data " +
+                "as CSV/JSON with `npm run import -- --file=<export>`. There is no " +
+                "generated fallback: an empty corpus is a visible problem, seeded rows are not.",
         );
     }
     return key;

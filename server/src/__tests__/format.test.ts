@@ -3,14 +3,14 @@
 // The first half checks the rules on hand-built fixtures: the n<5 gate, the
 // median-based ranking, the outlier headline, the basis guard.
 //
-// The second half is the one worth reading. It runs the actual seed adapter,
-// puts its output through the actual rating and aggregation code, and asserts
-// that the engine RECOVERED THE PATTERN THAT WAS DELIBERATELY PLANTED. That is
-// a far stronger claim than "it produced a number" — it is the difference
+// The second half is the one worth reading. It runs a corpus with deliberately
+// planted multipliers (see `fixtures/plantedCorpus.ts`) through the actual rating
+// and aggregation code, and asserts that the engine RECOVERED THE PATTERN. That
+// is a far stronger claim than "it produced a number" — it is the difference
 // between a tested pipeline and a pipeline that has been run once.
 
 import { describe, expect, it } from "vitest";
-import { createSeedAdapter, FORMAT_QUALITY } from "../adapters/seedAdapter";
+import { FORMAT_QUALITY, plantedCorpus } from "./fixtures/plantedCorpus";
 import {
     analyseFormats,
     analyseFormatsByBasis,
@@ -178,55 +178,40 @@ describe("round trip — the engine recovers the planted format pattern", () => 
     // views, which legitimately splits the corpus across two bases — tested
     // separately below.
     //
-    // Note the seed generator divides interactions into likes/comments/shares/
-    // saves by fixed proportions, and the analytics layer then re-weights them.
-    // Within one platform that is a constant factor, so it cancels out of every
-    // RATIO below. The assertions are therefore about ordering and multiples,
-    // never absolute rate values — which is also the only honest thing to assert
-    // about a stochastic generator.
+    // Note the fixture divides interactions into likes/comments/shares/saves by
+    // fixed proportions, and the analytics layer then re-weights them. Within one
+    // platform that is a constant factor, so it cancels out of every RATIO below.
+    // The assertions are therefore about ordering and multiples, never absolute
+    // rate values — which is also the only honest thing to assert about a
+    // stochastic generator.
 
     const HANDLES = ["ShashiTharoor", "priyankac19", "varungandhi", "kanhaiyakumar"];
 
-    async function ratedXPostsFor(handle: string): Promise<RatedPost<EngagementPost>[]> {
-        const adapter = createSeedAdapter("X");
-        const since = new Date(Date.now() - 90 * 86_400_000);
-
-        const meta = await adapter.fetchAccountMeta(handle);
-        const raw = await adapter.fetchPosts(handle, since);
-
-        const posts: EngagementPost[] = raw.map((p) => ({
-            platform: p.platform,
-            mediaType: p.mediaType,
-            likes: p.metrics.likes,
-            comments: p.metrics.comments,
-            shares: p.metrics.shares,
-            views: p.metrics.views,
-            saves: p.metrics.saves,
-        }));
-
-        return rateAll(posts, { followerCount: meta.followerCount }).rated;
+    function ratedXPostsFor(handle: string): RatedPost<EngagementPost>[] {
+        const { followerCount, posts } = plantedCorpus("X", handle);
+        return rateAll(posts, { followerCount }).rated;
     }
 
-    async function xAnalysisFor(handle: string): Promise<FormatAnalysis> {
-        return analyseFormats(await ratedXPostsFor(handle), `round trip: X / ${handle}`)!;
+    function xAnalysisFor(handle: string): FormatAnalysis {
+        return analyseFormats(ratedXPostsFor(handle), `round trip: X / ${handle}`)!;
     }
 
-    it("rates every X post on the VIEWS basis, since X reports impressions on all of them", async () => {
-        const analysis = await xAnalysisFor("ShashiTharoor");
+    it("rates every X post on the VIEWS basis, since X reports impressions on all of them", () => {
+        const analysis = xAnalysisFor("ShashiTharoor");
         expect(analysis.basis).toBe("VIEWS");
         expect(analysis.ratedPosts).toBeGreaterThan(50);
     });
 
-    it("ranks REEL_SHORT_VIDEO first for a reel-heavy account — planted at FORMAT_QUALITY 1.9", async () => {
+    it("ranks REEL_SHORT_VIDEO first for a reel-heavy account — planted at FORMAT_QUALITY 1.9", () => {
         // kanhaiyakumar's X mix is reel-dominated, so every format clears n>=5.
-        const analysis = await xAnalysisFor("kanhaiyakumar");
+        const analysis = xAnalysisFor("kanhaiyakumar");
 
         expect(FORMAT_QUALITY.REEL_SHORT_VIDEO).toBe(Math.max(...Object.values(FORMAT_QUALITY)));
         expect(analysis.formats[0].mediaType).toBe("REEL_SHORT_VIDEO");
     });
 
-    it("ranks LINK last for the principal — the format platforms suppress, planted at 0.55", async () => {
-        const analysis = await xAnalysisFor("ShashiTharoor");
+    it("ranks LINK last for the principal — the format platforms suppress, planted at 0.55", () => {
+        const analysis = xAnalysisFor("ShashiTharoor");
         const ranked = analysis.formats.map((f) => f.mediaType);
 
         // LINK must have cleared the n>=5 gate for this assertion to mean anything.
@@ -234,12 +219,12 @@ describe("round trip — the engine recovers the planted format pattern", () => 
         expect(ranked[ranked.length - 1]).toBe("LINK");
     });
 
-    it("recovers the reel-over-link multiple within the account that posts both", async () => {
-        // Planted ratio is 1.9 / 0.55 = 3.45 for format alone. The generator layers
+    it("recovers the reel-over-link multiple within the account that posts both", () => {
+        // Planted ratio is 1.9 / 0.55 = 3.45 for format alone. The fixture layers
         // log-normal noise on top, so this asserts a band rather than a point —
         // wide enough not to be flaky, tight enough that a pipeline which lost the
         // signal (landing near 1.0) fails.
-        const analysis = await xAnalysisFor("ShashiTharoor");
+        const analysis = xAnalysisFor("ShashiTharoor");
         const spread = formatSpread(analysis)!;
 
         expect(spread.worst.mediaType).toBe("LINK");
@@ -247,12 +232,12 @@ describe("round trip — the engine recovers the planted format pattern", () => 
         expect(spread.multiple).toBeLessThan(8);
     });
 
-    it("POOLING FORMATS ACROSS ACCOUNTS CONFOUNDS FORMAT WITH POSTING HABIT", async () => {
+    it("POOLING FORMATS ACROSS ACCOUNTS CONFOUNDS FORMAT WITH POSTING HABIT", () => {
         // Found by this suite, and worth stating loudly because it is a real
         // analytical failure mode rather than a quirk of the fixture.
         //
-        // In the seeded world — as in the real one — the accounts that post reels
-        // are also the accounts that post in the evening peak on the themes that
+        // In the fixture — as in the real world — the accounts that post reels are
+        // also the accounts that post in the evening peak on the themes that
         // travel. Pool all four accounts' X posts together and "reels" inherits
         // those accounts' hour and theme advantages, inflating the format effect
         // well past the 3.45 that was actually planted.
@@ -260,8 +245,8 @@ describe("round trip — the engine recovers the planted format pattern", () => 
         // The product therefore reports format analysis PER ACCOUNT. This test
         // exists so that if someone later pools it for convenience, the reason not
         // to is written down where they will find it.
-        const perAccount = await ratedXPostsFor("ShashiTharoor");
-        const pooled = (await Promise.all(HANDLES.map(ratedXPostsFor))).flat();
+        const perAccount = ratedXPostsFor("ShashiTharoor");
+        const pooled = HANDLES.flatMap(ratedXPostsFor);
 
         const reelMedian = (set: RatedPost<EngagementPost>[]) => {
             const rates = set.filter((r) => r.post.mediaType === "REEL_SHORT_VIDEO").map((r) => r.engagement.rate);
@@ -273,27 +258,14 @@ describe("round trip — the engine recovers the planted format pattern", () => 
         expect(reelMedian(pooled)).toBeGreaterThan(reelMedian(perAccount));
     });
 
-    it("finds the Instagram corpus genuinely split across both bases", async () => {
+    it("finds the Instagram corpus genuinely split across both bases", () => {
         // Instagram reports plays on reels but not on carousels, so the same
         // account's posts land on different denominators. This is the real-world
-        // case the mixing guard exists for, and it is present in the demo data —
-        // not a hypothetical.
-        const adapter = createSeedAdapter("INSTAGRAM");
-        const since = new Date(Date.now() - 90 * 86_400_000);
-        const meta = await adapter.fetchAccountMeta("ShashiTharoor");
-        const raw = await adapter.fetchPosts("ShashiTharoor", since);
+        // case the mixing guard exists for, and the fixture reproduces it rather
+        // than leaving it hypothetical.
+        const { followerCount, posts } = plantedCorpus("INSTAGRAM", "ShashiTharoor");
 
-        const posts: EngagementPost[] = raw.map((p) => ({
-            platform: p.platform,
-            mediaType: p.mediaType,
-            likes: p.metrics.likes,
-            comments: p.metrics.comments,
-            shares: p.metrics.shares,
-            views: p.metrics.views,
-            saves: p.metrics.saves,
-        }));
-
-        const { rated: allRated } = rateAll(posts, { followerCount: meta.followerCount });
+        const { rated: allRated } = rateAll(posts, { followerCount });
         const split = partitionByBasis(allRated);
 
         expect(split.VIEWS.length).toBeGreaterThan(0);
