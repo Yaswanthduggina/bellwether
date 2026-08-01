@@ -130,6 +130,7 @@ GET    /api/analytics/overview            KPI row
 GET    /api/analytics/formats             format × platform stats            (FR6)
 GET    /api/analytics/timing              day×hour heatmap + n per cell      (FR7)
 GET    /api/analytics/top-posts           best/worst + permalinks            (FR8)
+GET    /api/analytics/recent-posts        the principal's last n, by date    (?count=, max 50)
 GET    /api/analytics/compare             principal vs peers                 (FR9)
 GET    /api/analytics/gaps                gap analysis                       (FR10)
 GET    /api/analytics/report              the whole analytics document

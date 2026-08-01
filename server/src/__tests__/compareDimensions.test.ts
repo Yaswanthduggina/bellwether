@@ -176,13 +176,14 @@ describe("best-performing windows — the fourth dimension", () => {
 
     it("does not call an hour he uses RARELY an hour he never uses", () => {
         // THE REGRESSION, caught on the live YouTube corpus: presence was read
-        // off `analysis.byHour`, which suppresses buckets under MIN_CELL_N. Two
-        // posts at 20:00 vanished from the marginal and the route reported 20:00
-        // as an hour the principal had never used — so the advice would have been
-        // "start posting at 20:00" to someone already posting at 20:00.
+        // off `analysis.byHour`, which suppresses buckets under MIN_MARGINAL_N.
+        // Two posts at 20:00 vanished from the marginal and the route reported
+        // 20:00 as an hour the principal had never used — so the advice would have
+        // been "start posting at 20:00" to someone already posting at 20:00.
         //
-        // One post, deliberately: below MIN_CELL_N=3, so it exists in the corpus
-        // and cannot exist in the marginal.
+        // One post, deliberately: under both floors, so it exists in the corpus
+        // and cannot exist in the marginal — and the bug survives a change to
+        // either threshold rather than being accidentally masked by one.
         const principal = windowCorpus("Tharoor", "PRINCIPAL", [
             ...hourBlock(10, 10, 0.03),
             ...hourBlock(1, 20, 0.03),

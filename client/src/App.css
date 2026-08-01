@@ -419,10 +419,15 @@
     padding: 0;
 }
 
+/* Holds posts, too few to score. Hatched so it reads as withheld, not as absent. */
 .heat-cell.empty {
     background: repeating-linear-gradient(45deg, transparent, transparent 3px, var(--rule) 3px, var(--rule) 4px);
     opacity: 0.55;
 }
+
+/* Never posted in. Deliberately no rule of its own — the base cell's flat sunken
+   background is the correct appearance, and the class exists so that "withheld"
+   and "never used" are distinguishable in the DOM as well as to the eye. */
 
 .heat-cell:hover,
 .heat-cell:focus-visible {

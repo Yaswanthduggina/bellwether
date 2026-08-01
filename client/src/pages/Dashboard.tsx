@@ -22,11 +22,15 @@ import { Filters } from "../components/Filters";
 import { FormatChart } from "../components/FormatChart";
 import { GapPanel } from "../components/GapPanel";
 import { KpiRow } from "../components/KpiRow";
+import { RecentPosts } from "../components/RecentPosts";
 import { Recommendations } from "../components/Recommendations";
 import { TimingHeatmap } from "../components/TimingHeatmap";
 import { TopPosts } from "../components/TopPosts";
 import { Loading, Notes, Notice, Panel, SeededBadge } from "../components/ui";
 import { useAsync } from "../hooks/useAsync";
+
+/** What the activity list shows. Ten is a glance; more is a scroll. */
+const RECENT_POST_COUNT = 10;
 
 export function Dashboard() {
     const [filter, setFilter] = useState<Filter>({});
@@ -39,6 +43,7 @@ export function Dashboard() {
     const report = useAsync(() => api.report(filter), [key]);
     const overview = useAsync(() => api.overview(filter), [key]);
     const timing = useAsync(() => api.timing(filter), [key]);
+    const recent = useAsync(() => api.recentPosts(filter, RECENT_POST_COUNT), [key]);
     const recommendations = useAsync(() => api.recommendations(filter), [key]);
 
     const platforms = report.data?.platforms ?? [];
@@ -61,6 +66,16 @@ export function Dashboard() {
 
     const timingAnalysis =
         timingAccount === null || activeBasis === null ? null : (timingAccount.byBasis[activeBasis.basis] ?? null);
+
+    // Keyed off the platform tab ONLY, never the basis tab. A post is recent
+    // regardless of which denominator its rate happened to use, and this list
+    // legitimately holds both — an Instagram reel is rated on views and a
+    // carousel from the same hour is rated on followers. Filtering it by basis
+    // would silently hide half of what the account posted.
+    const recentAccount = useMemo(() => {
+        if (activePlatform === null) return null;
+        return recent.data?.accounts.find((a) => a.platform === activePlatform.platform) ?? null;
+    }, [recent.data, activePlatform]);
 
     if (report.error) {
         return (
@@ -144,6 +159,35 @@ export function Dashboard() {
                                     </span>
                                 </div>
                             )}
+
+                            <Panel
+                                title="Recent posts"
+                                sub={`The last ${RECENT_POST_COUNT} posts on ${activePlatform.platform}, newest first. Not ranked — this is what was posted, not what worked. Unaffected by the engagement basis.`}
+                                right={
+                                    <SeededBadge
+                                        provenance={activePlatform.provenance}
+                                        accounts={activePlatform.seededAccounts}
+                                    />
+                                }
+                            >
+                                {recent.loading ? (
+                                    <Loading lines={4} />
+                                ) : recent.error !== null ? (
+                                    <Notice kind="warn">
+                                        Could not load recent posts. {recent.error.message}
+                                    </Notice>
+                                ) : recentAccount === null ? (
+                                    <p className="muted">
+                                        The principal has no {activePlatform.platform} account under this filter.
+                                    </p>
+                                ) : (
+                                    <RecentPosts
+                                        posts={recentAccount.posts}
+                                        timezone={recentAccount.timezone}
+                                        matchedPosts={recentAccount.matchedPosts}
+                                    />
+                                )}
+                            </Panel>
 
                             <Panel
                                 eyebrow="Question 1 · what content works?"

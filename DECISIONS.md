@@ -164,13 +164,15 @@ Keeping it "inert but present" was the previous position, and it was the weaker 
 
 ### 2.5 Sample-size thresholds enforced in code, not styled in CSS
 
-**Chosen:** heatmap cells with `n < 3` are suppressed entirely; `3 ≤ n < 5` renders muted and flagged; format statistics with `n < 5` read "insufficient data"; any recommendation resting on `n < 5` is dropped by the validator.
+**Chosen:** heatmap cells with `n < 2` are suppressed entirely; hour and day marginals with `n < 3` are dropped; anything under `n < 5` renders muted and flagged; format statistics with `n < 5` read "insufficient data"; any recommendation resting on `n < 5` is dropped by the validator.
 
 **Rejected:** rendering everything and greying out the thin cells.
 
 **Why:** a greyed-out cell is still a cell, and a number on screen gets acted on regardless of its styling. Suppression has to be a property of the computation, or it isn't a guarantee.
 
 **Cost:** a sparse account's heatmap will have real holes in it. That is the correct appearance for sparse data.
+
+**Amended:** the grid and the marginals were originally gated by one constant at `n < 3`, which conflated "is this worth drawing?" with "is this worth citing?". They are different questions: a thin cell on a picture costs a reader nothing as long as it is visibly marked thin, while a thin marginal becomes a sentence in a recommendation. The grid's floor is now 2 and the marginals' is 3 — so the heatmap is legible on a real account without the recommendation layer's bar moving. Lowering one can no longer silently lower the other, and a test asserts the two floors stay in that order.
 
 ### 2.6 Derived metrics are computed, never stored
 

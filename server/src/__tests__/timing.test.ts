@@ -16,6 +16,7 @@ import {
     localSlot,
     LOW_CONFIDENCE_N,
     MIN_CELL_N,
+    MIN_MARGINAL_N,
     type TimingPost,
 } from "../analytics/timing";
 
@@ -84,9 +85,9 @@ describe("localSlot — UTC to account-local", () => {
 
 describe("analyseTiming — sample-size suppression", () => {
     it("suppresses a cell below MIN_CELL_N entirely", () => {
-        // Two posts in a slot is not a pattern, however good those two posts were.
+        // One post in a slot is not a pattern, however good that post was.
         const input = [
-            ...nPostsAt("2026-06-15T14:30:00Z", 2, 0.9), // Mon 20:00 IST — huge rates, n=2
+            ...nPostsAt("2026-06-15T14:30:00Z", 1, 0.9), // Mon 20:00 IST — huge rate, n=1
             ...nPostsAt("2026-06-16T14:30:00Z", 5, 0.05), // Tue 20:00 IST — modest, n=5
         ];
 
@@ -95,7 +96,36 @@ describe("analyseTiming — sample-size suppression", () => {
 
         expect(slots).toEqual(["2:20"]);
         expect(analysis.suppressedCells).toBe(1);
-        expect(analysis.suppressedPosts).toBe(2);
+        expect(analysis.suppressedPosts).toBe(1);
+    });
+
+    it("locates the cells it suppressed, so the UI can tell thin from never-used", () => {
+        // A grid carrying only its survivors cannot distinguish "you post here
+        // rarely" from "you have never posted here" — opposite findings that
+        // render identically. These coordinates are what separates them.
+        const input = [
+            ...nPostsAt("2026-06-15T14:30:00Z", 5), // Mon 20:00 — drawn
+            ...nPostsAt("2026-06-16T03:30:00Z", 1), // Tue 09:00 — suppressed
+            ...nPostsAt("2026-06-17T05:30:00Z", 1), // Wed 11:00 — suppressed
+        ];
+
+        const analysis = analyseTiming(input, IST)!;
+
+        // Day then hour ascending, regardless of the order the corpus arrived in.
+        expect(analysis.suppressedSlots).toEqual([
+            { dayOfWeek: 2, hour: 9, n: 1 },
+            { dayOfWeek: 3, hour: 11, n: 1 },
+        ]);
+        expect(analysis.suppressedSlots).toHaveLength(analysis.suppressedCells);
+        // No distribution rides along — publishing one invites exactly the reading
+        // the suppression exists to prevent.
+        expect(Object.keys(analysis.suppressedSlots[0])).toEqual(["dayOfWeek", "hour", "n"]);
+    });
+
+    it("reports the floors it computed under, so the UI never hardcodes them", () => {
+        const analysis = analyseTiming(nPostsAt("2026-06-15T14:30:00Z", 5), IST)!;
+        expect(analysis.minCellN).toBe(MIN_CELL_N);
+        expect(analysis.minMarginalN).toBe(MIN_MARGINAL_N);
     });
 
     it("includes a cell at exactly MIN_CELL_N but flags it LOW confidence", () => {
@@ -157,12 +187,29 @@ describe("analyseTiming — the marginals", () => {
         expect(analysis.byHour[0].n).toBe(3);
     });
 
-    it("applies the same suppression rule to the marginals", () => {
-        // An hour the account posted at twice is no more quotable than a cell it
-        // posted in twice. The gate does not relax because the axis changed.
+    it("holds the marginals to a HIGHER floor than the grid", () => {
+        // The load-bearing consequence of splitting the two constants, and the
+        // regression this test exists to catch: the grid's floor was lowered to
+        // fill in a sparse heatmap, and it must not have dragged the marginals
+        // down with it. Two posts is enough to DRAW a cell and not enough to CITE
+        // an hour, because only the second of those becomes a recommendation.
+        expect(MIN_CELL_N).toBeLessThan(MIN_MARGINAL_N);
+
         const analysis = analyseTiming(nPostsAt("2026-06-15T14:30:00Z", 2), IST)!;
+
+        expect(analysis.grid).toHaveLength(1);
+        expect(analysis.grid[0].n).toBe(2);
         expect(analysis.byHour).toHaveLength(0);
         expect(analysis.byDay).toHaveLength(0);
+    });
+
+    it("still drops a marginal one post under its own floor", () => {
+        const analysis = analyseTiming(nPostsAt("2026-06-15T14:30:00Z", MIN_MARGINAL_N - 1), IST)!;
+        expect(analysis.byHour).toHaveLength(0);
+
+        const atFloor = analyseTiming(nPostsAt("2026-06-15T14:30:00Z", MIN_MARGINAL_N), IST)!;
+        expect(atFloor.byHour).toHaveLength(1);
+        expect(atFloor.byHour[0].n).toBe(MIN_MARGINAL_N);
     });
 
     it("bestHours excludes LOW-confidence buckets from what recommendations may cite", () => {
@@ -265,14 +312,27 @@ describe("round trip — the engine recovers the planted timing pattern", () => 
         expect(avg(midweek)).toBeGreaterThan(avg(weekend));
     });
 
-    it("suppresses most of a real 7x24 grid, and says so", () => {
+    it("leaves most of a real 7x24 grid empty, and says so", () => {
         // The honest consequence of 168 cells and fewer than 100 posts. This is
         // asserted rather than hidden, because it is the reason the marginals
         // exist and the reason a recommendation must never cite a grid cell.
+        //
+        // This used to assert that suppression discarded more cells than it kept,
+        // which was true only of the old drawing floor — lowering MIN_CELL_N to 2
+        // inverted it (17 drawn against 9 suppressed) without touching the
+        // property that actually matters. Sparsity is about the 168, not about
+        // the ratio between the two piles of occupied cells.
         const analysis = analyseTiming(ratedXPostsFor("priyankac19"), IST, "round trip")!;
 
-        // More of the grid is thrown away than survives.
-        expect(analysis.suppressedCells).toBeGreaterThan(analysis.grid.length);
+        // Every cell the account has ever posted in, drawn or not, is still a
+        // small minority of the grid. The rest is untouched hours.
+        const occupied = analysis.grid.length + analysis.suppressedCells;
+        expect(occupied).toBeLessThan(168 / 2);
+
+        // Suppression has not quietly become a no-op, and every suppressed cell
+        // is located rather than merely counted.
+        expect(analysis.suppressedCells).toBeGreaterThan(0);
+        expect(analysis.suppressedSlots).toHaveLength(analysis.suppressedCells);
 
         // And the marginals are what make the data usable: collapsing day gives
         // each hour bucket several times the sample of the cells it replaces.

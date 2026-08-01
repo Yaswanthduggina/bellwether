@@ -49,6 +49,14 @@ const KNOWN_KEYS = new Set([
     "from",
     "to",
     "liveOnly",
+    // Not a filter — it does not change WHICH posts a route considers, only how
+    // many of them come back, and `parseFilter` ignores it entirely. It is
+    // listed here because the guard above rejects anything it does not
+    // recognise, and two routes (`/top-posts`, `/recent-posts`) legitimately
+    // read it off the same query string. Without this entry `?count=3` is a
+    // 400 UNKNOWN_FILTER, which is what `/top-posts` quietly did for as long as
+    // nothing exercised its documented parameter.
+    "count",
 ]);
 
 function readOne(req: Request, key: string): string | undefined {

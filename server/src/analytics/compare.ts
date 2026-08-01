@@ -422,7 +422,7 @@ export interface WindowCorpus {
      * Every local hour this account has ANY post in — see `timing.occupiedHours`.
      *
      * Supplied separately rather than read off `analysis.byHour` because that
-     * marginal suppresses buckets below MIN_CELL_N. Deriving presence from it
+     * marginal suppresses buckets below MIN_MARGINAL_N. Deriving presence from it
      * reported an hour holding two posts as one the principal had never used,
      * and "start posting at 10:00" then goes to someone already posting at 10:00.
      */

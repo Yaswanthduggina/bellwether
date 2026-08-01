@@ -16,6 +16,9 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
 import fixtures from "./fixtures.json";
+// A second capture, from the current corpus — `fixtures.json` predates the route.
+// See client/README.md for why the two vintages coexist.
+import recentPosts from "./recentPostsLive.json";
 
 const NO_KEY = {
     error: {
@@ -44,6 +47,7 @@ function mockFetch(overrides: Record<string, { status: number; body: unknown }> 
             "/api/analytics/overview": fixtures.overview,
             "/api/analytics/report": fixtures.report,
             "/api/analytics/timing": fixtures.timing,
+            "/api/analytics/recent-posts": recentPosts,
             "/api/ai/recommendations": NO_KEY,
         };
 
@@ -123,6 +127,23 @@ describe("the dashboard renders the real corpus", () => {
         expect(await screen.findByText(/of 168 cells/)).toBeInTheDocument();
         // The grid itself is drawn, suppressed cells included as hatching.
         expect(document.querySelectorAll(".heatmap .heat-cell").length).toBe(7 * 24);
+    });
+
+    it("shows the recent-posts panel, and degrades to a sentence off-platform", async () => {
+        render(<App />);
+
+        expect(await screen.findByRole("heading", { name: "Recent posts", level: 2 })).toBeInTheDocument();
+
+        // The two fixtures are different vintages on purpose: the report still
+        // carries FACEBOOK, which the current corpus no longer has, so the
+        // default tab exercises the "no account on this platform" branch. That
+        // it renders a sentence rather than an empty table or a crash is the
+        // property worth pinning — the populated table is covered against a real
+        // payload in RecentPosts.test.tsx.
+        const tab = fixtures.report.platforms[0]!.platform;
+        const served = recentPosts.accounts.some((a) => a.platform === tab);
+        expect(served).toBe(false);
+        expect(await screen.findByText(new RegExp(`no ${tab} account`))).toBeInTheDocument();
     });
 
     it("shows the comparison sentence the server composed", async () => {

@@ -23,6 +23,7 @@ import { loadCorpora, type LoadedCorpus } from "../analytics/corpus";
 import { partitionByBasis, type EngagementBasis } from "../analytics/engagement";
 import { analyseFormatsByBasis } from "../analytics/format";
 import { describeGap, findGapsByBasis, mergeHourWindows } from "../analytics/gaps";
+import { clampRecentCount, recentPosts } from "../analytics/recentPosts";
 import { analyseTimingByBasis, occupiedHours } from "../analytics/timing";
 import { topPostsByBasis } from "../analytics/topPosts";
 import { parseFilter } from "./filters";
@@ -149,6 +150,41 @@ analyticsRouter.get(
                 timezone: corpus.timezone,
                 isSynthetic: corpus.isSynthetic,
                 byBasis: analyseTimingByBasis(corpus.rated, corpus.timezone, `timing: ${corpus.personName}`),
+            })),
+        });
+    }),
+);
+
+analyticsRouter.get(
+    "/recent-posts",
+    route(async (req, res) => {
+        const filter = parseFilter(req);
+        const { principal } = await loadWithPrincipal(filter);
+
+        const count = clampRecentCount(req.query["count"]);
+
+        // The principal's accounts only, matching /timing and /formats. The
+        // question behind this panel is "what have WE just put out" — a peer's
+        // recent posts are a different question, and the comparison routes are
+        // where that one is answered.
+        //
+        // Built from `corpus.posts` rather than `corpus.rated`: an unrated post
+        // still happened. See recentPosts.ts.
+        res.json({
+            filter,
+            count,
+            accounts: principal.map((corpus) => ({
+                accountId: corpus.accountId,
+                personName: corpus.personName,
+                platform: corpus.platform,
+                handle: corpus.handle,
+                timezone: corpus.timezone,
+                isSynthetic: corpus.isSynthetic,
+                followerCount: corpus.followerCount,
+                /** Everything the filter matched — `posts` is the last `count` of these. */
+                matchedPosts: corpus.posts.length,
+                unratedPosts: corpus.gaps.NO_METRICS + corpus.gaps.NO_DENOMINATOR,
+                posts: recentPosts(corpus.posts, { followerCount: corpus.followerCount }, count),
             })),
         });
     }),

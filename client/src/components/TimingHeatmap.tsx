@@ -12,15 +12,26 @@
 // A 7×24 grid is 168 cells; ninety days of heavy posting is under a hundred
 // posts. So the typical cell holds zero or one post and a real account's grid is
 // mostly empty. That is arithmetic, not a rendering bug, and no amount of visual
-// polish fixes it. The server suppresses cells below n=3 before they ever reach
-// here, and this component draws the suppressed ones as hatching rather than
-// omitting them — an empty grid is itself the finding that an account posts in a
-// narrow band, which is precisely the fact behind this product's most important
+// polish fixes it. The server suppresses thin cells before they ever reach here,
+// and this component draws the suppressed ones as hatching rather than omitting
+// them — an empty grid is itself the finding that an account posts in a narrow
+// band, which is precisely the fact behind this product's most important
 // recommendation.
+//
+// HATCHED AND BLANK ARE DIFFERENT FINDINGS, so they are drawn differently.
+// Hatched means "you post here, too rarely to score"; blank means "you have
+// never posted here". Both were hatched while the grid carried only its
+// surviving cells, which read as suppression everywhere and made an account's
+// posting spread look wider than it is. `suppressedSlots` is what separates them.
+//
+// Every threshold in the copy below comes off the payload rather than a literal.
+// The server owns both floors and has already changed one of them once; a legend
+// reading "n < 3" under a server suppressing at 2 is a lie the reader cannot check.
 //
 // The hour and day marginals are shown alongside for the same reason: they carry
 // ~4× and ~24× the sample of a grid cell, so they are what a recommendation is
-// allowed to cite. The grid is a picture of posting habit.
+// allowed to cite — and they hold a higher floor than the grid for exactly that
+// reason. The grid is a picture of posting habit.
 
 import { useState } from "react";
 import type { TimingAnalysis } from "../api/client";
@@ -53,6 +64,17 @@ export function TimingHeatmap({ analysis }: { analysis: TimingAnalysis }) {
     const cells = new Map<string, (typeof analysis.grid)[number]>();
     for (const cell of analysis.grid) cells.set(`${cell.dayOfWeek}:${cell.hour}`, cell);
 
+    // Absent on a payload captured before the server located its suppressed
+    // cells. Without the coordinates a blank cell is genuinely ambiguous, so the
+    // grid falls back to hatching everything undrawn — which overstates
+    // suppression, and that is the safe direction to be wrong in: it never tells
+    // a reader they have "never posted" at an hour they have posted at.
+    const located = analysis.suppressedSlots;
+    const minCellN = analysis.minCellN;
+
+    const suppressed = new Map<string, number>();
+    for (const slot of located ?? []) suppressed.set(`${slot.dayOfWeek}:${slot.hour}`, slot.n);
+
     const bestHours = [...analysis.byHour].sort((a, b) => b.multipleOfOverall - a.multipleOfOverall).slice(0, 3);
     const bestDays = [...analysis.byDay].sort((a, b) => b.multipleOfOverall - a.multipleOfOverall).slice(0, 3);
 
@@ -68,11 +90,22 @@ export function TimingHeatmap({ analysis }: { analysis: TimingAnalysis }) {
                                 const label = `${dayName} ${String(hour).padStart(2, "0")}:00`;
 
                                 if (!cell) {
+                                    const thin = suppressed.get(`${day}:${hour}`);
+                                    const hatched = located === undefined || thin !== undefined;
+
+                                    let why: string;
+                                    if (located === undefined) why = "no posts, or too few to draw";
+                                    else if (thin === undefined) why = "never posted";
+                                    else {
+                                        const floor = minCellN === undefined ? "" : `, below the n=${minCellN} floor`;
+                                        why = `${thin} post${thin === 1 ? "" : "s"}${floor} — suppressed`;
+                                    }
+
                                     return (
                                         <div
                                             key={hour}
-                                            className="heat-cell empty"
-                                            title={`${label} — fewer than 3 posts, suppressed.`}
+                                            className={hatched ? "heat-cell empty" : "heat-cell unused"}
+                                            title={`${label} — ${why}.`}
                                             onMouseEnter={() => setHovered(null)}
                                         />
                                     );
@@ -159,17 +192,28 @@ export function TimingHeatmap({ analysis }: { analysis: TimingAnalysis }) {
                 </span>
                 <span>Better</span>
                 <span className="legend-key" style={{ marginLeft: 10 }}>
-                    <i className="heat-cell empty" style={{ aspectRatio: "auto", height: 11 }} /> suppressed (n&lt;3)
+                    <i className="heat-cell empty" style={{ aspectRatio: "auto", height: 11 }} /> suppressed
+                    {minCellN !== undefined && <> (n&lt;{minCellN})</>}
                 </span>
+                {located !== undefined && (
+                    <span className="legend-key">
+                        <i className="heat-cell" style={{ aspectRatio: "auto", height: 11 }} /> never posted
+                    </span>
+                )}
                 <span className="legend-key">
                     <i style={{ border: "1px dashed var(--rule-strong)", background: "transparent" }} /> thin (n&lt;5)
                 </span>
             </div>
 
             <p className="muted" style={{ fontSize: 12.5, marginTop: 10 }}>
-                {analysis.suppressedCells} of 168 cells hold posts but fewer than three, and are hidden —{" "}
-                {analysis.suppressedPosts} posts in total. A grid this sparse is normal: 168 cells against{" "}
-                {analysis.ratedPosts} rated posts. Read the marginals below, not individual cells.
+                {analysis.suppressedCells} of 168 cells hold posts but fewer than{" "}
+                {minCellN === undefined ? "the floor" : minCellN}, and are hidden — {analysis.suppressedPosts} posts in
+                total.{located !== undefined && " The blank cells are hours this account has never posted in at all."} A
+                grid this sparse is normal: 168 cells against {analysis.ratedPosts} rated posts. Read the marginals
+                below, not individual cells
+                {analysis.minMarginalN !== undefined &&
+                    ` — they carry a higher bar (n≥${analysis.minMarginalN}) because they are what a recommendation may cite`}
+                .
             </p>
 
             <div className="split" style={{ marginTop: 16 }}>

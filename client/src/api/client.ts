@@ -32,9 +32,8 @@ export class ApiError extends Error {
     }
 }
 
-async function get<T>(path: string, filter?: Filter): Promise<T> {
-    const query = filter ? toQuery(filter) : "";
-    return request<T>(`${path}${query}`, { method: "GET" });
+async function get<T>(path: string, query?: Query): Promise<T> {
+    return request<T>(`${path}${query ? toQuery(query) : ""}`, { method: "GET" });
 }
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
@@ -89,7 +88,17 @@ export interface Filter {
  * here means "no filter" and "all platforms" are the same request, which is
  * what a cleared dropdown means to the person who cleared it.
  */
-export function toQuery(filter: Filter): string {
+/**
+ * The filter block, plus the one parameter that is not a filter.
+ *
+ * `count` does not change WHICH posts a route considers, only how many come
+ * back, but it travels in the same query string — so it is typed here rather
+ * than concatenated onto a path by a caller, where it would collide with the
+ * leading "?" that `toQuery` owns.
+ */
+export type Query = Filter & { count?: number };
+
+export function toQuery(filter: Query): string {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(filter)) {
         if (value === undefined || value === null || value === "" || value === false) continue;
@@ -242,8 +251,20 @@ export interface TimingAnalysis {
     byHour: (TimingBucket & { hour: number })[];
     byDay: (TimingBucket & { dayOfWeek: number })[];
     ratedPosts: number;
+    /** The grid's drawing floor and the marginals' citing floor — see server timing.ts. */
+    minCellN?: number;
+    minMarginalN?: number;
     suppressedCells: number;
     suppressedPosts: number;
+    /**
+     * Slots holding posts but too few to draw. Lets the grid tell thin from unused.
+     *
+     * Optional, with the two floors above, because these three arrived together
+     * and captured payloads predating them are still in the test suite. The
+     * server always sends them; the heatmap degrades rather than crashing when
+     * something older does not. See `TimingHeatmap`.
+     */
+    suppressedSlots?: { dayOfWeek: number; hour: number; n: number }[];
 }
 
 export interface TimingResponse {
@@ -254,6 +275,50 @@ export interface TimingResponse {
         timezone: string;
         isSynthetic: boolean;
         byBasis: Record<string, TimingAnalysis | null>;
+    }[];
+}
+
+/**
+ * One row of the activity list — ordered by recency, not ranked.
+ *
+ * `ratePct` and `unratedReason` are exactly one of null each: a post either has
+ * a computable rate or a reason it does not. The UI must render the reason
+ * rather than an empty cell, because "the platform withheld the metrics" and
+ * "this post earned nothing" are opposite findings.
+ */
+export interface RecentPost {
+    id: string;
+    postId: string;
+    platform: Platform;
+    mediaType: string;
+    postedAt: string;
+    captionExcerpt: string | null;
+    permalink: string | null;
+    isSynthetic: boolean;
+    theme: string | null;
+    likes: number | null;
+    comments: number | null;
+    shares: number | null;
+    views: number | null;
+    saves: number | null;
+    ratePct: number | null;
+    basis: "VIEWS" | "FOLLOWERS" | null;
+    unratedReason: "NO_METRICS" | "NO_DENOMINATOR" | null;
+}
+
+export interface RecentPostsResponse {
+    count: number;
+    accounts: {
+        accountId: string;
+        personName: string;
+        platform: Platform;
+        handle: string;
+        timezone: string;
+        isSynthetic: boolean;
+        followerCount: number | null;
+        matchedPosts: number;
+        unratedPosts: number;
+        posts: RecentPost[];
     }[];
 }
 
@@ -389,6 +454,18 @@ export const api = {
     overview: (filter: Filter) => get<Overview>("/api/analytics/overview", filter),
     report: (filter: Filter) => get<Report>("/api/analytics/report", filter),
     timing: (filter: Filter) => get<TimingResponse>("/api/analytics/timing", filter),
+
+    /**
+     * The principal's latest posts per platform. `count` is clamped server-side.
+     *
+     * Not part of the report: the report is the document the recommendation
+     * model is grounded against, and this list exists for a human to eyeball.
+     */
+    recentPosts: (filter: Filter, count = 10) =>
+        // `count` rides in the same query string as the filter rather than being
+        // appended to the path — `toQuery` owns the leading "?", so a hand-built
+        // one here would produce `?count=10?platform=…`.
+        get<RecentPostsResponse>("/api/analytics/recent-posts", { ...filter, count }),
 
     // ── The writes that used to be terminal-only ─────────────────────────
     // These three routes existed on the server from the start; nothing in the

@@ -22,6 +22,17 @@
 // one-post cell as "Tuesday 8pm is your best slot" is exactly the confident
 // claim from six data points the brief warns against — so the suppression is
 // enforced here, in the computation, rather than in the CSS.
+//
+// WHY TWO FLOORS AND NOT ONE
+//
+// The grid and the marginals were originally gated by the same constant, which
+// quietly conflated two different questions. "Is this worth DRAWING?" and "is
+// this worth CITING?" have different answers: a thin cell on a picture costs a
+// reader nothing as long as it is visibly marked thin, while a thin marginal
+// becomes a sentence in a recommendation. So the floors are separate —
+// MIN_CELL_N for the grid, MIN_MARGINAL_N for the two marginals — and lowering
+// the drawing floor to fill in a sparse heatmap cannot silently lower the bar on
+// what the product is willing to claim.
 
 import {
     assertSingleBasis,
@@ -32,8 +43,29 @@ import {
 } from "./engagement";
 import { describe as describeDistribution, type Distribution } from "./stats";
 
-/** Below this, a cell is not rendered at all. Three posts is not a pattern. */
-export const MIN_CELL_N = 3;
+/**
+ * Below this, a grid cell is not drawn at all.
+ *
+ * Two, not three: a 7×24 grid over a 90-day corpus is mostly empty by
+ * arithmetic, and a floor of three left real accounts with a handful of visible
+ * cells — too few for the grid to do its actual job, which is showing the SHAPE
+ * of a posting habit. A two-post cell is not evidence, and it is not presented
+ * as evidence: everything below LOW_CONFIDENCE_N renders flagged, and nothing on
+ * the grid reaches a recommendation. Lowering this only makes the picture legible.
+ */
+export const MIN_CELL_N = 2;
+
+/**
+ * Below this, an hour or day marginal is dropped.
+ *
+ * Held at three while MIN_CELL_N is two, deliberately. The marginals are what
+ * `bestHours` ranks and what the recommendation layer cites, so this floor is a
+ * claim-quality bar rather than a rendering one. The marginals can afford it:
+ * collapsing day gives an hour bucket ~4× a cell's sample and collapsing hour
+ * gives a day bucket ~24×, so three is a far weaker constraint here than the
+ * same number would be on the grid.
+ */
+export const MIN_MARGINAL_N = 3;
 
 /** Below this, a cell renders muted and is flagged. At or above it, it is quotable. */
 export const LOW_CONFIDENCE_N = 5;
@@ -72,6 +104,20 @@ export interface DayBucket extends TimingBucket {
     dayOfWeek: DayOfWeek;
 }
 
+/**
+ * A slot that holds posts but too few to draw — coordinates and count only.
+ *
+ * No distribution, because publishing one would invite exactly the reading the
+ * suppression exists to prevent. The UI needs these to tell "you have never
+ * posted here" apart from "you have posted here once", which look identical on a
+ * grid built only from the surviving cells and are opposite findings.
+ */
+export interface SuppressedSlot {
+    dayOfWeek: DayOfWeek;
+    hour: number;
+    n: number;
+}
+
 export interface TimingAnalysis {
     basis: EngagementBasis;
     /** The IANA zone every hour and day in this result is expressed in. */
@@ -85,12 +131,24 @@ export interface TimingAnalysis {
     overall: Distribution;
     ratedPosts: number;
     /**
+     * The two floors this result was computed under.
+     *
+     * Carried in the payload so the UI can label a suppressed cell with the
+     * number that actually suppressed it. The legend and the tooltips used to
+     * hardcode "n < 3", which was one edit away from telling the reader something
+     * the server had stopped doing — and the reader has no way to check.
+     */
+    minCellN: number;
+    minMarginalN: number;
+    /**
      * What the grid does not show. Reported rather than dropped, because a
      * heatmap with two visible cells out of 168 is telling the reader something
      * about their posting spread, and silently omitting the rest hides it.
      */
     suppressedCells: number;
     suppressedPosts: number;
+    /** Those same cells, located — day/hour ascending. See `SuppressedSlot`. */
+    suppressedSlots: SuppressedSlot[];
 }
 
 // ── UTC → local ──────────────────────────────────────────────────────────
@@ -256,31 +314,37 @@ export function analyseTiming<T extends TimingPost>(
     }
 
     const grid: GridCell[] = [];
-    let suppressedCells = 0;
+    const suppressedSlots: SuppressedSlot[] = [];
     let suppressedPosts = 0;
 
     for (const [key, rates] of cellRates) {
+        const [day, hour] = key.split(":").map(Number);
+
         if (rates.length < MIN_CELL_N) {
-            suppressedCells += 1;
+            suppressedSlots.push({ dayOfWeek: day as DayOfWeek, hour, n: rates.length });
             suppressedPosts += rates.length;
             continue;
         }
 
-        const [day, hour] = key.split(":").map(Number);
         grid.push({ ...toBucket(rates, overall.median)!, dayOfWeek: day as DayOfWeek, hour });
     }
 
-    // The marginals carry the same suppression rule. An hour the account has
-    // posted at twice is no more quotable than a cell it has posted in twice.
+    // Map iteration order is insertion order, which here is corpus order — stable
+    // per query but arbitrary. Sorting makes the payload deterministic, which is
+    // what lets the captured client fixtures mean anything.
+    suppressedSlots.sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.hour - b.hour);
+
+    // The marginals get the higher floor: they are what recommendations cite,
+    // and collapsing an axis buys enough sample to afford it. See MIN_MARGINAL_N.
     const byHour: HourBucket[] = [];
     for (const [hour, rates] of hourRates) {
-        if (rates.length < MIN_CELL_N) continue;
+        if (rates.length < MIN_MARGINAL_N) continue;
         byHour.push({ ...toBucket(rates, overall.median)!, hour });
     }
 
     const byDay: DayBucket[] = [];
     for (const [dayOfWeek, rates] of dayRates) {
-        if (rates.length < MIN_CELL_N) continue;
+        if (rates.length < MIN_MARGINAL_N) continue;
         byDay.push({ ...toBucket(rates, overall.median)!, dayOfWeek });
     }
 
@@ -296,8 +360,11 @@ export function analyseTiming<T extends TimingPost>(
         byDay,
         overall,
         ratedPosts: rated.length,
-        suppressedCells,
+        minCellN: MIN_CELL_N,
+        minMarginalN: MIN_MARGINAL_N,
+        suppressedCells: suppressedSlots.length,
         suppressedPosts,
+        suppressedSlots,
     };
 }
 
@@ -343,11 +410,11 @@ export function worstHours(analysis: TimingAnalysis, count = 3): HourBucket[] {
  * Every local hour an account has ANY post in, suppression ignored.
  *
  * Distinct from `analysis.byHour`, and the distinction is load-bearing. `byHour`
- * drops buckets below MIN_CELL_N because three posts are not a pattern — correct
- * for "how does this hour PERFORM", wrong for "does this account POST here".
- * Reading presence off the suppressed marginal reports an hour with two posts in
- * it as one the account has never used, and a recommendation to "start posting
- * at 10:00" then goes to someone who already does.
+ * drops buckets below MIN_MARGINAL_N because two posts are not a pattern —
+ * correct for "how does this hour PERFORM", wrong for "does this account POST
+ * here". Reading presence off the suppressed marginal reports an hour with two
+ * posts in it as one the account has never used, and a recommendation to "start
+ * posting at 10:00" then goes to someone who already does.
  */
 export function occupiedHours<T extends TimingPost>(
     rated: readonly RatedPost<T>[],

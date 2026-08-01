@@ -126,7 +126,8 @@ No confident claims from six data points. Enforced in code, not just in the UI:
 
 | Context | Rule |
 |---|---|
-| Timing heatmap cell | `n < 3` → cell suppressed entirely. `3 ≤ n < 5` → rendered muted, flagged low-confidence |
+| Timing heatmap cell | `n < 2` → cell suppressed entirely. `2 ≤ n < 5` → rendered muted, flagged low-confidence |
+| Timing hour/day marginal | `n < 3` → bucket dropped. A higher floor than the grid's, because the marginals are what recommendations cite while the grid is only a picture |
 | Format statistic | `n < 5` → shown as "insufficient data", excluded from recommendations |
 | Any recommendation | must cite `n`; recommendations built on `n < 5` are dropped by the validator |
 
@@ -306,7 +307,7 @@ Module B — analytics:
 - Basis-mixing guard: aggregating `VIEWS`-based and `FOLLOWERS`-based rates together **throws**
 - Statistics: mean/median/stdev/IQR against hand-computed fixtures, R type-7 quantiles pinned
 - Format aggregation: the `n < 5` gate, median-based ranking, the outlier-driven headline
-- Timing: UTC → account-local bucketing including a cross-midnight boundary and a **DST-observing zone**, plus the `n < 3` / `n < 5` suppression thresholds
+- Timing: UTC → account-local bucketing including a cross-midnight boundary and a **DST-observing zone**, plus the `n < 2` grid / `n < 3` marginal / `n < 5` confidence thresholds — including that the grid's floor stays below the marginals'
 - Top posts: ranking on rate rather than raw counts, with the trap asserted to be real
 - Comparison: median-peer benchmarking, sample-size exclusion with reasons, and mixed provenance reported rather than averaged away
 
