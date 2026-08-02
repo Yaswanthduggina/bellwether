@@ -176,6 +176,16 @@ export interface ReportPost {
     captionExcerpt: string | null;
 }
 
+/** One peer's contribution to a gap or a near miss. */
+export interface ReportPeerEvidence {
+    personName: string;
+    n: number;
+    lift: number;
+    /** True where this peer on its own cleared the lift bar. */
+    clears: boolean;
+    isSynthetic: boolean;
+}
+
 export interface ReportGap {
     dimension: string;
     label: string;
@@ -186,6 +196,32 @@ export interface ReportGap {
     opportunity: number;
     sentence: string;
     provenanceCaveat: string | null;
+    peers: ReportPeerEvidence[];
+}
+
+/**
+ * A bucket that was considered and rejected, with the gate that stopped it.
+ * Never a finding — see the reason copy in GapPanel.
+ */
+export interface ReportNearMiss {
+    dimension: string;
+    label: string;
+    reason: string;
+    peerLift: number;
+    peerAgreement: string;
+    principalN: number;
+    principalLift: number | null;
+    whatWouldChangeIt: string;
+    sentence: string;
+    peers: ReportPeerEvidence[];
+}
+
+export interface ReportDimensionCoverage {
+    dimension: string;
+    bucketsConsidered: number;
+    bucketsTestable: number;
+    gaps: number;
+    nearMisses: number;
 }
 
 export interface ReportBasis {
@@ -203,6 +239,8 @@ export interface ReportBasis {
     comparisonSentence: string;
     peerWindows: { personName: string; label: string; n: number; multipleOfOverall: number }[];
     gaps: ReportGap[];
+    nearMisses: ReportNearMiss[];
+    gapCoverage: ReportDimensionCoverage[];
     overInvested: { label: string; n: number; shareOfOutputPct: number; lift: number; sentence: string }[];
     bestPosts: ReportPost[];
     worstPosts: ReportPost[];

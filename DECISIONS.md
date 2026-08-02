@@ -24,8 +24,14 @@ The format is deliberate: **what was chosen · what was rejected · what it cost
 
 ### 1.2 X: assessed, then rejected rather than half-wired
 
-> **Partly superseded on Day 4.** The assessment stands and is why X still has no
-> adapter. What changed is the fallback: X is now *declared and empty*, not seeded.
+> **Superseded on Day 5 by §1.9.** X is live. The assessment below is still correct
+> about X's **first-party API**, which is what it actually assessed — and that is the
+> point of keeping it. Filed under "X", it read for four days as a verdict on the
+> platform rather than on one route to it, and it was only re-read while adding a
+> platform. A blocker is only as narrow as the thing it names.
+>
+> (Partly superseded on Day 4 first: the fallback changed from *seeded* to
+> *declared and empty*.)
 
 **Chosen:** X is seeded.
 
@@ -116,7 +122,35 @@ Keeping it "inert but present" was the previous position, and it was the weaker 
 
 **Cost:** platform status is now duplicated in the client, and duplicated state drifts — `Accounts.tsx` held a hardcoded `LIVE_PLATFORMS = {YOUTUBE}` that was silently wrong the moment Instagram went live, offering a "seeded" warning for a platform that had just become real. It is corrected and commented, but the honest fix is for the UI to read status from the API (every account response already carries `liveAdapterAvailable`), and that is not done. `Filters.tsx` still lists X and Facebook as filter options that return nothing.
 
+> **Partly closed on Day 5 by §1.9.** X is live. Facebook is not, and the reasoning
+> below still governs it.
+
 **A second cost, worth naming separately:** the account-creation gate had to change meaning. It used to make the caller acknowledge that a new account on an adapterless platform would be *seeded*; it now makes them acknowledge it will be *empty*, and such accounts are created with `isSynthetic: false`. Writing `true` there would have been worse than cosmetic — the registry refuses flagged accounts, so those accounts would have been permanently skipped by the very adapter they were waiting for.
+
+### 1.9 X goes live through Apify — the blocker was about the wrong API
+
+**Chosen:** read X's public timeline through an Apify actor, exactly as Instagram is read. X flips from `PLANNED` to `LIVE` in the registry; the four already-declared handles start ingesting on the next run with no edit to `config/accounts.ts` and no change to any analytics module.
+
+**Rejected:** X's first-party API (the original blocker, and still correct — its free read tier is far below a 90-day pull across four accounts, and a truncated first-party sample would look authoritative while hiding its own bias); continuing to ship X as `PLANNED`; seeding it.
+
+**Why:** the blocker recorded on Day 1 was assessed against X's own API and then filed under "X". Re-reading it while adding a platform showed it had never been an argument about the *platform* — it was an argument about one *route* to it. The public timeline is the same surface Instagram is already read from, under the same reasoning: it is what any visitor sees. Nothing about the original assessment was wrong; its scope had quietly widened in the retelling.
+
+**The actor choice is the substance of this decision, and two of three candidates fail in ways the output shape does not reveal:**
+
+| Actor | Outcome |
+|---|---|
+| `apidojo/tweet-scraper` | **Unusable.** Most-run X scraper on the platform by two orders of magnitude and the one every tutorial shows. It refuses API access on the Apify free plan — but *not by failing*. The run returns HTTP 201, status `SUCCEEDED`, and ten rows of `{"noResults": true}`. Trust the run status and count the rows and you have learned that a head of government posts nothing |
+| `xtdata/twitter-x-scraper` | **Runs, and was the first implementation.** Abandoned on two counts found only by attempting a full ingest: $0.005/tweet (20× the going rate), and a `minimalMaxTotalChargeUsd` of **$3** that Apify checks against remaining credit before launching. Below $3 of credit no run starts at any `maxItems` or `maxTotalChargeUsd`. It also returns no view count |
+| `kaitoeasyapi/…-cheapest` | **Chosen.** $0.00025/tweet, no minimum pre-authorisation, and it returns `viewCount` — which is what keeps X on the views basis rather than followers |
+
+**Why that last column matters more than the price.** `VIEW_NATIVE_PLATFORMS` listed X before any X adapter existed, on the strength of the impression count X shows on its own web UI. That is a claim about the *source*, not the platform, and the first actor disproved it — an X corpus read through xtdata would have fallen silently through to the followers basis without erroring, re-basing a whole platform mid-product. Membership of that set is now documented as an adapter-dependent fact.
+
+**Cost:**
+
+- **The corpus is capped at 160 posts per account**, and because the cap is on count while the accounts post at very different rates, that bought 15 days of the principal and 65 days of one peer. **This manufactured a false finding before it was caught** — see §2.8.
+- **Retweets and replies-to-others are dropped**, so X post counts are lower than a raw timeline count. A retweet's metrics belong to the original author; a reply reaches a different audience under different distribution rules. Self-replies are kept, because a thread is one broadcast post that happens to be chunked.
+- **X classification is incomplete.** 640 new posts exhausted the Gemini free tier 175 rows in, so theme gaps on X cover a recent-skewed subset. `gaps.ts` reports the fraction rather than presenting the finding flat.
+- **The adapter is one actor away from breaking**, on a marketplace where actors change pricing and access terms unilaterally. `X_ACTOR` makes a swap a `.env` change, and `assertUsableRun` turns the specific way these actors fail — refusal-as-data — into a loud error rather than a zero.
 
 ---
 
@@ -174,7 +208,30 @@ Keeping it "inert but present" was the previous position, and it was the weaker 
 
 **Amended:** the grid and the marginals were originally gated by one constant at `n < 3`, which conflated "is this worth drawing?" with "is this worth citing?". They are different questions: a thin cell on a picture costs a reader nothing as long as it is visibly marked thin, while a thin marginal becomes a sentence in a recommendation. The grid's floor is now 2 and the marginals' is 3 — so the heatmap is legible on a real account without the recommendation layer's bar moving. Lowering one can no longer silently lower the other, and a test asserts the two floors stay in that order.
 
-### 2.6 Derived metrics are computed, never stored
+### 2.6 The gap panel reports what it rejected, and why
+
+> **Partly superseded by §2.9.** `MIN_PEER_ACCOUNTS` was subsequently lowered to 1
+> by product decision, so most of what this entry sends to the near-miss list is
+> now a reported gap. The near-miss machinery and everything below about keeping
+> a refusal from reading as a finding still stands.
+
+**Chosen:** alongside its gaps, `findGaps` returns **near misses** — buckets where at least one peer cleared the 1.2× bar on its own, but the evidence failed a gate — each tagged with the gate that stopped it (`SINGLE_PEER_ONLY`, `NO_PEER_AGREEMENT`, `MEDIAN_BELOW_BAR`, `PRINCIPAL_COMPETITIVE`) and what would change it. Every gap and near miss also carries its per-peer evidence, and each dimension reports how many buckets it could actually test.
+
+**Rejected:** lowering `GAP_LIFT_THRESHOLD` or `MIN_PEER_ACCOUNTS` to produce more findings; ranking near misses alongside gaps; leaving the panel as it was.
+
+**Why:** the gates are strict and on a real corpus they reject nearly everything — the first live run across three platforms returned **one** gap in six basis-platform combinations. The statistic is right, and every attempt in this project to relax it has produced a finding that did not survive scrutiny (see the `MIN_PEER_ACCOUNTS` note in `gaps.ts`, where one peer at 1.76× and one at exactly 1.00× interpolated to a reportable 1.38×).
+
+But `No gap clears the bar on this basis`, rendered alone above a table about over-investment, is indistinguishable to a reader from *we did not look* — and it discards the most useful thing the analysis knows. A bucket where one peer sits at 1.48× and a second at 1.11× is not nothing; it is a named, quantified thing to watch with a stated distance to the bar. The entry rule is deliberately narrow — **at least one peer must have cleared the bar on its own** — which is exactly the situation `MIN_PEER_ACCOUNTS` was written for. A near miss is the gate's own argument made visible, not a softer gate under a different name.
+
+The per-peer evidence closes a smaller hole in the same wall: `2 of 3 peers agree` was an assertion the reader had no way to check, because the projection computed the per-peer lifts and then dropped them.
+
+**Cost:**
+
+- **A near miss can be misread as a finding**, and that would be worse than the blank panel it replaces. Everything that makes a gap look actionable is withheld: no opportunity multiple, no table, muted type, an explicit *These are not findings* line, and `describeNearMiss` leads with `NOT REPORTED as a gap` so the AI layer receives a refusal it cannot paraphrase into a claim. Six tests pin that separation. It remains the main risk in the change.
+- **More surface area on screen.** The panel is longer and denser, and a reader in a hurry has more to skim past before reaching the findings.
+- **The `PRINCIPAL_COMPETITIVE` reason is good news wearing a warning's clothes** — "peers do well here and so do you" sits in a list of things that failed. It is sorted last and dimmed, which is a presentation fix for what is really a taxonomy problem.
+
+### 2.7 Derived metrics are computed, never stored
 
 **Chosen:** engagement rate is computed in `analytics/engagement.ts` at query time.
 
@@ -183,6 +240,47 @@ Keeping it "inert but present" was the previous position, and it was the weaker 
 **Why:** follower counts change, so a stored rate goes stale silently — the worst kind of wrong, because nothing in the system reports it. A single computation path is also a single thing to test.
 
 **Cost:** repeated computation on every request. If it ever gets slow the fix is a cache with an explicit TTL, not a denormalised column — the staleness stays visible either way.
+
+### 2.8 Cadence is withheld when histories do not cover the window
+
+**Chosen:** `compareCadence` checks whether each account's earliest post covers the window it is being divided by. If any account's does not, the platform's cadence figures — the comparison **and** the principal's own rate and consistency — are returned as `null` with a sentence explaining why.
+
+**Rejected:** publishing the figures with a caveat; giving each account its own denominator (the failure mode `cadence.ts` was written against — an account with two posts three days apart is not posting 4.67×/week); narrowing the window to the intersection of all accounts' histories.
+
+**Why:** found the day X went live, and it is the sharpest example in the project of correct arithmetic over incomparable inputs. The X adapter caps results per account for cost reasons. The cap is on **count**, but the accounts post at very different rates, so 160 posts bought 15 days of the principal and 65 days of one peer — and `windowSpanning` takes the union, dividing all four by the same 65-day denominator.
+
+Every account came out at exactly **17.11 posts/week**. The dashboard reported `principalVsPeers = 1.00×` — *he posts exactly as often as his peers*. That is not a weak finding, it is a manufactured one: the number measures the result cap. Consistency was worse, reporting the principal as active in **30% of weeks** when he posts most days, because seven of the ten blocks predated anything that had been fetched.
+
+Withholding beats caveating here because the figure is not *approximately* right. `1.00×` is a specific, memorable, false claim, and a caveat under a number that precise does not survive being skimmed. The intersection window was rejected because it cannot be distinguished from the case it would break: an account genuinely silent early in the window looks identical to a truncated one in post rows alone, and narrowing the window would hide the most actionable finding cadence produces.
+
+**Cost:**
+
+- **X reports no cadence at all** until `X_RESULTS_LIMIT` is raised on a paid plan. A whole panel is blank on one platform, and blank panels are the thing this project otherwise works hard to avoid — mitigated only by the sentence that replaces it.
+- **The check is a heuristic on post rows** (`MIN_WINDOW_COVERAGE = 0.9`), not a fact from ingestion. The truncation is *known* at fetch time — `rowsFetched === limit` — and plumbing that through `IngestionRun` to the analytics layer would let the two cases be told apart properly. Not done.
+- **It can fire on honest data**: an account that genuinely started posting a month into the window will suppress its platform's cadence. That is the conservative direction, but it is a real false positive.
+
+### 2.9 One competitor is enough for a gap
+
+**Chosen:** `MIN_PEER_ACCOUNTS = 1`. A bucket where a single peer clears the 1.2× bar over five or more posts is a reported gap, carrying the count of how many peers backed it and a `ONE PEER` flag on the finding itself.
+
+**Rejected:** keeping the floor at 2 (the previous behaviour); lowering `GAP_LIFT_THRESHOLD` or `MIN_GAP_N` instead; reporting one-peer buckets only as near misses.
+
+**Why:** a product decision, and it reverses a gate this file previously defended — so the reasoning on both sides is worth keeping.
+
+The gate existed because of a real failure. The first run of `gaps.ts` surfaced an Instagram day-of-week "gap" at **1.38×**, built from one peer at 1.76× and one at exactly 1.00×. One account's strong bucket is that account's *habit*, and a recommendation built on it is a recommendation to imitate one person rather than to follow a pattern.
+
+What outweighed it: at a floor of 2, three of the four live basis-platform panels reported **zero** gaps against a 2,365-post corpus. The module that answers *"what are they doing that we aren't?"* was answering "nothing" almost everywhere, and a missed real opportunity was judged the more expensive error.
+
+**What was kept from the gate, and this is the substantive part.** The 1.38× failure had two halves, and only one of them was about agreement. The other was that the headline figure was the median across *every* peer with a sample, so it interpolated between a strong peer and a flat one and published a number **neither peer achieved and no reader could check against an account**. `peerLift` is now the median of the **clearing** peers, so the same bucket reports 1.76× — Strong's actual number — with `1 of 2` beside it. Lowering the agreement bar did not require lowering the honesty bar on the figure.
+
+Two things carry the rest of the weight, and neither existed when the gate was written: `peerAgreement` and the per-peer evidence rows both ship to the UI (§2.6), and a gap resting on one competitor is badged `ONE PEER` on its face so a reader does not have to open the evidence to notice.
+
+**Cost:**
+
+- **Thin findings are now published, and they are the majority.** **16 of the 19** gaps shown on the live corpus rest on a single peer. Every one is flagged, but a flag is weaker than a refusal, and some of these will not reproduce. This ratio is the honest measure of what the change bought and what it cost.
+- **The 1.38× class of error returns in a milder form.** A gap can still be one account's habit. What can no longer happen is publishing a lift figure that no account earned.
+- **The near-miss list is nearly empty.** At this floor the only reachable reason is `PRINCIPAL_COMPETITIVE`; `SINGLE_PEER_ONLY` and `NO_PEER_AGREEMENT` are unreachable, and `MEDIAN_BELOW_BAR` was removed outright because a median over values that each clear the bar cannot fall below it. The machinery and its tests are kept intact, because the floor is a one-line constant and deleting them is how it stops being tunable.
+- **`MAX_GAPS = 5` now truncates.** Panels that reported nothing are hitting the cap, and the truncation note is doing real work rather than sitting unused.
 
 ---
 

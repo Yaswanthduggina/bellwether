@@ -74,19 +74,39 @@ export const MIN_GAP_N = 5;
 
 /**
  * How many separate peers must independently clear the bar before a gap is
- * reported. Two, not one: a single account's strong bucket is that account's
- * habit, and a recommendation built on it is a recommendation to imitate one
- * person rather than to follow a pattern.
+ * reported.
  *
- * This is a gate on AGREEMENT, not merely on sample. Requiring two peers to
- * merely HAVE data and then reporting the median of their lifts is not the same
- * test, and the difference is not academic — the first real run of this module
- * surfaced an Instagram day-of-week "gap" at 1.38× built from one peer at 1.76×
- * and one at exactly 1.00×. The median of two values interpolates, so a single
- * enthusiastic peer dragged a flat second peer over the line. Two peers must
- * each clear GAP_LIFT_THRESHOLD on their own.
+ * ── ONE. THIS WAS TWO, AND THE HISTORY MATTERS ───────────────────────────
+ *
+ * The original value was 2, on the argument that a single account's strong
+ * bucket is that account's HABIT rather than a pattern, and that a
+ * recommendation built on it is a recommendation to imitate one person. That
+ * argument is not wrong, and the finding that produced it was real: the first
+ * run of this module surfaced an Instagram day-of-week "gap" at 1.38× built from
+ * one peer at 1.76× and one at exactly 1.00×, where the median of two values
+ * interpolated and a single enthusiastic peer dragged a flat one over the line.
+ *
+ * It is now 1, by product decision: one competitor demonstrably beating its own
+ * baseline in a bucket is worth surfacing, and the cost of missing a real
+ * opportunity was judged higher than the cost of showing a thin one.
+ *
+ * WHAT PROTECTS THE READER INSTEAD. Two things carry the weight the gate used
+ * to, and neither existed when the gate was written:
+ *
+ *   1. `peerLift` is now the median of the CLEARING peers, not of every peer
+ *      with a sample. That is what kills the 1.38× case specifically — the
+ *      interpolation between a strong peer and a flat one can no longer produce
+ *      a headline figure that no peer actually achieved. A gap built on one peer
+ *      at 1.76× reports 1.76×, which is true of that peer and checkable.
+ *   2. `peerAgreement` ("1 of 3") and the per-peer evidence rows ship to the UI,
+ *      so a finding resting on a single account is visibly a finding resting on
+ *      a single account rather than an anonymous "peers do this".
+ *
+ * Raising this back to 2 is a one-line change and the near-miss machinery below
+ * is written to handle any value — at 1, the only reachable near-miss reason is
+ * PRINCIPAL_COMPETITIVE, because every clearing peer now produces a gap.
  */
-export const MIN_PEER_ACCOUNTS = 2;
+export const MIN_PEER_ACCOUNTS = 1;
 
 /**
  * How much better than their own baseline peers must perform in a bucket before
@@ -182,7 +202,16 @@ export interface Gap {
     /** Display-ready, computed once here so every surface names the bucket identically. */
     label: string;
     kind: GapKind;
-    /** Median of the per-peer lifts. The headline figure for this gap. */
+    /**
+     * Median of the lifts of the peers that CLEARED the bar. The headline figure.
+     *
+     * Deliberately not the median across every peer with a sample. That version
+     * interpolates: one peer at 1.76× and one at 1.00× produced a reported 1.38×,
+     * a number no peer achieved and nobody can check against an account. Taking
+     * the median of the clearing peers only means the figure is always one a
+     * named peer actually earned, which is what makes the evidence rows beside it
+     * verifiable. `peerAgreement` carries how many of the peers with data that is.
+     */
     peerLift: number;
     /**
      * How many qualifying peers independently cleared GAP_LIFT_THRESHOLD, out of
@@ -220,10 +249,90 @@ export interface OverInvestment {
     lift: number;
 }
 
+/**
+ * Why a candidate bucket did not become a reported gap.
+ *
+ * Each value corresponds to exactly one gate in `findGaps`, in the order the
+ * gates are applied. Kept as a union rather than a message string so the UI can
+ * group by reason and the set cannot drift from the gates it describes.
+ */
+export type NearMissReason =
+    /** Fewer peers had a large enough sample than MIN_PEER_ACCOUNTS requires. */
+    | "SINGLE_PEER_ONLY"
+    /** Enough peers had data; fewer than MIN_PEER_ACCOUNTS cleared the bar. */
+    | "NO_PEER_AGREEMENT"
+    /** Peers do well here — and so does the principal, so there is no gap. */
+    | "PRINCIPAL_COMPETITIVE";
+
+/**
+ * A bucket that was evaluated, showed something, and was rejected anyway.
+ *
+ * WHY THIS EXISTS. Written when MIN_PEER_ACCOUNTS was 2 and the gates rejected
+ * nearly everything on a real corpus — the first live run across three platforms
+ * returned ONE gap in six basis-platform combinations. "No gap clears the bar",
+ * rendered on its own, is indistinguishable to a reader from "we did not look",
+ * and it throws away the most useful thing the analysis knows: WHICH buckets came
+ * close and what specifically stopped them.
+ *
+ * WHAT IT DOES NOW THAT THE PEER FLOOR IS 1. Most of what used to land here is a
+ * reported gap instead, so this list is short and its remaining job is the one
+ * case that is good news rather than a missed test: PRINCIPAL_COMPETITIVE, where
+ * peers do well in a bucket AND so does the principal. That still needs saying —
+ * a reader scanning a panel cannot otherwise tell a bucket that was checked and
+ * cleared from one that was never testable.
+ *
+ * The entry rule stays narrow: at least one peer must have cleared
+ * GAP_LIFT_THRESHOLD on its own. Buckets where nothing happened do not appear.
+ *
+ * Kept intact rather than trimmed to the one live case, because the floor is a
+ * one-line constant and the other reasons become reachable the moment it is
+ * raised. Deleting tested machinery to match a tunable setting is how the setting
+ * stops being tunable.
+ *
+ * A near miss is NOT a finding and must never be presented as one. It is the
+ * evidence trail behind a refusal.
+ */
+export interface NearMiss {
+    key: GapKey;
+    label: string;
+    reason: NearMissReason;
+    /** Median of the per-peer lifts among peers with a large enough sample. */
+    peerLift: number;
+    peerAgreement: { clearing: number; of: number };
+    peers: PeerEvidence[];
+    principal: PrincipalPosition;
+    /**
+     * What would have to be true for this to become a reportable gap — the
+     * actionable half. "Watch this bucket" is not a next step; "one more peer
+     * clearing 1.2x would make this a finding" is.
+     */
+    whatWouldChangeIt: string;
+}
+
+/** How much of the corpus a dimension could actually speak for. */
+export interface DimensionCoverage {
+    dimension: GapDimension;
+    /** Distinct buckets anyone posted in. */
+    bucketsConsidered: number;
+    /** Buckets where enough peers had a large enough sample to be testable. */
+    bucketsTestable: number;
+    gaps: number;
+    nearMisses: number;
+}
+
 export interface GapAnalysis {
     basis: EngagementBasis;
     /** Every gap found, best opportunity first, across all four dimensions. */
     gaps: Gap[];
+    /**
+     * Buckets that showed something and were rejected, closest first.
+     *
+     * Present so that an empty `gaps` array is legible rather than merely blank.
+     * See the `NearMiss` docblock — these are not findings.
+     */
+    nearMisses: NearMiss[];
+    /** What each dimension was able to test, so a silent dimension is visible. */
+    coverage: DimensionCoverage[];
     /** Where the principal's output is going for a below-baseline return. */
     overInvested: OverInvestment[];
     principalName: string;
@@ -376,6 +485,8 @@ export function findGaps<T extends GapPost>(
         return {
             basis,
             gaps: [],
+            nearMisses: [],
+            coverage: [],
             overInvested: [],
             principalName: principal.personName,
             principalRatedPosts: principal.ratedPosts,
@@ -384,6 +495,10 @@ export function findGaps<T extends GapPost>(
         };
     }
 
+    // At MIN_PEER_ACCOUNTS = 1 this is unreachable (peers.length === 0 returns
+    // above), and it is kept rather than deleted for the same reason the unused
+    // near-miss reasons are: the floor is a one-line constant, and this is the
+    // note that has to fire the moment it is raised again.
     if (peers.length < MIN_PEER_ACCOUNTS) {
         notes.push(
             `Only ${peers.length} peer has data on this basis, and a gap requires ${MIN_PEER_ACCOUNTS} independent ` +
@@ -435,8 +550,23 @@ export function findGaps<T extends GapPost>(
     }
 
     const gaps: Gap[] = [];
+    const nearMisses: NearMiss[] = [];
+
+    /** Per-dimension tallies, so a dimension that could test nothing is visible. */
+    const coverageBy = new Map<GapDimension, DimensionCoverage>();
+    const coverageFor = (dimension: GapDimension): DimensionCoverage => {
+        let row = coverageBy.get(dimension);
+        if (row === undefined) {
+            row = { dimension, bucketsConsidered: 0, bucketsTestable: 0, gaps: 0, nearMisses: 0 };
+            coverageBy.set(dimension, row);
+        }
+        return row;
+    };
 
     for (const [mapKey, key] of allBucketKeys) {
+        const coverage = coverageFor(key.dimension);
+        coverage.bucketsConsidered += 1;
+
         const evidence: PeerEvidence[] = [];
 
         for (const peer of usablePeers) {
@@ -455,15 +585,21 @@ export function findGaps<T extends GapPost>(
             });
         }
 
-        if (evidence.length < MIN_PEER_ACCOUNTS) continue;
+        evidence.sort((a, b) => b.lift - a.lift);
 
-        // The agreement gate. Each peer must clear the bar on its own — see the
-        // note on MIN_PEER_ACCOUNTS for the real finding this rule killed.
-        const clearing = evidence.filter((e) => e.lift >= GAP_LIFT_THRESHOLD).length;
-        if (clearing < MIN_PEER_ACCOUNTS) continue;
+        const clearingPeers = evidence.filter((e) => e.lift >= GAP_LIFT_THRESHOLD);
+        const clearing = clearingPeers.length;
 
-        const peerLift = medianOf(evidence.map((e) => e.lift));
-        if (peerLift < GAP_LIFT_THRESHOLD) continue; // peers do not win here either
+        // The median of the peers that actually cleared the bar — see the note on
+        // Gap.peerLift for why this is not the median across every peer with a
+        // sample. Where nobody cleared, the median across all of them is the
+        // honest figure for a near miss: there is no winning subset to describe.
+        const peerLift =
+            clearing > 0
+                ? medianOf(clearingPeers.map((e) => e.lift))
+                : evidence.length === 0
+                  ? 0
+                  : medianOf(evidence.map((e) => e.lift));
 
         const principalBucket = principal.buckets.get(mapKey);
         const principalN = principalBucket?.rates.length ?? 0;
@@ -474,6 +610,72 @@ export function findGaps<T extends GapPost>(
             bucketMedian: null,
             lift: null,
         };
+        if (principalN >= MIN_GAP_N) {
+            const bucketMedian = medianOf(principalBucket!.rates);
+            position.bucketMedian = bucketMedian;
+            if (principal.overallMedian > 0) position.lift = bucketMedian / principal.overallMedian;
+        }
+
+        /**
+         * Record a rejected candidate, but only where at least one peer cleared
+         * the bar on its own — see the NearMiss docblock for why that is the
+         * entry rule and not a softer one.
+         */
+        const recordNearMiss = (reason: NearMissReason, whatWouldChangeIt: string): void => {
+            if (clearing === 0) return;
+            coverage.nearMisses += 1;
+            nearMisses.push({
+                key,
+                label: labelFor(key),
+                reason,
+                peerLift,
+                peerAgreement: { clearing, of: evidence.length },
+                peers: evidence,
+                principal: position,
+                whatWouldChangeIt,
+            });
+        };
+
+        if (evidence.length < MIN_PEER_ACCOUNTS) {
+            const only = evidence[0];
+            recordNearMiss(
+                "SINGLE_PEER_ONLY",
+                `Only ${evidence.length} peer has ${MIN_GAP_N}+ posts here` +
+                    (only ? ` (${only.personName}, n=${only.n}, ${only.lift.toFixed(2)}x)` : "") +
+                    `, and one account's strong bucket is that account's habit. A second peer reaching ` +
+                    `${MIN_GAP_N} posts here would make this testable.`,
+            );
+            continue;
+        }
+
+        coverage.bucketsTestable += 1;
+
+        // The agreement gate. Each peer must clear the bar on its own — see the
+        // note on MIN_PEER_ACCOUNTS for the real finding this rule killed.
+        if (clearing < MIN_PEER_ACCOUNTS) {
+            const short = evidence.filter((e) => e.lift < GAP_LIFT_THRESHOLD);
+            recordNearMiss(
+                "NO_PEER_AGREEMENT",
+                `${clearing} of ${evidence.length} peers clear ${GAP_LIFT_THRESHOLD}x here, and ` +
+                    `${MIN_PEER_ACCOUNTS} are required` +
+                    (short[0] ? `. Closest miss: ${short[0].personName} at ${short[0].lift.toFixed(2)}x` : "") +
+                    `. One enthusiastic peer is not a pattern.`,
+            );
+            continue;
+        }
+
+        // There was a third gate here — "enough peers clear it individually, but
+        // the median across ALL peers with data does not". It was removed with
+        // the same change that made `peerLift` the median of the CLEARING peers,
+        // because the two are the same test: a median taken over values that each
+        // clear the bar cannot itself fall below it, so the gate could never fire.
+        //
+        // Worth knowing that it was a real gate rather than a hypothetical one. It
+        // was what stopped a bucket where one peer sat at 1.5× and three sat near
+        // 0.9× — and that bucket is now REPORTED, as a 1.5× gap with "1 of 4"
+        // beside it. That is the intended consequence of the peer floor being 1,
+        // not an oversight: the agreement count and the evidence rows are what
+        // tell the reader how isolated the finding is.
 
         let kind: GapKind;
         let opportunity: number;
@@ -487,25 +689,31 @@ export function findGaps<T extends GapPost>(
             kind = "THIN";
             opportunity = peerLift;
         } else {
-            const bucketMedian = medianOf(principalBucket!.rates);
-            position.bucketMedian = bucketMedian;
-
             if (principal.overallMedian === 0) continue; // no baseline to measure against
 
-            const principalLift = bucketMedian / principal.overallMedian;
-            position.lift = principalLift;
+            const principalLift = position.lift!;
 
-            // He is already at least as good here as the peer set is. Not a gap.
-            if (principalLift <= 0 || peerLift / principalLift < GAP_LIFT_THRESHOLD) continue;
+            // He is already at least as good here as the peer set is. Not a gap —
+            // but worth showing, because "peers win here and so do you" is a
+            // different message from silence, and a reader scanning an empty panel
+            // cannot tell which buckets were checked and cleared.
+            if (principalLift <= 0 || peerLift / principalLift < GAP_LIFT_THRESHOLD) {
+                recordNearMiss(
+                    "PRINCIPAL_COMPETITIVE",
+                    `Peers earn ${peerLift.toFixed(2)}x their own baseline here, but so does the ` +
+                        `principal (${principalLift.toFixed(2)}x over ${principalN} posts) — there is no ` +
+                        `shortfall to close.`,
+                );
+                continue;
+            }
 
             kind = "UNDERPERFORMING";
             opportunity = peerLift / principalLift;
         }
 
-        evidence.sort((a, b) => b.lift - a.lift);
-
         const syntheticPeers = evidence.filter((e) => e.isSynthetic).map((e) => e.personName);
 
+        coverage.gaps += 1;
         gaps.push({
             key,
             label: labelFor(key),
@@ -529,9 +737,26 @@ export function findGaps<T extends GapPost>(
     const KIND_TIEBREAK: Record<GapKind, number> = { ABSENT: 0, THIN: 1, UNDERPERFORMING: 2 };
     gaps.sort((a, b) => b.opportunity - a.opportunity || KIND_TIEBREAK[a.kind] - KIND_TIEBREAK[b.kind]);
 
+    // Closest to clearing the bar first. PRINCIPAL_COMPETITIVE sorts last within
+    // a tie: it is the one reason that is good news rather than a missed test,
+    // so it should not head a list a reader scans for things to act on.
+    const REASON_TIEBREAK: Record<NearMissReason, number> = {
+        NO_PEER_AGREEMENT: 0,
+        SINGLE_PEER_ONLY: 2,
+        PRINCIPAL_COMPETITIVE: 3,
+    };
+    nearMisses.sort((a, b) => b.peerLift - a.peerLift || REASON_TIEBREAK[a.reason] - REASON_TIEBREAK[b.reason]);
+
+    const DIMENSION_ORDER: GapDimension[] = ["FORMAT", "HOUR", "DAY", "THEME"];
+    const coverage = DIMENSION_ORDER.filter((d) => coverageBy.has(d)).map((d) => coverageBy.get(d)!);
+
+    const belowPeerFloor = peers.length < MIN_PEER_ACCOUNTS;
+
     return {
         basis,
-        gaps: peers.length < MIN_PEER_ACCOUNTS ? [] : gaps,
+        gaps: belowPeerFloor ? [] : gaps,
+        nearMisses: belowPeerFloor ? [] : nearMisses,
+        coverage,
         overInvested: findOverInvestment(principal),
         principalName: principal.personName,
         principalRatedPosts: principal.ratedPosts,
@@ -700,6 +925,40 @@ export function describeGap(gap: Gap, principalName: string): string {
                 `${gap.opportunity.toFixed(2)}× shortfall. ${agreement}. Evidence: ${peerList}.${caveat}`
             );
     }
+}
+
+/**
+ * One sentence for a bucket that was considered and rejected.
+ *
+ * Deliberately phrased so it cannot be mistaken for a finding — it leads with
+ * what the peers did, names the gate that stopped it, and ends with what would
+ * change it. Same reason `describeGap` lives here: the dashboard, the export and
+ * the AI prompt must describe a refusal the same way, and the AI layer in
+ * particular must never be handed a near miss it could paraphrase into a claim.
+ */
+export function describeNearMiss(miss: NearMiss, principalName: string): string {
+    const peerList = miss.peers
+        .map((p) => `${p.personName} (n=${p.n}, ${p.lift.toFixed(2)}x${p.isSynthetic ? ", SEEDED" : ""})`)
+        .join(", ");
+
+    const dimension =
+        miss.key.dimension === "HOUR"
+            ? `the ${miss.label} hour`
+            : miss.key.dimension === "DAY"
+              ? miss.label
+              : miss.key.dimension === "FORMAT"
+                ? `the ${miss.label} format`
+                : `the ${miss.label} theme`;
+
+    const position =
+        miss.principal.n === 0
+            ? `${principalName} has no posts there`
+            : `${principalName} has ${miss.principal.n} post(s) there`;
+
+    return (
+        `NOT REPORTED as a gap — ${dimension}. ${miss.whatWouldChangeIt} ${position}. ` +
+        `Peer evidence considered: ${peerList || "none with a large enough sample"}.`
+    );
 }
 
 /** As `describeGap`, for the "stop" side. */

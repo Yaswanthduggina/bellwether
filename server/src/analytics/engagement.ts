@@ -133,6 +133,19 @@ export function weightedInteractions(post: EngagementPost): number | null {
  * Platforms whose public metrics include a realised-audience count for every
  * post, regardless of format: YouTube reports views on all videos, and X
  * exposes impressions on posts.
+ *
+ * MEMBERSHIP IS A CLAIM ABOUT THE SOURCE, NOT ABOUT THE PLATFORM, and X is the
+ * entry that proves the difference matters. This set listed X before any X
+ * adapter existed, on the strength of the impression count X shows on its own
+ * web UI. Building the adapter turned that into a testable question, and the
+ * first scraper tried (xtdata) returned no impression field at all — an X corpus
+ * read through it would have fallen silently through to the followers basis
+ * without erroring, re-basing a whole platform mid-product. The actor this
+ * project settled on does return `viewCount` on every tweet, so the entry stands.
+ *
+ * The rule this leaves behind: an adapter swap that loses a view count is a
+ * change to THIS set, and the pipeline will not tell you — see the denominator
+ * note in adapters/xAdapter.ts.
  */
 const VIEW_NATIVE_PLATFORMS: ReadonlySet<Platform> = new Set<Platform>(["YOUTUBE", "X"]);
 

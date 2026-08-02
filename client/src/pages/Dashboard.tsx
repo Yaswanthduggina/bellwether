@@ -235,7 +235,7 @@ export function Dashboard() {
 
                             <Panel
                                 title="Gaps"
-                                sub="Formats, slots and themes at least two peers independently win with, that the principal does not use — and where his own output is going for a below-baseline return."
+                                sub="Formats, slots and themes a peer wins with that the principal does not use — and where his own output is going for a below-baseline return. Each gap says how many peers back it; one-peer findings are flagged."
                             >
                                 <GapPanel basis={activeBasis} />
                             </Panel>

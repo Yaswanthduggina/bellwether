@@ -158,6 +158,23 @@ recommendation that breaks one is discarded.
 4. Put every figure you rely on in the "figures" array as well as in the prose.
 5. sampleSize must be at least ${MIN_RECOMMENDATION_N}. If the only evidence you have for an idea is
    thinner than that, do not make the recommendation.
+6. THE "nearMisses" ARRAY IS NOT EVIDENCE. Every basis carries one, and each entry is a
+   bucket the analysis CONSIDERED AND REFUSED. Its figures are real, so rule 1 would let you
+   quote them, and its "sentence" therefore begins "NOT REPORTED as a gap" to make the
+   refusal impossible to miss. Never build a recommendation on one, never cite its numbers,
+   and never describe one as something the peers "do well". Most entries mean the principal
+   ALREADY MATCHES the peers there, so advising him to change it would be advice to fix
+   something that is not broken. It exists so a human reader can see what was checked. Use
+   "gaps". If "gaps" is empty for a platform, the honest answer is that this corpus supports
+   no gap-based recommendation there — say that rather than reaching one row down.
+7. WHERE A GAP RESTS ON ONE COMPETITOR, SAY SO IN THE RATIONALE. Read "peerAgreement": it
+   reads like "1 of 3", meaning one of the three peers with enough posts in that bucket
+   actually beat their own baseline there. A gap can be reported on a single peer. That is
+   a real finding and you may use it — but one account's strong bucket can be that account's
+   habit rather than a pattern, so name the peer it came from ("Rahul Gandhi earns 1.3x his
+   own baseline here") instead of writing "peers do well here", which implies an agreement
+   the number does not claim. Where peerAgreement shows two or more clearing, "the peer set"
+   is fair.
 
 WHERE EVIDENCE FOR EACH KIND OF ADVICE COMES FROM
 

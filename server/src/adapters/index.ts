@@ -23,6 +23,7 @@
 
 import { createApifyAdapter } from "./apifyAdapter";
 import { RawPost, SocialAdapter } from "./types";
+import { createXAdapter } from "./xAdapter";
 import { createYouTubeAdapter } from "./youtubeAdapter";
 
 type Platform = RawPost["platform"];
@@ -49,12 +50,15 @@ export const PLATFORM_SOURCES: Record<Platform, PlatformSource> = {
         source: "apify_instagram",
         create: () => createApifyAdapter(),
     },
+    // The blocker recorded here for most of this project's life — X's free read
+    // tier being far below a 90-day backfill — was an argument against X's
+    // FIRST-PARTY API, and it still holds against it. It was never an argument
+    // against reading the public timeline the way Instagram is already read.
+    // Routed through Apify, off the same public web surface, it is live.
     X: {
-        status: "PLANNED",
-        adapterFile: "xAdapter.ts",
-        blocker:
-            "free read tier caps are far below a 90-day backfill across four accounts; " +
-            "a truncated sample would look live and hide its own sampling bias. Needs a paid tier.",
+        status: "LIVE",
+        source: "apify_x",
+        create: () => createXAdapter(),
     },
     FACEBOOK: {
         status: "PLANNED",

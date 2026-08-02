@@ -29,12 +29,11 @@ Four things flow one direction and never backwards:
    SAME interface  └────────────┘    │  recommend │
                                      │  validate  │
       ┌ ─ ─ ─ ─ ─ ┐                  └────────────┘
-        X          │              receives analytics JSON only —
-      │ Facebook                    never raw posts
-        PLANNED    │
+        Facebook   │              receives analytics JSON only —
+      │ PLANNED                     never raw posts
       └ ─ ─ ─ ─ ─ ┘
    declared in the registry with
-   their blockers; no adapter yet,
+   its blocker; no adapter yet,
    and no generated stand-in either
 ```
 
@@ -53,7 +52,7 @@ server/src/
 │   ├── youtubeAdapter.ts   #   YouTube Data API v3                       ✅ done — 108 live posts
 │   ├── apifyAdapter.ts     #   Instagram via Apify actors                ✅ done
 │   ├── fileAdapter.ts      #   CSV/JSON import — a MUST, not a nicety    ✅ done
-│   ├── xAdapter.ts         #   X                                         🟡 planned — blocker in the registry
+│   ├── xAdapter.ts         #   X via Apify actor                          ✅ done — 640 live posts
 │   ├── facebookAdapter.ts  #   Facebook                                  🟡 planned — blocker in the registry
 │   └── index.ts            #   registry: platform → LIVE | PLANNED       ✅ done
 │
@@ -69,8 +68,11 @@ server/src/
 │   ├── timing.ts           #   day×hour in account-local tz, sample-size gated
 │   ├── topPosts.ts         #   best/worst per platform and per format
 │   ├── compare.ts          #   principal vs peer set, same metrics
-│   ├── gaps.ts             #   formats/slots/themes competitors own
+│   ├── gaps.ts             #   formats/slots/themes competitors own — plus the
+│   │                       #   near misses, i.e. what was rejected and by which gate
 │   ├── cadence.ts          #   posting frequency vs performance   (SHOULD)
+│   │                       #   withholds its figures when a history does not span
+│   │                       #   the window — see DECISIONS §2.8
 │   └── buildReport.ts      #   assembles the ONE analytics JSON the AI layer consumes
 │
 ├── ai/
@@ -246,7 +248,7 @@ what did not:
 | Layer | Change |
 |---|---|
 | `adapters/apifyAdapter.ts` | **New.** Instagram via `apify/instagram-post-scraper` (posts) and `apify/instagram-profile-scraper` (follower count, the ER denominator for stills) |
-| `adapters/index.ts` | Registry now records a `status` per platform: `LIVE` for YouTube and Instagram, `PLANNED` with a stated blocker for X and Facebook. Nothing routes to the seed adapter |
+| `adapters/index.ts` | Registry records a `status` per platform: `LIVE` for YouTube, Instagram and X, `PLANNED` with a stated blocker for Facebook. Nothing routes to the seed adapter |
 | `config/accounts.ts` | All four platforms declared; `TRACKED_ACCOUNTS` derived by filtering on `hasLiveAdapter`, so an adapter landing flips its accounts on with no roster edit |
 | `scripts/ingest.ts` | `seed.ts` folded in as `--roster`. A command named "seed" describing a system that seeds nothing is a trap for the next reader |
 | Everything else | **Untouched.** Same `RawPost`, same validate → normalise → upsert → log, same analytics, same AI layer, same API, same UI |
@@ -255,7 +257,7 @@ That last row is the point of the adapter contract, and this is the first time i
 has been tested by a change it did not anticipate: swapping a platform's entire
 data source moved 4 files and 0 lines of analytics.
 
-**What it cost.** Two platforms of coverage — X and Facebook contribute nothing
+**What it cost.** Two platforms of coverage at the time — X and Facebook contributed nothing
 until someone builds their adapters. The corpus is smaller and the peer set is
 uneven (Varun Gandhi is Instagram-only, with 28 lifetime posts). Those are real
 losses, and they are the correct trade: a finding drawn from generated data is not
@@ -398,7 +400,7 @@ Drawn straight from the brief's "what will hurt you", plus what the verification
 | Ranking on raw followers or raw likes | Every comparison goes through `engagement.ts`. No raw-count sort anywhere in the UI. |
 | LLM citing a number that isn't in the data | `validate.ts`, built the same day as `recommend.ts` — never bolted on afterwards |
 | README implying seeded data is live | Moot as of Day 4 — there is no seeded data. The guards stay anyway: provenance table at the top of the README, `isSynthetic` at row level, SEEDED badge in the UI, and a registry that refuses to ingest a flagged account. A removed guard is a regression nobody sees |
-| A platform quietly dropped instead of decided | X and Facebook stay declared in the roster and in the registry with their blockers. An absent platform gets rediscovered from first principles; a `PLANNED` one gets closed |
+| A platform quietly dropped instead of decided | Facebook stays declared in the roster and in the registry with its blocker. An absent platform gets rediscovered from first principles; a `PLANNED` one gets closed — X was, on Day 5, by re-reading the blocker and finding that it named an API rather than a platform |
 | A single giant commit | Commit per working piece. Commit history is read as evidence of process. |
 | Committed `.env` | Already gitignored ✅ — verify once more before submitting |
 | Confident claims from six data points | Suppression thresholds enforced in `timing.ts` and `format.ts`, not just styled in CSS |

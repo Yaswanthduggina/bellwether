@@ -164,7 +164,23 @@
         "principalN": 0,
         "opportunity": 1.59,
         "sentence": "Shashi Tharoor has no posts in the ATTACK_REBUTTAL theme, where peers earn 1.59× their own typical post — 2 of 2 peers clear the 1.2× bar here independently. Evidence: Priyanka Chaturvedi (n=9, 1.72×, SEEDED), Kanhaiya Kumar (n=19, 1.45×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar) — it demonstrates the pipeline, not a real-world finding.",
-        "provenanceCaveat": "Every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar)."
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar).",
+        "peers": [
+         {
+          "personName": "Priyanka Chaturvedi",
+          "n": 9,
+          "lift": 1.72,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Kanhaiya Kumar",
+          "n": 19,
+          "lift": 1.45,
+          "clears": true,
+          "isSynthetic": true
+         }
+        ]
        },
        {
         "dimension": "HOUR",
@@ -175,7 +191,23 @@
         "principalN": 0,
         "opportunity": 1.34,
         "sentence": "Shashi Tharoor has no posts in the 20:00 hour, where peers earn 1.34× their own typical post — 2 of 2 peers clear the 1.2× bar here independently. Evidence: Kanhaiya Kumar (n=6, 1.37×, SEEDED), Priyanka Chaturvedi (n=8, 1.30×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi) — it demonstrates the pipeline, not a real-world finding.",
-        "provenanceCaveat": "Every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi)."
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi).",
+        "peers": [
+         {
+          "personName": "Kanhaiya Kumar",
+          "n": 6,
+          "lift": 1.37,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Priyanka Chaturvedi",
+          "n": 8,
+          "lift": 1.3,
+          "clears": true,
+          "isSynthetic": true
+         }
+        ]
        }
       ],
       "overInvested": [],
@@ -242,7 +274,9 @@
         "isSynthetic": true,
         "captionExcerpt": "[synthetic] Our constituency office has now processed over nine thousand citizen grievances this year."
        }
-      ]
+      ],
+      "nearMisses": [],
+      "gapCoverage": []
      },
      {
       "basis": "FOLLOWERS",
@@ -338,7 +372,23 @@
         "principalN": 0,
         "opportunity": 1.45,
         "sentence": "Shashi Tharoor has no posts in the ATTACK_REBUTTAL theme, where peers earn 1.45× their own typical post — 2 of 2 peers clear the 1.2× bar here independently. Evidence: Priyanka Chaturvedi (n=15, 1.55×, SEEDED), Kanhaiya Kumar (n=10, 1.35×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar) — it demonstrates the pipeline, not a real-world finding.",
-        "provenanceCaveat": "Every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar)."
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar).",
+        "peers": [
+         {
+          "personName": "Priyanka Chaturvedi",
+          "n": 15,
+          "lift": 1.55,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Kanhaiya Kumar",
+          "n": 10,
+          "lift": 1.35,
+          "clears": true,
+          "isSynthetic": true
+         }
+        ]
        },
        {
         "dimension": "HOUR",
@@ -349,7 +399,30 @@
         "principalN": 0,
         "opportunity": 1.36,
         "sentence": "Shashi Tharoor has no posts in the 20:00 hour, where peers earn 1.36× their own typical post — 2 of 3 peers clear the 1.2× bar here independently. Evidence: Varun Gandhi (n=5, 2.69×, SEEDED), Priyanka Chaturvedi (n=10, 1.36×, SEEDED), Kanhaiya Kumar (n=5, 1.16×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Varun Gandhi, Priyanka Chaturvedi, Kanhaiya Kumar) — it demonstrates the pipeline, not a real-world finding.",
-        "provenanceCaveat": "Every peer behind this figure is seeded data (Varun Gandhi, Priyanka Chaturvedi, Kanhaiya Kumar)."
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Varun Gandhi, Priyanka Chaturvedi, Kanhaiya Kumar).",
+        "peers": [
+         {
+          "personName": "Varun Gandhi",
+          "n": 5,
+          "lift": 2.69,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Priyanka Chaturvedi",
+          "n": 10,
+          "lift": 1.36,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Kanhaiya Kumar",
+          "n": 5,
+          "lift": 1.16,
+          "clears": false,
+          "isSynthetic": true
+         }
+        ]
        }
       ],
       "overInvested": [
@@ -438,7 +511,9 @@
         "isSynthetic": true,
         "captionExcerpt": "[synthetic] My conversation on the state of parliamentary debate, and why the quality of disagreement matters more than its volume. Full int"
        }
-      ]
+      ],
+      "nearMisses": [],
+      "gapCoverage": []
      }
     ]
    },
@@ -531,12 +606,28 @@
         "dimension": "THEME",
         "label": "ATTACK_REBUTTAL",
         "kind": "ABSENT",
-        "peerLift": 1.31,
-        "peerAgreement": "2 of 2",
+        "peerLift": 1.33,
+        "peerAgreement": "1 of 2",
         "principalN": 0,
         "opportunity": 1.31,
         "sentence": "Shashi Tharoor has no posts in the ATTACK_REBUTTAL theme, where peers earn 1.31× their own typical post — 2 of 2 peers clear the 1.2× bar here independently. Evidence: Kanhaiya Kumar (n=20, 1.33×, SEEDED), Priyanka Chaturvedi (n=15, 1.28×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi) — it demonstrates the pipeline, not a real-world finding.",
-        "provenanceCaveat": "Every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi)."
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi).",
+        "peers": [
+         {
+          "personName": "Kanhaiya Kumar",
+          "n": 20,
+          "lift": 1.33,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Priyanka Chaturvedi",
+          "n": 15,
+          "lift": 1.05,
+          "clears": false,
+          "isSynthetic": true
+         }
+        ]
        }
       ],
       "overInvested": [],
@@ -603,7 +694,9 @@
         "isSynthetic": true,
         "captionExcerpt": "[synthetic] At the weekly grievance camp today. Forty-two cases heard, most on pension delays and ration card corrections."
        }
-      ]
+      ],
+      "nearMisses": [],
+      "gapCoverage": []
      },
      {
       "basis": "FOLLOWERS",
@@ -756,6 +849,112 @@
         "isSynthetic": true,
         "captionExcerpt": "[synthetic] At the weekly grievance camp today. Forty-two cases heard, most on pension delays and ration card corrections."
        }
+      ],
+      "nearMisses": [
+       {
+        "dimension": "HOUR",
+        "label": "14:00",
+        "reason": "NO_PEER_AGREEMENT",
+        "peerLift": 1.29,
+        "peerAgreement": "1 of 2",
+        "principalN": 3,
+        "principalLift": null,
+        "whatWouldChangeIt": "1 of 2 peers clear 1.2x here, and 2 are required. Closest miss: Rahul Gandhi at 1.11x. One enthusiastic peer is not a pattern.",
+        "sentence": "NOT REPORTED as a gap — the 14:00 hour.",
+        "peers": [
+         {
+          "personName": "Arvind Kejriwal",
+          "n": 7,
+          "lift": 1.48,
+          "clears": true,
+          "isSynthetic": false
+         },
+         {
+          "personName": "Rahul Gandhi",
+          "n": 6,
+          "lift": 1.11,
+          "clears": false,
+          "isSynthetic": false
+         }
+        ]
+       },
+       {
+        "dimension": "DAY",
+        "label": "Monday",
+        "reason": "SINGLE_PEER_ONLY",
+        "peerLift": 1.33,
+        "peerAgreement": "1 of 1",
+        "principalN": 11,
+        "principalLift": 0.94,
+        "whatWouldChangeIt": "Only 1 peer has 5+ posts here (Rahul Gandhi, n=7, 1.33x), and one account’s strong bucket is that account’s habit. A second peer reaching 5 posts here would make this testable.",
+        "sentence": "NOT REPORTED as a gap — Monday.",
+        "peers": [
+         {
+          "personName": "Rahul Gandhi",
+          "n": 7,
+          "lift": 1.33,
+          "clears": true,
+          "isSynthetic": false
+         }
+        ]
+       },
+       {
+        "dimension": "HOUR",
+        "label": "13:00",
+        "reason": "PRINCIPAL_COMPETITIVE",
+        "peerLift": 1.26,
+        "peerAgreement": "2 of 2",
+        "principalN": 22,
+        "principalLift": 1.31,
+        "whatWouldChangeIt": "Peers earn 1.26x their own baseline here, but so does the principal (1.31x over 22 posts) — there is no shortfall to close.",
+        "sentence": "NOT REPORTED as a gap — the 13:00 hour.",
+        "peers": [
+         {
+          "personName": "Rahul Gandhi",
+          "n": 9,
+          "lift": 1.28,
+          "clears": true,
+          "isSynthetic": false
+         },
+         {
+          "personName": "Arvind Kejriwal",
+          "n": 6,
+          "lift": 1.23,
+          "clears": true,
+          "isSynthetic": false
+         }
+        ]
+       }
+      ],
+      "gapCoverage": [
+       {
+        "dimension": "FORMAT",
+        "bucketsConsidered": 2,
+        "bucketsTestable": 2,
+        "gaps": 0,
+        "nearMisses": 0
+       },
+       {
+        "dimension": "HOUR",
+        "bucketsConsidered": 18,
+        "bucketsTestable": 12,
+        "gaps": 0,
+        "nearMisses": 2
+       },
+       {
+        "dimension": "DAY",
+        "bucketsConsidered": 7,
+        "bucketsTestable": 3,
+        "gaps": 0,
+        "nearMisses": 1
+       },
+       {
+        "dimension": "THEME",
+        "bucketsConsidered": 8,
+        "bucketsTestable": 0,
+        "gaps": 0,
+        "nearMisses": 0
+       }
       ]
      }
     ]
@@ -903,7 +1102,23 @@
         "principalN": 1,
         "opportunity": 1.48,
         "sentence": "Shashi Tharoor has only 1 post(s) in the 20:00 hour — below the 5-post bar for quoting a rate — while peers earn 1.48× their own typical post there. 2 of 2 peers clear the 1.2× bar here independently. Evidence: Kanhaiya Kumar (n=15, 1.55×, SEEDED), Priyanka Chaturvedi (n=13, 1.42×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi) — it demonstrates the pipeline, not a real-world finding.",
-        "provenanceCaveat": "Every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi)."
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Kanhaiya Kumar, Priyanka Chaturvedi).",
+        "peers": [
+         {
+          "personName": "Kanhaiya Kumar",
+          "n": 15,
+          "lift": 1.55,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Priyanka Chaturvedi",
+          "n": 13,
+          "lift": 1.42,
+          "clears": true,
+          "isSynthetic": true
+         }
+        ]
        },
        {
         "dimension": "HOUR",
@@ -914,7 +1129,30 @@
         "principalN": 0,
         "opportunity": 1.48,
         "sentence": "Shashi Tharoor has no posts in the 19:00 hour, where peers earn 1.48× their own typical post — 3 of 3 peers clear the 1.2× bar here independently. Evidence: Varun Gandhi (n=9, 2.09×, SEEDED), Kanhaiya Kumar (n=14, 1.48×, SEEDED), Priyanka Chaturvedi (n=7, 1.45×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Varun Gandhi, Kanhaiya Kumar, Priyanka Chaturvedi) — it demonstrates the pipeline, not a real-world finding.",
-        "provenanceCaveat": "Every peer behind this figure is seeded data (Varun Gandhi, Kanhaiya Kumar, Priyanka Chaturvedi)."
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Varun Gandhi, Kanhaiya Kumar, Priyanka Chaturvedi).",
+        "peers": [
+         {
+          "personName": "Varun Gandhi",
+          "n": 9,
+          "lift": 2.09,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Kanhaiya Kumar",
+          "n": 14,
+          "lift": 1.48,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Priyanka Chaturvedi",
+          "n": 7,
+          "lift": 1.45,
+          "clears": true,
+          "isSynthetic": true
+         }
+        ]
        },
        {
         "dimension": "THEME",
@@ -925,7 +1163,30 @@
         "principalN": 2,
         "opportunity": 1.43,
         "sentence": "Shashi Tharoor has only 2 post(s) in the PERSONAL_FAMILY theme — below the 5-post bar for quoting a rate — while peers earn 1.43× their own typical post there. 2 of 3 peers clear the 1.2× bar here independently. Evidence: Varun Gandhi (n=13, 1.63×, SEEDED), Kanhaiya Kumar (n=14, 1.43×, SEEDED), Priyanka Chaturvedi (n=6, 0.69×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Varun Gandhi, Kanhaiya Kumar, Priyanka Chaturvedi) — it demonstrates the pipeline, not a real-world finding.",
-        "provenanceCaveat": "Every peer behind this figure is seeded data (Varun Gandhi, Kanhaiya Kumar, Priyanka Chaturvedi)."
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Varun Gandhi, Kanhaiya Kumar, Priyanka Chaturvedi).",
+        "peers": [
+         {
+          "personName": "Varun Gandhi",
+          "n": 13,
+          "lift": 1.63,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Kanhaiya Kumar",
+          "n": 14,
+          "lift": 1.43,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Priyanka Chaturvedi",
+          "n": 6,
+          "lift": 0.69,
+          "clears": false,
+          "isSynthetic": true
+         }
+        ]
        },
        {
         "dimension": "THEME",
@@ -936,7 +1197,23 @@
         "principalN": 1,
         "opportunity": 1.37,
         "sentence": "Shashi Tharoor has only 1 post(s) in the ATTACK_REBUTTAL theme — below the 5-post bar for quoting a rate — while peers earn 1.37× their own typical post there. 2 of 2 peers clear the 1.2× bar here independently. Evidence: Priyanka Chaturvedi (n=25, 1.40×, SEEDED), Kanhaiya Kumar (n=20, 1.34×, SEEDED). CAVEAT: every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar) — it demonstrates the pipeline, not a real-world finding.",
-        "provenanceCaveat": "Every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar)."
+        "provenanceCaveat": "Every peer behind this figure is seeded data (Priyanka Chaturvedi, Kanhaiya Kumar).",
+        "peers": [
+         {
+          "personName": "Priyanka Chaturvedi",
+          "n": 25,
+          "lift": 1.4,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Kanhaiya Kumar",
+          "n": 20,
+          "lift": 1.34,
+          "clears": true,
+          "isSynthetic": true
+         }
+        ]
        }
       ],
       "overInvested": [
@@ -1025,7 +1302,9 @@
         "isSynthetic": true,
         "captionExcerpt": "[synthetic] Wishing everyone peace and good health this festival season. May the year ahead be kinder than the one behind us."
        }
-      ]
+      ],
+      "nearMisses": [],
+      "gapCoverage": []
      },
      {
       "basis": "FOLLOWERS",
@@ -1066,7 +1345,9 @@
         "isSynthetic": true,
         "captionExcerpt": "Three separate figures for the same scheme, in three separate speeches, in one week. The House deserves to know which one is true."
        }
-      ]
+      ],
+      "nearMisses": [],
+      "gapCoverage": []
      }
     ]
    },
@@ -1185,7 +1466,30 @@
         "principalN": 31,
         "opportunity": 1.38,
         "sentence": "In the REEL_SHORT_VIDEO format, Shashi Tharoor earns 1.04× his own baseline across 31 posts, against 1.43× for the peer set — a 1.38× shortfall. 2 of 3 peers clear the 1.2× bar here independently. Evidence: Priyanka Chaturvedi (n=8, 1.45×), Varun Gandhi (n=16, 1.43×, SEEDED), Kanhaiya Kumar (n=25, 1.08×). NOTE: this figure mixes live and seeded peers — seeded: Varun Gandhi.",
-        "provenanceCaveat": "Mixes live and seeded peers — seeded: Varun Gandhi."
+        "provenanceCaveat": "Mixes live and seeded peers — seeded: Varun Gandhi.",
+        "peers": [
+         {
+          "personName": "Priyanka Chaturvedi",
+          "n": 8,
+          "lift": 1.45,
+          "clears": true,
+          "isSynthetic": false
+         },
+         {
+          "personName": "Varun Gandhi",
+          "n": 16,
+          "lift": 1.43,
+          "clears": true,
+          "isSynthetic": true
+         },
+         {
+          "personName": "Kanhaiya Kumar",
+          "n": 25,
+          "lift": 1.08,
+          "clears": false,
+          "isSynthetic": false
+         }
+        ]
        }
       ],
       "overInvested": [
@@ -1274,7 +1578,9 @@
         "isSynthetic": false,
         "captionExcerpt": "Shashi Tharoor Accidentally Matched a Peacock!\n\nCoincidence or perfect color coordination? You decide! 🦚\n\n#shashitharoor #india #funny #blu"
        }
-      ]
+      ],
+      "nearMisses": [],
+      "gapCoverage": []
      }
     ]
    }

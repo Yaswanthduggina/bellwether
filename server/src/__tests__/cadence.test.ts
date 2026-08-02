@@ -259,3 +259,84 @@ describe("compareCadence", () => {
         expect(sentence).toContain("% of weeks");
     });
 });
+
+// ── Truncated histories ──────────────────────────────────────────────────
+
+describe("A COUNT-CAPPED CORPUS PRODUCES A MANUFACTURED CADENCE FINDING", () => {
+    // The failure that added `comparable`, reproduced from the X ingest that
+    // caused it. Every account was capped at the same NUMBER of posts, but the
+    // accounts post at very different rates, so the same count bought very
+    // different spans of history. Divided by one shared window, they all came out
+    // identical — and "he posts exactly as often as his peers" is a finding, not
+    // a null result.
+
+    /** `n` posts, evenly spaced, ending on the last day of the window. */
+    function lastNDays(n: number, spanDays: number): Date[] {
+        const step = spanDays / n;
+        return Array.from({ length: n }, (_, i) => day(28 - spanDays + i * step));
+    }
+
+    // 40 posts each. The principal is prolific, so 40 posts is the last 7 days of
+    // him; the peers are slower, so 40 posts reaches back across the whole window.
+    const cappedPrincipal = corpus("Principal", "PRINCIPAL", lastNDays(40, 7));
+    const fullPeerA = corpus("PeerA", "COMPETITOR", lastNDays(40, 28));
+    const fullPeerB = corpus("PeerB", "COMPETITOR", lastNDays(40, 28));
+
+    it("would otherwise report the principal and the peers as identical", () => {
+        // The arithmetic that made the false finding. Same posts, same window,
+        // therefore same rate — measuring the cap rather than the accounts.
+        const comparison = compareCadence([cappedPrincipal, fullPeerA, fullPeerB], WINDOW)!;
+
+        expect(comparison.principal!.posts).toBe(40);
+        expect(comparison.peers[0]!.posts).toBe(40);
+        expect(comparison.principal!.postsPerWeek).toBeCloseTo(comparison.peers[0]!.postsPerWeek, 5);
+    });
+
+    it("withholds the comparison instead of publishing 1.00x", () => {
+        const comparison = compareCadence([cappedPrincipal, fullPeerA, fullPeerB], WINDOW)!;
+
+        expect(comparison.comparable).toBe(false);
+        expect(comparison.truncatedAccounts).toEqual(["Principal"]);
+        expect(comparison.principalVsPeers).toBeNull();
+        expect(comparison.peerBenchmark).toBeNull();
+        // Consistency was the worse of the two: blocks that predate anything we
+        // fetched read as weeks the account chose not to post in.
+        expect(comparison.peerConsistency).toBeNull();
+    });
+
+    it("says why, rather than going quiet", () => {
+        const sentence = describeCadence(compareCadence([cappedPrincipal, fullPeerA, fullPeerB], WINDOW)!);
+
+        expect(sentence).toMatch(/withheld/);
+        expect(sentence).toMatch(/Principal/);
+        expect(sentence).toMatch(/result cap/);
+        // And it must not quote the rate it just refused to compare.
+        expect(sentence).not.toMatch(/×\/week/);
+    });
+
+    it("still compares accounts whose histories all cover the window", () => {
+        // The guard must not fire on ordinary data, or it suppresses the module.
+        const comparison = compareCadence([
+            corpus("Principal", "PRINCIPAL", lastNDays(20, 28)),
+            fullPeerA,
+            fullPeerB,
+        ], WINDOW)!;
+
+        expect(comparison.comparable).toBe(true);
+        expect(comparison.truncatedAccounts).toEqual([]);
+        expect(comparison.principalVsPeers).toBeCloseTo(0.5, 5);
+    });
+
+    it("treats an account with no posts as silent, not as truncated", () => {
+        // A genuinely dark account is the most actionable finding cadence can
+        // produce. Suppressing the comparison for it would hide exactly that.
+        const comparison = compareCadence([
+            corpus("Principal", "PRINCIPAL", lastNDays(20, 28)),
+            fullPeerA,
+            corpus("Silent", "COMPETITOR", []),
+        ], WINDOW)!;
+
+        expect(comparison.comparable).toBe(true);
+        expect(comparison.peers.find((p) => p.personName === "Silent")!.postsPerWeek).toBe(0);
+    });
+});

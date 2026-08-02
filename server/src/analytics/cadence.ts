@@ -93,7 +93,35 @@ export interface CadenceStats {
     daysSinceLastPost: number | null;
     /** Most posts in any single local calendar day — the burst detector. */
     maxPostsInOneDay: number;
+    /**
+     * This account's earliest post inside the window. Null with no posts.
+     *
+     * Exists to detect a corpus that was TRUNCATED rather than quiet — see
+     * `historyStartsLate`.
+     */
+    observedFrom: Date | null;
+    /**
+     * True when this account's first post sits well after the window opens.
+     *
+     * Two very different things produce this, and cadence cannot tell them apart
+     * from post rows alone: an account that genuinely posted nothing for the
+     * first stretch of the window, or a source that returned only the most
+     * recent N posts. Either way the account's rate over the FULL window is not
+     * a rate anyone should compare — which is what `comparable` below is for.
+     */
+    historyStartsLate: boolean;
 }
+
+/**
+ * How much of the window an account's history must cover before its rate is
+ * treated as comparable.
+ *
+ * 0.9 — a tenth of the window is a generous allowance for an account that simply
+ * started slowly, and well inside the distortion a result cap produces. The X
+ * ingest that motivated this covered 23% of the window for the principal against
+ * 100% for one peer.
+ */
+const MIN_WINDOW_COVERAGE = 0.9;
 
 /**
  * The tightest window containing every post across every corpus.
@@ -164,6 +192,10 @@ export function analyseCadence<T extends CadencePost>(
             longestSilenceDays: null,
             daysSinceLastPost: null,
             maxPostsInOneDay: 0,
+            observedFrom: null,
+            // An account with no posts in the window is not truncated, it is
+            // silent — and that is a finding, not a data problem.
+            historyStartsLate: false,
         };
     }
 
@@ -201,6 +233,8 @@ export function analyseCadence<T extends CadencePost>(
         longestSilenceDays: gaps.length === 0 ? null : Math.max(...gaps) / HOURS_PER_DAY,
         daysSinceLastPost: (to - times[times.length - 1]) / MS_PER_DAY,
         maxPostsInOneDay: Math.max(...postsPerLocalDay.values()),
+        observedFrom: new Date(times[0]),
+        historyStartsLate: (to - times[0]) / MS_PER_DAY < windowDays * MIN_WINDOW_COVERAGE,
     };
 }
 
@@ -209,12 +243,38 @@ export interface CadenceComparison {
     principal: CadenceStats | null;
     /** Peers, most prolific first. */
     peers: CadenceStats[];
-    /** Median peer posts-per-week. Null with no peers. */
+    /** Median peer posts-per-week. Null with no peers, or where not comparable. */
     peerBenchmark: number | null;
     /** Principal ÷ benchmark. Below 1 means the principal posts less often. */
     principalVsPeers: number | null;
     /** Median peer consistency, for the regularity half of the picture. */
     peerConsistency: number | null;
+    /**
+     * False when at least one account's history does not cover the window, so
+     * the cross-account figures are withheld rather than published.
+     *
+     * ── THE FAILURE THIS EXISTS TO PREVENT ───────────────────────────────
+     *
+     * Found the day X went live. The X adapter caps results per account for cost
+     * reasons, and all four accounts hit the same 160-post cap. Because the cap
+     * is on COUNT and the accounts post at wildly different rates, 160 posts
+     * bought 15 days of the principal's history and 65 days of one peer's — but
+     * `windowSpanning` takes the union, so all four were then divided by the same
+     * 65-day denominator.
+     *
+     * Every account came out at exactly 17.11 posts/week, and the dashboard
+     * reported `principalVsPeers = 1.00x` — "he posts exactly as often as his
+     * peers". That is not a weak finding, it is a manufactured one: the number
+     * measures the result cap, not the accounts. The consistency figure was worse
+     * still, reporting the principal as posting in 30% of weeks when he posts
+     * most days, because 7 of the 10 blocks predated anything we fetched.
+     *
+     * Nothing about the arithmetic was wrong. The inputs were not comparable and
+     * the module had no way to say so, so it said something false instead.
+     */
+    comparable: boolean;
+    /** Accounts whose history does not cover the window. Empty when comparable. */
+    truncatedAccounts: string[];
 }
 
 /**
@@ -248,18 +308,27 @@ export function compareCadence<T extends CadencePost>(
         return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
     };
 
-    const peerBenchmark = medianOf(peers.map((p) => p.postsPerWeek));
+    // An account with no posts at all is silent, not truncated — it belongs in
+    // the comparison at 0 posts/week, which is the truth about it.
+    const truncatedAccounts = stats.filter((s) => s.posts > 0 && s.historyStartsLate).map((s) => s.personName);
+    const comparable = truncatedAccounts.length === 0;
+
+    const peerBenchmark = comparable ? medianOf(peers.map((p) => p.postsPerWeek)) : null;
 
     return {
         window: resolved,
         principal,
         peers,
         peerBenchmark,
+        // Withheld rather than computed when the denominators are not shared in
+        // fact, only in form. See `comparable`.
         principalVsPeers:
-            principal === null || peerBenchmark === null || peerBenchmark === 0
+            !comparable || principal === null || peerBenchmark === null || peerBenchmark === 0
                 ? null
                 : principal.postsPerWeek / peerBenchmark,
-        peerConsistency: medianOf(peers.map((p) => p.consistency)),
+        peerConsistency: comparable ? medianOf(peers.map((p) => p.consistency)) : null,
+        comparable,
+        truncatedAccounts,
     };
 }
 
@@ -275,6 +344,22 @@ export function describeCadence(comparison: CadenceComparison): string {
     const { principal, peerBenchmark, principalVsPeers, peerConsistency } = comparison;
 
     if (principal === null) return "No principal in this comparison.";
+
+    // Says what is missing and why, rather than quoting a rate computed over a
+    // window the account's data does not cover. The per-account posts-per-week
+    // figure is deliberately NOT restated here either: it is the same wrong
+    // number the comparison was withheld for.
+    if (!comparison.comparable) {
+        return (
+            `Cadence comparison withheld on this platform: ${comparison.truncatedAccounts.join(", ")} ` +
+            `${comparison.truncatedAccounts.length === 1 ? "has" : "have"} no posts in the earlier part of the ` +
+            `window, so ${comparison.truncatedAccounts.length === 1 ? "that account is" : "those accounts are"} ` +
+            `measured over a shorter history than the rest. Dividing every account by the same window would ` +
+            `report a posting rate that measures the gap in coverage rather than the account. The usual cause ` +
+            `is a per-account result cap at ingestion (see X_RESULTS_LIMIT); the other is an account that was ` +
+            `genuinely silent, and post rows alone cannot tell the two apart.`
+        );
+    }
     if (peerBenchmark === null || principalVsPeers === null) {
         return `${principal.personName} posts ${principal.postsPerWeek.toFixed(1)}×/week. No peers to compare against.`;
     }

@@ -31,7 +31,16 @@ import { compareCadence, describeCadence, type CadenceComparison } from "./caden
 import { loadCorpora, type CorpusFilter, type CorpusPost, type LoadedCorpus } from "./corpus";
 import { partitionByBasis, type EngagementBasis, type Platform } from "./engagement";
 import { analyseFormats, type FormatAnalysis } from "./format";
-import { describeGap, describeOverInvestment, findGaps, mergeHourWindows, type GapAnalysis } from "./gaps";
+import {
+    describeGap,
+    describeNearMiss,
+    describeOverInvestment,
+    findGaps,
+    GAP_LIFT_THRESHOLD,
+    mergeHourWindows,
+    type GapAnalysis,
+    type PeerEvidence,
+} from "./gaps";
 import { analyseTiming, bestHours, occupiedHours, type TimingAnalysis } from "./timing";
 import { topPosts } from "./topPosts";
 
@@ -41,6 +50,12 @@ import { topPosts } from "./topPosts";
 
 const MAX_FORMATS = 5;
 const MAX_GAPS = 5;
+/**
+ * Higher than MAX_GAPS on purpose. Near misses are the panel's whole content on
+ * a corpus where nothing clears the bar, and truncating them to five would
+ * reintroduce the blankness they exist to fix.
+ */
+const MAX_NEAR_MISSES = 8;
 const MAX_OVER_INVESTED = 3;
 const MAX_TOP_POSTS = 3;
 const MAX_BEST_HOURS = 3;
@@ -96,6 +111,16 @@ export interface ReportPost {
     captionExcerpt: string | null;
 }
 
+/** One peer's contribution to a gap or a near miss, as the UI renders it. */
+export interface ReportPeerEvidence {
+    personName: string;
+    n: number;
+    lift: number;
+    /** True where this peer on its own cleared the lift bar. */
+    clears: boolean;
+    isSynthetic: boolean;
+}
+
 export interface ReportGap {
     dimension: string;
     label: string;
@@ -107,6 +132,44 @@ export interface ReportGap {
     /** Pre-written from verified figures, so the model restates rather than recomputes. */
     sentence: string;
     provenanceCaveat: string | null;
+    /**
+     * Who the finding actually rests on.
+     *
+     * Previously dropped in this projection, which left the dashboard asserting
+     * "2 of 3 peers agree" with no way to see which two or by how much. A reader
+     * deciding whether to move a posting slot is entitled to the names.
+     */
+    peers: ReportPeerEvidence[];
+}
+
+/**
+ * A bucket that was considered and rejected, with the gate that stopped it.
+ *
+ * See the NearMiss docblock in analytics/gaps.ts for why this is reported at
+ * all. The short version: on a real corpus the gates reject nearly everything,
+ * and "no gap clears the bar" rendered alone is indistinguishable from "we did
+ * not look".
+ */
+export interface ReportNearMiss {
+    dimension: string;
+    label: string;
+    reason: string;
+    peerLift: number;
+    peerAgreement: string;
+    principalN: number;
+    /** Null where he has too few posts in the bucket to quote a figure. */
+    principalLift: number | null;
+    whatWouldChangeIt: string;
+    sentence: string;
+    peers: ReportPeerEvidence[];
+}
+
+export interface ReportDimensionCoverage {
+    dimension: string;
+    bucketsConsidered: number;
+    bucketsTestable: number;
+    gaps: number;
+    nearMisses: number;
 }
 
 export interface ReportBasisSection {
@@ -126,6 +189,10 @@ export interface ReportBasisSection {
     comparisonSentence: string;
     peerWindows: { personName: string; label: string; n: number; multipleOfOverall: number }[];
     gaps: ReportGap[];
+    /** Considered and rejected, closest to the bar first. Never a finding. */
+    nearMisses: ReportNearMiss[];
+    /** What each dimension could test, so a dimension that ran on nothing is visible. */
+    gapCoverage: ReportDimensionCoverage[];
     overInvested: { label: string; n: number; shareOfOutputPct: number; lift: number; sentence: string }[];
     bestPosts: ReportPost[];
     worstPosts: ReportPost[];
@@ -252,6 +319,15 @@ function buildBasisSection(
         truncations.push(`${context}: showing ${MAX_GAPS} of ${gapAnalysis.gaps.length} gaps.`);
     }
 
+    const toPeerEvidence = (peers: readonly PeerEvidence[]): ReportPeerEvidence[] =>
+        peers.map((p) => ({
+            personName: p.personName,
+            n: p.n,
+            lift: mult(p.lift),
+            clears: p.lift >= GAP_LIFT_THRESHOLD,
+            isSynthetic: p.isSynthetic,
+        }));
+
     const gaps: ReportGap[] = (gapAnalysis?.gaps ?? []).slice(0, MAX_GAPS).map((gap) => ({
         dimension: gap.key.dimension,
         label: gap.label,
@@ -266,7 +342,29 @@ function buildBasisSection(
             : gap.provenance.mixed
               ? `Mixes live and seeded peers — seeded: ${gap.provenance.syntheticPeers.join(", ")}.`
               : null,
+        peers: toPeerEvidence(gap.peers),
     }));
+
+    if (gapAnalysis && gapAnalysis.nearMisses.length > MAX_NEAR_MISSES) {
+        truncations.push(
+            `${context}: showing ${MAX_NEAR_MISSES} of ${gapAnalysis.nearMisses.length} near misses.`,
+        );
+    }
+
+    const nearMisses: ReportNearMiss[] = (gapAnalysis?.nearMisses ?? [])
+        .slice(0, MAX_NEAR_MISSES)
+        .map((miss) => ({
+            dimension: miss.key.dimension,
+            label: miss.label,
+            reason: miss.reason,
+            peerLift: mult(miss.peerLift),
+            peerAgreement: `${miss.peerAgreement.clearing} of ${miss.peerAgreement.of}`,
+            principalN: miss.principal.n,
+            principalLift: miss.principal.lift === null ? null : mult(miss.principal.lift),
+            whatWouldChangeIt: miss.whatWouldChangeIt,
+            sentence: describeNearMiss(miss, gapAnalysis!.principalName),
+            peers: toPeerEvidence(miss.peers),
+        }));
 
     return {
         basis,
@@ -302,6 +400,14 @@ function buildBasisSection(
             multipleOfOverall: mult(w.multipleOfOverall),
         })),
         gaps,
+        nearMisses,
+        gapCoverage: (gapAnalysis?.coverage ?? []).map((c) => ({
+            dimension: c.dimension,
+            bucketsConsidered: c.bucketsConsidered,
+            bucketsTestable: c.bucketsTestable,
+            gaps: c.gaps,
+            nearMisses: c.nearMisses,
+        })),
         overInvested: (gapAnalysis?.overInvested ?? []).slice(0, MAX_OVER_INVESTED).map((o) => ({
             label: o.label,
             n: o.n,
@@ -406,15 +512,28 @@ export async function buildReport(filter: CorpusFilter = {}): Promise<AnalyticsR
                 cadenceComparison === null || cadenceComparison.principal === null
                     ? null
                     : {
-                          principalPostsPerWeek: mult(cadenceComparison.principal.postsPerWeek),
+                          // The principal's OWN figures are withheld alongside the
+                          // comparison when histories do not cover the window, and
+                          // not only the cross-account ones. They are computed over
+                          // the same window his data does not span, so they are
+                          // wrong in the same way — the X run that motivated this
+                          // reported him posting in 30% of weeks when he posts most
+                          // days, because seven of the ten blocks predated anything
+                          // that was fetched. `sentence` explains the blanks.
+                          principalPostsPerWeek: cadenceComparison.comparable
+                              ? mult(cadenceComparison.principal.postsPerWeek)
+                              : null,
                           peerMedianPostsPerWeek:
                               cadenceComparison.peerBenchmark === null ? null : mult(cadenceComparison.peerBenchmark),
                           principalVsPeers:
                               cadenceComparison.principalVsPeers === null ? null : mult(cadenceComparison.principalVsPeers),
-                          principalConsistencyPct: sharePct(cadenceComparison.principal.consistency),
+                          principalConsistencyPct: cadenceComparison.comparable
+                              ? sharePct(cadenceComparison.principal.consistency)
+                              : null,
                           peerConsistencyPct:
                               cadenceComparison.peerConsistency === null ? null : sharePct(cadenceComparison.peerConsistency),
                           principalLongestSilenceDays:
+                              !cadenceComparison.comparable ||
                               cadenceComparison.principal.longestSilenceDays === null
                                   ? null
                                   : Math.round(cadenceComparison.principal.longestSilenceDays),
