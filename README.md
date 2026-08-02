@@ -2,7 +2,7 @@
 
 A social media intelligence portal for political communications teams.
 
-Bellwether ingests the last 90 days of **public** posts for a principal and their peer set across Instagram and YouTube, normalises everything into one schema, and answers four questions:
+Bellwether ingests the last 90 days of **public** posts for a principal and their peer set across Instagram, X and YouTube, normalises everything into one schema, and answers four questions:
 
 1. **What content works?** — performance by media format, on a normalised engagement measure, with spread (not just averages).
 2. **When should we post?** — day × hour heatmap per platform in the account's local timezone, with sample sizes shown and thin cells suppressed.
@@ -10,6 +10,33 @@ Bellwether ingests the last 90 days of **public** posts for a principal and thei
 4. **So what do we do?** — a ranked list of recommendations, each one traceable to specific posts and figures in the data.
 
 Question 4 is the point of the product. Everything above it exists to make the recommendations defensible.
+
+---
+
+## 🔑 Running this after a clone — credentials you will need
+
+**Read this before `npm install`.** Every row this portal shows is fetched from a live source, and no database dump or API key is committed to this repository — so a fresh clone starts with an empty database and needs credentials to fill it. That is a deliberate consequence of the provenance rule in the next section, not an oversight: there is no generated fallback corpus, because a portal that quietly shows invented data is the failure this project is built to avoid.
+
+You need four things in `server/.env` (copy `server/.env.example` and fill it in — full walkthrough at [Setup](#setup)):
+
+| Variable | Required? | Where it comes from | Cost |
+|---|---|---|---|
+| `DATABASE_URL` | **Required** | Any Postgres 14+. A free [Supabase](https://supabase.com) project is what this was built against — copy the connection string from *Project Settings → Database*. A local Postgres works identically | Free |
+| `YOUTUBE_API_KEY` | **Required** for YouTube | [Google Cloud Console](https://console.cloud.google.com) → create a project → enable **YouTube Data API v3** → *Credentials* → API key. No billing account, no app review | Free — 10,000 units/day, and a full 90-day pull of this roster costs well under 100 |
+| `APIFY_API_TOKEN` | **Required** for Instagram and X | [apify.com](https://apify.com) → sign up → *Settings → Integrations → Personal API token* | Free plan gives $5/month of credit. A full ingest of all four accounts on both platforms costs roughly **$1** |
+| `GEMINI_API_KEY` | Optional | [Google AI Studio](https://aistudio.google.com/apikey) → *Get API key* | Free tier. Only theme classification and recommendations use it — **every chart, table, comparison and export works without it**, and the portal says so rather than showing an empty panel |
+
+Then, from `server/`:
+
+```bash
+npm run db:deploy                 # create the tables
+npm run ingest -- --roster        # load the roster and pull 90 days (a few minutes)
+npm run classify                  # optional — needs GEMINI_API_KEY
+```
+
+**If any of this is unclear, or you would rather not create four accounts to review a take-home — reply on the email thread this submission was sent on and I will share working credentials and a database export privately, within a few hours.** Keys are deliberately not committed here (the brief asks for exactly that, and `.env` has been in `.gitignore` since the first commit), but I am happy to hand them over out of band so that reviewing this does not cost you an afternoon of signups.
+
+Two things you can read with **no setup at all**: [`SAMPLE-REPORT.md`](SAMPLE-REPORT.md) is the portal's own Markdown export against the real 4,112-post corpus, and [`DECISIONS.md`](DECISIONS.md) opens with the ten decisions that shaped the build.
 
 ---
 
@@ -217,12 +244,16 @@ GEMINI_API_KEY="..."      # optional — only theme classification and recommend
 GEMINI_CLASSIFY_MODEL=""  # optional — comma-separated model chain; free-tier quota is per model, so a
 GEMINI_RECOMMEND_MODEL="" #   spent primary falls through to the next one automatically. RUNBOOK §6.2
 YOUTUBE_API_KEY="..."     # required — YouTube accounts are ingested live
-APIFY_API_TOKEN="..."     # required — serves the Instagram accounts
+APIFY_API_TOKEN="..."     # required — serves the Instagram AND X accounts
 APIFY_RESULTS_LIMIT=""    # optional — posts per Instagram account per run (default 200)
+X_RESULTS_LIMIT="1500"    # posts per X account per run. The code default of 150 is TOO LOW for a
+                          #   90-day window and distorts cadence — set this. ~$0.60 for four
+                          #   accounts, inside the free credit. RUNBOOK §4.4
+X_MAX_CHARGE_USD=""       # optional — per-run spend ceiling for one X account (default 0.5)
 PORT=4000
 ```
 
-**No API keys are committed to this repository.** `.env` is in `.gitignore` from the first commit; `.env.example` documents the shape without the secrets.
+**No API keys are committed to this repository.** `.env` is in `.gitignore` from the first commit; `.env.example` documents the shape without the secrets. If you would rather not create the accounts, ask on the email thread and working credentials plus a database export will be sent privately — see [the credentials section](#-running-this-after-a-clone--credentials-you-will-need) at the top.
 
 ### 3. Set up the database
 
