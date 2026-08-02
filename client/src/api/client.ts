@@ -384,6 +384,12 @@ export interface RecommendationRun {
     notes: string[];
     usage: { promptTokens: number; outputTokens: number; thoughtTokens: number };
     limits: { maxRecommendations: number; minSampleSize: number };
+    /**
+     * True when the server returned a run it had already computed for this exact
+     * corpus and filter, rather than calling the model again. `generatedAt` is
+     * then the time of that earlier run — which is why this needs saying.
+     */
+    cached: boolean;
 }
 
 export interface ClassificationStatus {

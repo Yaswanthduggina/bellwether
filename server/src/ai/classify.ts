@@ -24,7 +24,7 @@
 import { Type, type Schema } from "@google/genai";
 import { prisma } from "../db";
 import type { ContentPillar } from "../analytics/gaps";
-import { CLASSIFY_MODEL, QuotaExhaustedError, structured, ThinkingLevel } from "./gemini";
+import { CLASSIFY_MODELS, QuotaExhaustedError, structured, ThinkingLevel } from "./gemini";
 
 /**
  * How many posts per call.
@@ -237,6 +237,13 @@ export interface ClassifyReport {
     /** Results the model returned for an index outside the batch, or twice. */
     discardedResults: number;
     batches: number;
+    /**
+     * Every model that actually produced labels in this run, in the order first
+     * used. Usually one entry; more than one means the primary ran out of daily
+     * quota mid-run and the chain fell through, which is worth knowing when
+     * comparing label quality across runs.
+     */
+    modelsUsed: string[];
     failedBatches: { batch: number; error: string }[];
     /**
      * Set when the run abandoned work it had not attempted. Present rather than
@@ -299,6 +306,7 @@ export async function classifyPosts(options: ClassifyOptions = {}): Promise<Clas
         missing: 0,
         discardedResults: 0,
         batches: 0,
+        modelsUsed: [],
         failedBatches: [],
         distribution: {},
         usage: { promptTokens: 0, outputTokens: 0, thoughtTokens: 0 },
@@ -329,13 +337,15 @@ export async function classifyPosts(options: ClassifyOptions = {}): Promise<Clas
         report.batches += 1;
 
         try {
-            const { value, usage } = await structured<ClassifyResponse>({
-                model: CLASSIFY_MODEL,
+            const { value, usage, model } = await structured<ClassifyResponse>({
+                model: CLASSIFY_MODELS,
                 system: SYSTEM,
                 contents: `Classify these ${batch.length} posts. Return one result per index, 0 to ${batch.length - 1}.\n\n${renderBatch(batch)}`,
                 schema: RESPONSE_SCHEMA,
                 thinking: ThinkingLevel.MINIMAL,
             });
+
+            if (!report.modelsUsed.includes(model)) report.modelsUsed.push(model);
 
             report.usage.promptTokens += usage.promptTokens;
             report.usage.outputTokens += usage.outputTokens;
@@ -377,10 +387,12 @@ export async function classifyPosts(options: ClassifyOptions = {}): Promise<Clas
                 error: error instanceof Error ? error.message : String(error),
             });
 
-            // Quota exhaustion is a wall, not weather. Every remaining batch
-            // would fail identically, so the run stops and says so rather than
-            // spending minutes proving it — the first real pass burned 20
-            // batches × 3 retries after the quota was already gone.
+            // Quota exhaustion is a wall, not weather. By the time this fires,
+            // `structured` has already walked the whole model chain — so it
+            // means every model's daily allowance is gone, not just one. Every
+            // remaining batch would fail identically, so the run stops and says
+            // so rather than spending minutes proving it: the first real pass
+            // burned 20 batches × 3 retries after the quota was already gone.
             if (error instanceof QuotaExhaustedError) {
                 report.stoppedEarly = {
                     reason: "QUOTA_EXHAUSTED",

@@ -214,6 +214,8 @@ Fill in `server/.env`:
 ```env
 DATABASE_URL="postgresql://user:pass@host:5432/postgres"
 GEMINI_API_KEY="..."      # optional — only theme classification and recommendations need it
+GEMINI_CLASSIFY_MODEL=""  # optional — comma-separated model chain; free-tier quota is per model, so a
+GEMINI_RECOMMEND_MODEL="" #   spent primary falls through to the next one automatically. RUNBOOK §6.2
 YOUTUBE_API_KEY="..."     # required — YouTube accounts are ingested live
 APIFY_API_TOKEN="..."     # required — serves the Instagram accounts
 APIFY_RESULTS_LIMIT=""    # optional — posts per Instagram account per run (default 200)

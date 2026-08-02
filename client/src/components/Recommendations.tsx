@@ -15,11 +15,44 @@
 //    no key at all, so that state is degraded-and-expected rather than broken,
 //    and it says what to do about it.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ApiError, Recommendation, RecommendationRun, ReportPost } from "../api/client";
 import { Badge, Chip, humanise, Loading, Notes, Notice, Panel } from "./ui";
 
 const CONFIDENCE_KIND: Record<string, string> = { HIGH: "live", MEDIUM: "mixed", LOW: "neutral" };
+
+/**
+ * A live seconds counter for the one slow request in the app.
+ *
+ * This panel used to promise "a few seconds" while the call actually takes
+ * roughly a minute: a ~20k-token report, high thinking, and a model chain that
+ * may burn a round trip on an exhausted primary before it starts. A silent
+ * skeleton for that long does not read as "working", it reads as "hung", and
+ * the reasonable response to a hung page is to reload — which cancels nothing
+ * server-side and starts a second call that will be just as slow.
+ *
+ * A number that visibly moves is the whole fix. It costs one interval and it
+ * turns a wait into progress.
+ */
+function useElapsed(active: boolean): number {
+    const [seconds, setSeconds] = useState(0);
+    const startedAt = useRef(0);
+
+    useEffect(() => {
+        if (!active) return;
+
+        startedAt.current = Date.now();
+        setSeconds(0);
+
+        const timer = window.setInterval(() => {
+            setSeconds(Math.round((Date.now() - startedAt.current) / 1000));
+        }, 1000);
+
+        return () => window.clearInterval(timer);
+    }, [active]);
+
+    return seconds;
+}
 
 /**
  * Set every numeric literal in the prose in tabular figures.
@@ -126,6 +159,9 @@ export function Recommendations({
 }) {
     const [showDropped, setShowDropped] = useState(false);
 
+    // Before the early returns — a hook cannot live behind a branch.
+    const elapsed = useElapsed(loading);
+
     const sub =
         "Every number below was checked against the computed analytics before it was shown. " +
         "Anything that cited a figure the data does not contain was retried once, then discarded.";
@@ -135,7 +171,18 @@ export function Recommendations({
             <Panel lead eyebrow="Question 4 · so what do we do?" title="Recommendations" sub={sub}>
                 <Loading lines={4} />
                 <p className="muted" style={{ fontSize: 13 }}>
-                    Generating and validating — this calls the model and takes a few seconds.
+                    Generating and validating — <strong>{elapsed}s elapsed</strong>. This is the only request in the
+                    app that calls the model, and it usually takes <strong>40–70 seconds</strong>: the model is given
+                    the whole analytics report and every figure it writes is then checked back against it. Leave the
+                    page open — reloading starts again from zero. Repeat views of the same filter are served from the
+                    last run and are instant.
+                    {elapsed > 90 && (
+                        <>
+                            {" "}
+                            <strong>Longer than expected.</strong> Still waiting rather than failed — the request has
+                            no client timeout. The server log names the model actually answering.
+                        </>
+                    )}
                 </p>
             </Panel>
         );
@@ -171,7 +218,11 @@ export function Recommendations({
             title="Recommendations"
             sub={sub}
             right={
-                <button className="icon-button" onClick={onRetry} title="Re-run the model against the current filter.">
+                <button
+                    className="icon-button"
+                    onClick={onRetry}
+                    title="Re-request for the current filter. If nothing about the corpus has changed the server returns the run it already has — these calls run at temperature 0, so a second one would produce the same advice at the cost of another minute and another request against the daily quota."
+                >
                     ↻ Regenerate
                 </button>
             }
@@ -211,6 +262,13 @@ export function Recommendations({
                     title="The size of the set the validator checks against. A large jump here would mean validation has weakened."
                 />
                 <Chip label="model" value={run.model} />
+                {run.cached && (
+                    <Chip
+                        label="served from"
+                        value={`run of ${new Date(run.generatedAt).toLocaleTimeString()}`}
+                        title="The corpus and filter have not changed since this was generated, so the model was not called again. Any ingestion, classification or roster edit invalidates it automatically."
+                    />
+                )}
                 {run.dropped.length > 0 && (
                     <button className="icon-button" onClick={() => setShowDropped((v) => !v)}>
                         {showDropped ? "Hide" : "Show"} what was dropped

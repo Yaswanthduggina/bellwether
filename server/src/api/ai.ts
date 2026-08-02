@@ -7,8 +7,15 @@
 
 import { Router } from "express";
 import { classificationStatus, classifyPosts, MIN_CONFIDENCE } from "../ai/classify";
-import { CLASSIFY_MODEL, hasApiKey, MissingApiKeyError, QuotaExhaustedError, RECOMMEND_MODEL } from "../ai/gemini";
-import { generateRecommendations, MAX_RECOMMENDATIONS } from "../ai/recommend";
+import {
+    CLASSIFY_MODEL,
+    CLASSIFY_MODELS,
+    hasApiKey,
+    MissingApiKeyError,
+    QuotaExhaustedError,
+    RECOMMEND_MODELS,
+} from "../ai/gemini";
+import { MAX_RECOMMENDATIONS, recommendationsFor } from "../ai/recommend";
 import { MIN_RECOMMENDATION_N } from "../ai/validate";
 import { parseFilter } from "./filters";
 import { ApiError, route } from "./http";
@@ -34,6 +41,10 @@ aiRouter.get(
         res.json({
             ...status,
             model: CLASSIFY_MODEL,
+            // The fallbacks as well as the primary: when the primary's daily
+            // quota is spent the run continues on the next one, so "which model
+            // is this" has more than one honest answer.
+            models: CLASSIFY_MODELS,
             minConfidence: MIN_CONFIDENCE,
             apiKeyConfigured: hasApiKey(),
             complete: status.total > 0 && status.unclassified === 0,
@@ -92,12 +103,16 @@ aiRouter.post(
 /**
  * FR12 — the ranked, grounded, validated recommendations. Question 4.
  *
- * A GET that costs money and takes ~20 seconds, which is a fair objection. It is
- * a GET anyway because it is idempotent in the sense that matters — it writes
- * nothing, and calling it twice leaves the system exactly as it was. Caching is
- * the obvious next step and is deliberately absent: a cache keyed on the filter
- * would need invalidating on every ingestion, and shipping a stale-recommendation
- * bug is worse than shipping a slow endpoint.
+ * A GET that costs money and takes 40-70 seconds on a cold filter, which is a
+ * fair objection. It is a GET anyway because it is idempotent in the sense that
+ * matters — it writes nothing, and calling it twice leaves the system exactly as
+ * it was.
+ *
+ * It IS cached, and the objection that once kept it uncached is answered rather
+ * than dropped: the worry was that a filter-keyed cache needs invalidating on
+ * every ingestion. So the key is not the filter alone — it is the filter plus a
+ * fingerprint of the corpus, and anything that moves the corpus moves the key.
+ * See `recommendationsFor`. The response says which it was.
  *
  * Takes the same filter block as every analytics route (FR16), so the panel can
  * be re-run for one platform.
@@ -121,11 +136,19 @@ aiRouter.get(
         }
 
         try {
-            const run = await generateRecommendations(filter);
+            const { run, cached } = await recommendationsFor(filter);
             res.json({
                 ...run,
+                // Stated, not implied. `generatedAt` on a cached run is the time
+                // the MODEL ran, which is the honest value — but a reader
+                // comparing it to the clock deserves to know why it is old.
+                cached,
                 limits: { maxRecommendations: MAX_RECOMMENDATIONS, minSampleSize: MIN_RECOMMENDATION_N },
-                model: RECOMMEND_MODEL,
+                // `run.model` — the model that ANSWERED — is deliberately left
+                // to stand. Overwriting it with the configured primary would
+                // report the wrong model on any run that fell through to a
+                // fallback after the primary's daily quota ran out.
+                models: RECOMMEND_MODELS,
             });
         } catch (error) {
             throw asApiError(error) ?? error;

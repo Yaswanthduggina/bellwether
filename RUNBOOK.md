@@ -279,9 +279,23 @@ npm run classify -- --limit=50   # cheap smoke test first — 2 requests
 npm run classify                 # then the rest
 ```
 
-**Option 2 — a fresh key.** A new API key from a different Google account gets its own allowance. Reaching 100% coverage on the 1,725-post corpus originally took four keys across one day. Paste it into `server/.env` as `GEMINI_API_KEY` and re-run — no restart needed for the scripts.
+**Option 2 — switch the model, which is the fastest fix and needs no new key.** The free tier meters `GenerateRequestsPerDayPerProjectPerModel`, and the last segment is the one to exploit: **each model has its own daily bucket.** A spent `gemini-3.6-flash` says nothing about `gemini-3.5-flash` on the same key.
 
-**Option 3 — classify only what you need.** The API route accepts `accountId` and `platform`, so you can classify one account or one platform rather than the whole corpus:
+This is now automatic. `CLASSIFY_MODELS` / `RECOMMEND_MODELS` in `server/src/ai/gemini.ts` are a **chain**, and a model that returns a daily-quota 429 is skipped for the next one mid-run — logged as `[gemini] <model> is out of daily quota — falling back to <next>`. `QuotaExhaustedError` now fires only when *every* model in the chain is spent. To pin a different chain without touching code:
+
+```bash
+# server/.env — comma-separated, primary first
+GEMINI_CLASSIFY_MODEL="gemini-3.5-flash,gemini-3.1-flash-lite"
+GEMINI_RECOMMEND_MODEL="gemini-3.5-flash"
+```
+
+The report says which model actually answered: `modelsUsed` on the classify report, `model` on the recommendations response. More than one entry means the chain fell through.
+
+**Option 3 — a fresh key, with the catch that matters.** The bucket is **per Google Cloud project, not per key.** Minting a second API key inside the same project draws on the same spent allowance and fails with a byte-identical 429 — which reads exactly like "the new key wasn't picked up" and is the single most misleading failure in this system. A fresh allowance means a key from a **new project**, or a different Google account. Reaching 100% coverage on the 1,725-post corpus originally took four across one day.
+
+Paste it into `server/.env` as `GEMINI_API_KEY` and re-run. **No restart is needed, for the scripts or the server**: `readKey()` in `gemini.ts` re-reads `.env` on every call and the SDK client is memoised on the key's *value*, so a swapped key takes effect on the next request. (`tsx watch` would not have helped — it watches imported TypeScript, not `.env`.)
+
+**Option 4 — classify only what you need.** The API route accepts `accountId` and `platform`, so you can classify one account or one platform rather than the whole corpus:
 
 ```bash
 curl -X POST http://localhost:4000/api/ai/classify \
@@ -289,7 +303,7 @@ curl -X POST http://localhost:4000/api/ai/classify \
   -d '{"platform":"INSTAGRAM","limit":100}'
 ```
 
-**Option 4 — the UI button, which is the best one for a demo.** Accounts page → **Classify N posts**. It chunks at 25 posts per request and backs off exponentially (15s → 90s) on rate limits, giving up after 8 consecutive backoffs. That pacing exists for a specific reason: **Gemini's per-minute limit and its per-day limit return an identical error.** Firing batches back to back trips the per-minute one after about eight of them, which reads as "quota exhausted" when fifteen seconds of patience would have cleared it. Every chunk commits as it goes, and **Stop** keeps everything already written.
+**Option 5 — the UI button, which is the best one for a demo.** Accounts page → **Classify N posts**. It chunks at 25 posts per request and backs off exponentially (15s → 90s) on rate limits, giving up after 8 consecutive backoffs. That pacing exists for a specific reason: **Gemini's per-minute limit and its per-day limit return an identical error.** Firing batches back to back trips the per-minute one after about eight of them, which reads as "quota exhausted" when fifteen seconds of patience would have cleared it. Every chunk commits as it goes, and **Stop** keeps everything already written.
 
 ### 6.3 Budgeting a constrained key
 
@@ -329,6 +343,22 @@ npm run recommend -- --platform=X --json
 Prints each accepted recommendation with its priority, confidence, sample size, cited figures and post IDs — then every **dropped** one with the specific validator violation that killed it.
 
 The drop count is the number worth watching. Each recommendation's numeric literals and post IDs are checked against the analytics JSON that was passed in; anything unverifiable is rejected, retried once with the violation named, and dropped if it fails twice. The model never sees raw post data — only the pre-computed analytics document — so structurally it can misread a verified number but cannot invent an unverified one.
+
+### 7.1 How long it takes, and why the panel is not stuck
+
+**A cold run takes 40–70 seconds.** Measured, not estimated: 51s on the unfiltered corpus, 65s on `?platform=X`. The model is handed the entire ~20k-token analytics report and reasons at high thinking — `thoughtTokens` on a typical run is around 11,000. There is no client timeout, so the panel is waiting, not failing; it shows a live elapsed counter so that is visible rather than inferred.
+
+**Repeat views are instant.** The result is cached on the filter **plus a fingerprint of the corpus** — post count, account count, the latest post write, and the summed follower counts. Anything that moves the corpus moves the key: ingesting, classifying, editing the roster, or a refresh that changed only follower counts (engagement rates divide by those, and such a refresh touches no post row — hence their presence in the key). There is no path that serves advice derived from a corpus that has since changed.
+
+```
+GET /api/ai/recommendations            51.4s   "cached":false
+GET /api/ai/recommendations             0.4s   "cached":true
+GET /api/ai/recommendations?platform=X 65.0s   "cached":false   # different filter, correctly a miss
+```
+
+The response carries `cached`, and the UI shows a **served from** chip with the original run's time when it is true. The cache lives in the server process only — `npm run recommend` is a fresh process and always calls the model, which is what a hand-invoked command should do.
+
+This matters for more than speed. The panel refetches on every filter change; without the cache a reviewer clicking between platforms spends a model call each time, against a free tier metered at **20 requests per day per model**. And a second call would return the same advice regardless — these run at temperature 0.
 
 ---
 
@@ -383,7 +413,9 @@ Three things worth saying out loud while it runs:
 |---|---|---|
 | `P1001: Can't reach database server` | Supabase direct URL is IPv6-only | Use the **Session pooler** string; username is `postgres.<ref>` |
 | `No Gemini API key configured` (503) | `GEMINI_API_KEY` empty | Set it in `server/.env`. Both `GEMINI_API_KEY` and lowercase `gemini_api_key` are read — Windows env-var case handling made that necessary |
-| `Gemini quota exhausted` (503) | Daily allowance spent | §6. Work already done is saved; re-run continues from there |
+| Recommendations panel spins for ~a minute | Working as designed — a cold run is 40–70s | §7.1. The panel shows elapsed seconds; there is no client timeout, so it is waiting rather than failed. Don't reload — that restarts the clock and abandons nothing server-side |
+| `Gemini quota exhausted` (503) | Every model in the chain has spent its daily allowance | §6.2. Work already done is saved; re-run continues from there |
+| A **new key** gives the identical quota 429 | The free-tier bucket is per **project**, not per key — a second key in the same project shares the spent allowance | Use a key from a new project or another Google account, or set `GEMINI_CLASSIFY_MODEL` to a model with its own untouched bucket. §6.2, Options 2 and 3 |
 | `Monthly usage hard limit exceeded` | Apify credit gone | Top up, or lower `APIFY_RESULTS_LIMIT` / `X_RESULTS_LIMIT`. The run failed cleanly and wrote nothing |
 | `FACEBOOK has no live adapter yet` | Working as designed | Facebook is declared, not ingested. Import a CSV/JSON export instead |
 | `Account is flagged isSynthetic` | Leftover from the seeded era | `npm run ingest -- --roster` — purges its generated posts and re-points it at the live adapter |

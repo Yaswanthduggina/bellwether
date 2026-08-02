@@ -563,8 +563,9 @@ function Classification() {
                     {!current.apiKeyConfigured && (
                         <Notice kind="warn">
                             <strong>No Gemini API key is configured.</strong> Classification and recommendations both
-                            need one — set <code>GEMINI_API_KEY</code> in <code>server/.env</code> and restart the
-                            server. Every analytics panel works without it.
+                            need one — set <code>GEMINI_API_KEY</code> in <code>server/.env</code>. The server
+                            re-reads the file per request, so no restart is needed. Every analytics panel works
+                            without it.
                         </Notice>
                     )}
 

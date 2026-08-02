@@ -37,7 +37,8 @@ import {
     type ReportPost,
 } from "../analytics/buildReport";
 import type { CorpusFilter } from "../analytics/corpus";
-import { RECOMMEND_MODEL, structured, ThinkingLevel } from "./gemini";
+import { prisma } from "../db";
+import { RECOMMEND_MODEL, RECOMMEND_MODELS, structured, ThinkingLevel } from "./gemini";
 import {
     describeViolations,
     MIN_RECOMMENDATION_N,
@@ -261,7 +262,7 @@ async function repair(
     reportJson: string,
 ): Promise<{ value: Recommendation; usage: RecommendationRun["usage"] }> {
     const { value, usage } = await structured<Recommendation>({
-        model: RECOMMEND_MODEL,
+        model: RECOMMEND_MODELS,
         system: SYSTEM,
         contents:
             `This recommendation you wrote FAILED the grounding check:\n\n` +
@@ -321,8 +322,8 @@ export async function generateRecommendations(filter: CorpusFilter = {}): Promis
 
     const reportJson = JSON.stringify(report, null, 2);
 
-    const { value, usage } = await structured<{ recommendations: Recommendation[] }>({
-        model: RECOMMEND_MODEL,
+    const { value, usage, model } = await structured<{ recommendations: Recommendation[] }>({
+        model: RECOMMEND_MODELS,
         system: SYSTEM,
         contents:
             `Here is the analytics report for ${report.principalName ?? "the principal"}` +
@@ -416,5 +417,102 @@ export async function generateRecommendations(filter: CorpusFilter = {}): Promis
         notes.push("Every generated recommendation failed the grounding check. None are shown.");
     }
 
-    return { ...base, recommendations: accepted, dropped, repaired, generated, citedPosts, notes, usage: usageTotal };
+    // `model` is the one that ANSWERED, which is not always the one asked first
+    // — the chain falls through on a spent daily quota. Reporting the primary
+    // regardless would make the run wrong about its own provenance.
+    return {
+        ...base,
+        model,
+        recommendations: accepted,
+        dropped,
+        repaired,
+        generated,
+        citedPosts,
+        notes,
+        usage: usageTotal,
+    };
+}
+
+// ── Caching, and the invalidation that makes it safe ──────────────────────
+
+/**
+ * A fingerprint of the corpus a run was derived FROM.
+ *
+ * This is the whole reason a cache is defensible here. The original decision was
+ * to have none, on the grounds that a filter-keyed cache needs invalidating on
+ * every ingestion and a stale recommendation is worse than a slow endpoint. That
+ * reasoning was right and is preserved intact — what changed is that the key now
+ * includes everything the answer depends on, so ingesting posts, classifying
+ * them or editing the roster all produce a different key and therefore a miss.
+ * There is no path that serves advice computed from a corpus that has moved.
+ *
+ * `followerCount` is in here for a case that is easy to miss: engagement rates
+ * divide by it, and a follower-only refresh touches no post row — so without it,
+ * a re-ingest that moved only the denominators would keep serving rates computed
+ * against the old ones.
+ */
+export async function corpusFingerprint(): Promise<string> {
+    const [posts, accounts, lastPostWrite, lastAccount, followers] = await Promise.all([
+        prisma.post.count(),
+        prisma.account.count(),
+        prisma.post.aggregate({ _max: { updatedAt: true } }),
+        prisma.account.aggregate({ _max: { createdAt: true } }),
+        prisma.account.aggregate({ _sum: { followerCount: true } }),
+    ]);
+
+    return [
+        posts,
+        accounts,
+        lastPostWrite._max.updatedAt?.toISOString() ?? "-",
+        lastAccount._max.createdAt?.toISOString() ?? "-",
+        followers._sum.followerCount ?? 0,
+    ].join("|");
+}
+
+/**
+ * Bounded, because a scripted caller could otherwise grow this without limit.
+ * The filter space a UI can actually produce is a few dozen combinations, so a
+ * cap this size evicts approximately never in the case it exists to serve.
+ */
+const MAX_CACHE_ENTRIES = 32;
+
+const cache = new Map<string, RecommendationRun>();
+
+export interface CachedRecommendations {
+    run: RecommendationRun;
+    /** True when this was computed earlier for an identical corpus AND filter. */
+    cached: boolean;
+}
+
+/**
+ * `generateRecommendations`, but not twice for the same question.
+ *
+ * The endpoint is the lead panel of the dashboard and refetches on every filter
+ * change, at roughly a minute and one model call each. On a free tier metered at
+ * 20 requests per day PER MODEL, a reviewer clicking between platforms can spend
+ * the day's allowance re-deriving answers already computed — and the second
+ * derivation is identical anyway, since these calls run at temperature 0.
+ *
+ * Deliberately left uncached: the scripts. Each runs in a fresh process, so
+ * `npm run recommend` always calls the model, which is what a command invoked by
+ * hand should do.
+ */
+export async function recommendationsFor(filter: CorpusFilter = {}): Promise<CachedRecommendations> {
+    const key = `${await corpusFingerprint()}::${JSON.stringify(filter)}`;
+
+    const hit = cache.get(key);
+    if (hit) return { run: hit, cached: true };
+
+    const run = await generateRecommendations(filter);
+
+    // Only successful runs land here. A quota or transport failure throws out of
+    // `generateRecommendations` before this line, so a failure is never cached
+    // and the retry button stays meaningful in exactly the case it matters.
+    cache.set(key, run);
+    if (cache.size > MAX_CACHE_ENTRIES) {
+        const oldest = cache.keys().next().value;
+        if (oldest !== undefined) cache.delete(oldest);
+    }
+
+    return { run, cached: false };
 }
