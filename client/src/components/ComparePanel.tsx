@@ -60,6 +60,16 @@ function Cadence({ platform }: { platform: ReportPlatform }) {
                     </tr>
                 </tbody>
             </table>
+            {/* The denominator, stated under the table it divides. Every figure
+                above is a rate over this window, and a narrowed window is the
+                one thing a reader cannot infer from the numbers themselves. */}
+            <p className="muted" style={{ fontSize: 11.5, marginTop: 6 }}>
+                {cadence.narrowedFromDays === null
+                    ? `Measured over ${cadence.windowDays} days.`
+                    : `Measured over the last ${cadence.windowDays} days, not ${cadence.narrowedFromDays} — ` +
+                      `${cadence.narrowedBy.join(", ")} ${cadence.narrowedBy.length === 1 ? "has" : "have"} ` +
+                      `no history before that. Consistency over so few weeks is weak evidence.`}
+            </p>
         </>
     );
 }

@@ -146,7 +146,7 @@ export interface Overview {
     unratedPosts: number;
     provenance: { livePosts: number; seededPosts: number; seededPct: number; seededAccounts: string[] };
     classification: { classified: number; unclassified: number; complete: boolean };
-    cadence: { principalPostsPerWeek: number; peerMedianPostsPerWeek: number | null; sentence: string } | null;
+    cadence: { principalPostsPerWeek: number | null; peerMedianPostsPerWeek: number | null; sentence: string } | null;
     platforms: Platform[];
 }
 
@@ -258,6 +258,9 @@ export interface ReportPlatform {
         principalConsistencyPct: number | null;
         peerConsistencyPct: number | null;
         principalLongestSilenceDays: number | null;
+        windowDays: number;
+        narrowedFromDays: number | null;
+        narrowedBy: string[];
         sentence: string;
     } | null;
     formatMixDivergences: { mediaType: string; principalSharePct: number; peerSharePct: number }[];

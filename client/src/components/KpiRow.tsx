@@ -77,13 +77,23 @@ export function KpiRow({ overview }: { overview: Overview }) {
             />
             <Kpi
                 label="Cadence"
-                value={overview.cadence === null ? "—" : `${overview.cadence.principalPostsPerWeek.toFixed(1)}/wk`}
+                value={
+                    overview.cadence?.principalPostsPerWeek == null
+                        ? "—"
+                        : `${overview.cadence.principalPostsPerWeek.toFixed(1)}/wk`
+                }
                 foot={
                     overview.cadence === null
                         ? "no principal in this filter"
-                        : overview.cadence.peerMedianPostsPerWeek === null
-                          ? "no peer benchmark"
-                          : `peers ${overview.cadence.peerMedianPostsPerWeek.toFixed(1)}/wk`
+                        : // A blank rate here is the truncation guard, not a missing
+                          // principal, and a tile that says nothing invites the reader
+                          // to assume the pipeline broke. The full explanation is the
+                          // sentence on the Compare panel.
+                          overview.cadence.principalPostsPerWeek === null
+                          ? "withheld — see Compare"
+                          : overview.cadence.peerMedianPostsPerWeek === null
+                            ? "no peer benchmark"
+                            : `peers ${overview.cadence.peerMedianPostsPerWeek.toFixed(1)}/wk`
                 }
             />
         </div>

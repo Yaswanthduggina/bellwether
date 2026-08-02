@@ -211,6 +211,16 @@ export interface ReportPlatformSection {
         principalConsistencyPct: number | null;
         peerConsistencyPct: number | null;
         principalLongestSilenceDays: number | null;
+        /**
+         * Days the figures above are computed over, and — when the default
+         * window was too wide for some account's history — what it was narrowed
+         * from and who forced it. A posts-per-week figure whose denominator is
+         * unstated is not a checkable claim, and the AI layer reads this
+         * document as evidence.
+         */
+        windowDays: number;
+        narrowedFromDays: number | null;
+        narrowedBy: string[];
         sentence: string;
     } | null;
     formatMixDivergences: { mediaType: string; principalSharePct: number; peerSharePct: number }[];
@@ -537,6 +547,18 @@ export async function buildReport(filter: CorpusFilter = {}): Promise<AnalyticsR
                               cadenceComparison.principal.longestSilenceDays === null
                                   ? null
                                   : Math.round(cadenceComparison.principal.longestSilenceDays),
+                          windowDays: Math.max(
+                              Math.round(
+                                  (cadenceComparison.window.to.getTime() - cadenceComparison.window.from.getTime()) /
+                                      86_400_000,
+                              ),
+                              1,
+                          ),
+                          narrowedFromDays:
+                              cadenceComparison.narrowed === null
+                                  ? null
+                                  : Math.round(cadenceComparison.narrowed.requestedDays),
+                          narrowedBy: cadenceComparison.narrowed?.accounts ?? [],
                           sentence: describeCadence(cadenceComparison),
                       },
             // Only divergences worth a sentence. A one-point difference in

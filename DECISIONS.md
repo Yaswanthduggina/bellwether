@@ -245,19 +245,43 @@ The per-peer evidence closes a smaller hole in the same wall: `2 of 3 peers agre
 
 **Chosen:** `compareCadence` checks whether each account's earliest post covers the window it is being divided by. If any account's does not, the platform's cadence figures — the comparison **and** the principal's own rate and consistency — are returned as `null` with a sentence explaining why.
 
-**Rejected:** publishing the figures with a caveat; giving each account its own denominator (the failure mode `cadence.ts` was written against — an account with two posts three days apart is not posting 4.67×/week); narrowing the window to the intersection of all accounts' histories.
+**Rejected:** publishing the figures with a caveat; giving each account its own denominator (the failure mode `cadence.ts` was written against — an account with two posts three days apart is not posting 4.67×/week).
+
+**Amended, Day 4 — the intersection window was rejected here and is now the first fallback.** See §2.8a. Withholding is still what happens when narrowing cannot produce an honest window; it is no longer the only thing that happens.
 
 **Why:** found the day X went live, and it is the sharpest example in the project of correct arithmetic over incomparable inputs. The X adapter caps results per account for cost reasons. The cap is on **count**, but the accounts post at very different rates, so 160 posts bought 15 days of the principal and 65 days of one peer — and `windowSpanning` takes the union, dividing all four by the same 65-day denominator.
 
 Every account came out at exactly **17.11 posts/week**. The dashboard reported `principalVsPeers = 1.00×` — *he posts exactly as often as his peers*. That is not a weak finding, it is a manufactured one: the number measures the result cap. Consistency was worse, reporting the principal as active in **30% of weeks** when he posts most days, because seven of the ten blocks predated anything that had been fetched.
 
-Withholding beats caveating here because the figure is not *approximately* right. `1.00×` is a specific, memorable, false claim, and a caveat under a number that precise does not survive being skimmed. The intersection window was rejected because it cannot be distinguished from the case it would break: an account genuinely silent early in the window looks identical to a truncated one in post rows alone, and narrowing the window would hide the most actionable finding cadence produces.
+Withholding beats caveating here because the figure is not *approximately* right. `1.00×` is a specific, memorable, false claim, and a caveat under a number that precise does not survive being skimmed.
 
 **Cost:**
 
-- **X reports no cadence at all** until `X_RESULTS_LIMIT` is raised on a paid plan. A whole panel is blank on one platform, and blank panels are the thing this project otherwise works hard to avoid — mitigated only by the sentence that replaces it.
 - **The check is a heuristic on post rows** (`MIN_WINDOW_COVERAGE = 0.9`), not a fact from ingestion. The truncation is *known* at fetch time — `rowsFetched === limit` — and plumbing that through `IngestionRun` to the analytics layer would let the two cases be told apart properly. Not done.
 - **It can fire on honest data**: an account that genuinely started posting a month into the window will suppress its platform's cadence. That is the conservative direction, but it is a real false positive.
+
+### 2.8a The withheld panel gets a second chance: narrow the window, don't blank the panel
+
+**Chosen:** when the comparison is not comparable over the derived window, `compareCadence` re-runs it over `windowCovered` — the latest first-post across accounts through to the end of the data — and publishes that, labelled. It falls back to withholding when the covered span is under `MIN_NARROWED_DAYS` (14) or when an account is silent through the start of it too. A window the *caller* named is never narrowed.
+
+**Rejected:** leaving §2.8 as the only behaviour; narrowing without a floor; narrowing silently.
+
+**Why:** §2.8 was right that `1.00×` had to go and wrong that nothing could replace it. The reasoning it rejected the intersection window on — *an account genuinely silent early looks identical to a truncated one* — is still true, but it argues against the wrong thing. Both cases have the same remedy: measure over the span where every account's history is complete, and say that is what you did. The union window is not more honest than the covered window; it is a denominator three of the four accounts never had data for.
+
+The practical case for it is that §2.8's cost line was accurate and expensive. A blank panel on the platform the reviewer is most likely to click reads as a broken pipeline, not as a refusal, and the sentence explaining it is the one thing a skimming reader will not read. On the roster this was found with, narrowing to 20 days recovers a real finding — the principal posts **2.19×** the peer median — where the union window manufactured `1.00×`.
+
+Three constraints keep it honest:
+
+- **A floor at two weekly blocks.** Below that, `consistency` reads 100% for anyone who posted at all, so narrowing would buy a posts-per-week figure by silently destroying the regularity figure next to it. Under 14 days the panel stays blank.
+- **The disclosure leads.** Both the sentence and the panel state the shortened window *before* any rate, name the accounts that forced it, and say consistency over few weeks is weak evidence. A denominator disclosed after the numbers has already been mis-read.
+- **Never on a window the caller asked for.** An explicit date range is a question about a period; answering a different period quietly would be a worse failure than the one this fixes.
+
+**Cost:**
+
+- **A genuine early silence stops showing up in the numbers.** An account dark for the first month of the window now moves the window instead of scoring a low rate. The prose says it has no history before the narrowed start; the *figures* no longer show it. This is the objection §2.8 raised, and it is not fully answered — only disclosed.
+- **Two accounts can now be compared over 15 days and called comparable.** They are, but a fortnight of cadence is thinner evidence than a quarter of it, and the only thing standing between a reader and that mistake is the sentence.
+- **The window is now data-dependent.** Re-ingesting changes the denominator, so cadence figures are not stable across runs in the way a fixed 90-day window would be.
+- **None of this is the fix.** The fix is a result cap large enough to cover the window — ~$0.60 on X — and the narrowing is what the product does while the cap is wrong. RUNBOOK §4.4.
 
 ### 2.9 One competitor is enough for a gap
 

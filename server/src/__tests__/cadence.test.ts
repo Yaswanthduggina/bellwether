@@ -340,3 +340,137 @@ describe("A COUNT-CAPPED CORPUS PRODUCES A MANUFACTURED CADENCE FINDING", () => 
         expect(comparison.peers.find((p) => p.personName === "Silent")!.postsPerWeek).toBe(0);
     });
 });
+
+describe("NARROWING TO THE WINDOW EVERY ACCOUNT ACTUALLY COVERS", () => {
+    // The other half of the count-cap story. Withholding the comparison is
+    // correct but it is not free: the panel goes blank on the one platform whose
+    // ingestion is capped, and a blank panel reads as a broken pipeline rather
+    // than as a refusal. Where every account's history is complete from some
+    // later date, there IS a shared denominator — it is just a shorter one, and
+    // measuring over it is honest in a way that dividing by the union is not.
+    //
+    // The fallback fires only when the caller left the window unspecified. A
+    // named window is a question about a period, and answering a different one
+    // quietly is worse than answering nothing.
+
+    /** Every day from `from` to day 28 inclusive. */
+    function daily(from: number): Date[] {
+        return Array.from({ length: 29 - from }, (_, i) => day(from + i));
+    }
+
+    /** Every other day from `from` to day 28. */
+    function alternate(from: number): Date[] {
+        const dates: Date[] = [];
+        for (let n = from; n <= 28; n += 2) dates.push(day(n));
+        return dates;
+    }
+
+    it("re-runs the comparison over the covered span instead of withholding it", () => {
+        // Principal capped to the last 20 days; peers reach back to day 0. The
+        // union window is 28 days and nobody can be compared over it.
+        const comparison = compareCadence([
+            corpus("Principal", "PRINCIPAL", daily(8)),
+            corpus("PeerA", "COMPETITOR", alternate(0)),
+            corpus("PeerB", "COMPETITOR", alternate(0)),
+        ])!;
+
+        expect(comparison.comparable).toBe(true);
+        expect(comparison.truncatedAccounts).toEqual([]);
+        expect(comparison.narrowed).not.toBeNull();
+        expect(comparison.narrowed!.accounts).toEqual(["Principal"]);
+        expect(Math.round(comparison.narrowed!.requestedDays)).toBe(28);
+        expect(Math.round(comparison.narrowed!.days)).toBe(20);
+        // The window starts where the principal's history does, not where the
+        // peers' does — that is the whole point of the narrowing.
+        expect(comparison.window.from.getTime()).toBe(day(8).getTime());
+
+        // And the finding it recovers is a real one: 21 posts in 20 days against
+        // peers posting on alternate days is roughly double, not the 1.00x the
+        // union window manufactures.
+        expect(comparison.principalVsPeers).toBeGreaterThan(1.8);
+        expect(comparison.principalVsPeers).toBeLessThan(2.2);
+    });
+
+    it("states the shortened denominator before quoting any rate", () => {
+        const sentence = describeCadence(
+            compareCadence([
+                corpus("Principal", "PRINCIPAL", daily(8)),
+                corpus("PeerA", "COMPETITOR", alternate(0)),
+                corpus("PeerB", "COMPETITOR", alternate(0)),
+            ])!,
+        );
+
+        // Leading, not trailing: a reader who meets the denominator after the
+        // numbers has already read them as covering the full period.
+        expect(sentence).toMatch(/^Measured over the last 20 days rather than 28/);
+        expect(sentence).toMatch(/Principal/);
+        // Consistency over three blocks is not evidence, and the sentence that
+        // quotes it has to say so.
+        expect(sentence).toMatch(/weak evidence/);
+    });
+
+    it("refuses to narrow below two weekly blocks", () => {
+        // An 8-day window would buy a posts-per-week figure at the price of a
+        // consistency figure that reads 100% for anyone who posted at all.
+        const comparison = compareCadence([
+            corpus("Principal", "PRINCIPAL", daily(20)),
+            corpus("PeerA", "COMPETITOR", alternate(0)),
+            corpus("PeerB", "COMPETITOR", alternate(0)),
+        ])!;
+
+        expect(comparison.comparable).toBe(false);
+        expect(comparison.narrowed).toBeNull();
+        expect(comparison.principalVsPeers).toBeNull();
+        expect(Math.round((comparison.window.to.getTime() - comparison.window.from.getTime()) / 86_400_000)).toBe(28);
+    });
+
+    it("does not narrow a window the caller named", () => {
+        const comparison = compareCadence(
+            [
+                corpus("Principal", "PRINCIPAL", daily(8)),
+                corpus("PeerA", "COMPETITOR", alternate(0)),
+                corpus("PeerB", "COMPETITOR", alternate(0)),
+            ],
+            WINDOW,
+        )!;
+
+        expect(comparison.comparable).toBe(false);
+        expect(comparison.narrowed).toBeNull();
+        expect(comparison.narrowingTried).toBe(false);
+        // ...and the sentence must not claim a fallback it never attempted.
+        expect(describeCadence(comparison)).not.toMatch(/Narrowing/);
+    });
+
+    it("keeps withholding when the shorter window is still not comparable", () => {
+        // A peer silent through the start of the covered span is a real finding
+        // about that peer, not a coverage artefact — and it means there is no
+        // shared denominator at any length. The result reverts to the window
+        // that was asked for, so the blanks are never paired with a window
+        // nobody was measured over.
+        const comparison = compareCadence([
+            corpus("Principal", "PRINCIPAL", daily(8)),
+            corpus("PeerA", "COMPETITOR", alternate(0)),
+            corpus("Quiet", "COMPETITOR", [day(0), day(26), day(27), day(28)]),
+        ])!;
+
+        expect(comparison.comparable).toBe(false);
+        expect(comparison.narrowed).toBeNull();
+        expect(comparison.narrowingTried).toBe(true);
+        expect(comparison.window.from.getTime()).toBe(day(0).getTime());
+        expect(describeCadence(comparison)).toMatch(/Narrowing to the span every account covers was tried/);
+    });
+
+    it("lets a silent account stay in the comparison rather than collapse the window", () => {
+        // An account with no posts has no history to be missing. Letting it set
+        // the window would hand the quietest account the denominator.
+        const comparison = compareCadence([
+            corpus("Principal", "PRINCIPAL", daily(8)),
+            corpus("PeerA", "COMPETITOR", alternate(0)),
+            corpus("Silent", "COMPETITOR", []),
+        ])!;
+
+        expect(comparison.comparable).toBe(true);
+        expect(Math.round(comparison.narrowed!.days)).toBe(20);
+        expect(comparison.peers.find((p) => p.personName === "Silent")!.postsPerWeek).toBe(0);
+    });
+});

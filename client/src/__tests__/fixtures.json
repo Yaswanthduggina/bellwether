@@ -89,6 +89,9 @@
      "principalConsistencyPct": 100,
      "peerConsistencyPct": 100,
      "principalLongestSilenceDays": 5,
+     "windowDays": 89,
+     "narrowedFromDays": null,
+     "narrowedBy": [],
      "sentence": "Shashi Tharoor posts 7.5×/week across 96 posts, 1.55× more often than the peer median of 4.9×/week. He posts in 100% of weeks against a peer median of 100%."
     },
     "formatMixDivergences": [
@@ -534,6 +537,9 @@
      "principalConsistencyPct": 100,
      "peerConsistencyPct": 92,
      "principalLongestSilenceDays": 5,
+     "windowDays": 89,
+     "narrowedFromDays": null,
+     "narrowedBy": [],
      "sentence": "Shashi Tharoor posts 7.5×/week across 96 posts, 1.55× more often than the peer median of 4.9×/week. He posts in 100% of weeks against a peer median of 92%."
     },
     "formatMixDivergences": [
@@ -976,6 +982,9 @@
      "principalConsistencyPct": 100,
      "peerConsistencyPct": 100,
      "principalLongestSilenceDays": 4,
+     "windowDays": 89,
+     "narrowedFromDays": null,
+     "narrowedBy": [],
      "sentence": "Shashi Tharoor posts 8.5×/week across 108 posts, 1.74× more often than the peer median of 4.9×/week. He posts in 100% of weeks against a peer median of 100%."
     },
     "formatMixDivergences": [
@@ -1365,6 +1374,9 @@
      "principalConsistencyPct": 69,
      "peerConsistencyPct": 92,
      "principalLongestSilenceDays": 8,
+     "windowDays": 89,
+     "narrowedFromDays": null,
+     "narrowedBy": [],
      "sentence": "Shashi Tharoor posts 2.9×/week across 37 posts, 1.09× more often than the peer median of 2.7×/week. He posts in 69% of weeks against a peer median of 92%. Longest silence: 8 days."
     },
     "formatMixDivergences": [

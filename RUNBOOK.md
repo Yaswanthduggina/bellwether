@@ -43,17 +43,17 @@ All of these live in `server/.env` (copy `server/.env.example`). `.env` is gitig
 | `APIFY_API_TOKEN` | Instagram **and** X ingestion | Both platforms fail their ingest runs. Existing rows unaffected. |
 | `GEMINI_API_KEY` | Theme classification, recommendations | The AI routes return **503 with an explanation**, not a crash. Every analytics route, every chart, every comparison still works. |
 
-Optional tuning knobs — **these are not in `.env.example`**, so they are easy to miss:
+Optional tuning knobs. `X_RESULTS_LIMIT` and `X_MAX_CHARGE_USD` are in `.env.example`; the rest are not, so they are easy to miss:
 
 | Variable | Default | What it does |
 |---|---|---|
 | `APIFY_RESULTS_LIMIT` | `200` | Instagram posts fetched per account per run. |
-| `X_RESULTS_LIMIT` | `150` | X posts per account per run. Low on purpose — the actor bills per tweet. |
+| `X_RESULTS_LIMIT` | `150` | X posts per account per run. The actor bills per tweet, so this is the knob that decides what a refresh costs — **but 150 is too low to cover a 90-day window and distorts cadence. Set it to `1500`** (~$0.60 for all four accounts). §4.4. |
 | `X_ACTOR` | `kaitoeasyapi/twitter-x-data-tweet-scraper-pay-per-result-cheapest` | Swap the X scraper actor. |
 | `X_MAX_CHARGE_USD` | `0.5` | Hard spend guard on an X run. |
 | `PORT` | `4000` | Server port. |
 
-⚠️ **The result caps return NEWEST FIRST.** Hitting a cap drops the *oldest* posts in the window, not a random sample. On X this is why `compareCadence` withholds cross-account cadence figures — see §4.4.
+⚠️ **The result caps return NEWEST FIRST.** Hitting a cap drops the *oldest* posts in the window, not a random sample. On X this is why `compareCadence` narrows its window, or withholds cross-account cadence figures outright — see §4.4.
 
 ### Getting keys
 
@@ -204,7 +204,21 @@ Ingestion is synchronous and per-account isolated — one account's quota failur
 - **Instagram / X** — Apify, billed per result, against a $5/month free plan. This is the real budget.
 - `X_RESULTS_LIMIT` caps posts per **account**, and the accounts post at wildly different rates. At 160 posts, that bought 15 days of the principal's history and 65 days of a peer's.
 
-That asymmetry produced a false finding once and the guard against it is now in the code: all four X accounts hit the same cap, came out at exactly 17.11 posts/week, and the dashboard reported "the principal posts exactly as often as his peers" — a number measuring the result cap rather than the accounts. `compareCadence` now detects that an account's history does not cover the window and **withholds the cadence comparison for that platform** with a sentence saying why. Instagram and YouTube report cadence normally. Raising `X_RESULTS_LIMIT` on a paid plan restores it.
+That asymmetry produced a false finding once and the guard against it is now in the code: all four X accounts hit the same cap, came out at exactly 17.11 posts/week, and the dashboard reported "the principal posts exactly as often as his peers" — a number measuring the result cap rather than the accounts. `compareCadence` detects that an account's history does not cover the window and refuses to divide by it. What it does next depends on the data:
+
+1. **It re-measures over the window every account does cover** — `windowCovered`, the latest first-post across accounts through to the end. That span is complete for everyone, so one denominator is a denominator in fact and not only in form. The panel states the shortened window and warns that consistency over few weeks is weak evidence.
+2. **It withholds the whole comparison** when that span is under 14 days (two weekly blocks — below which consistency reads 100% for anyone who posted at all) or when an account is silent through the start of it too. The sentence says which.
+
+**The cap is the real problem, and it is cheap to fix.** The earlier claim that this needs a paid plan was wrong. The actor bills $0.00025/tweet, so covering the full 90 days for all four X accounts is **~2,400 tweets ≈ $0.60** — inside the $5/month free credit, and inside the `X_MAX_CHARGE_USD` per-run guard at $0.24 for the busiest account:
+
+```bash
+# in server/.env
+X_RESULTS_LIMIT=1500        # 150 is the code default and is not enough for a 90-day window
+
+npm run ingest -- --platform=X
+```
+
+At 1500 the principal's history covers 94% of the 90-day window and X reports cadence over the full window like every other platform. **Watch this number when the roster changes:** the ceiling that matters is the busiest account's daily rate × 90, so a more prolific principal needs a higher cap, and the panel will tell you it narrowed the window before it tells you anything is wrong.
 
 Engagement-rate analysis on X is unaffected — rate is per post, so a shorter history is a smaller sample, not a distorted one.
 
@@ -420,6 +434,7 @@ Three things worth saying out loud while it runs:
 | `FACEBOOK has no live adapter yet` | Working as designed | Facebook is declared, not ingested. Import a CSV/JSON export instead |
 | `Account is flagged isSynthetic` | Leftover from the seeded era | `npm run ingest -- --roster` — purges its generated posts and re-points it at the live adapter |
 | `PRINCIPAL_EXISTS` on create | Two principals on one platform | Delete the existing principal first, or add the new one as `COMPETITOR` |
-| Cadence panel says "comparison withheld" | An account's history does not cover the window | Expected on X at the default result cap. §4.4 |
+| Cadence panel is all dashes, "comparison withheld" | An account's history does not cover the window, and the covered span is under 14 days | Raise `X_RESULTS_LIMIT` to 1500 and re-ingest X (~$0.60). §4.4 |
+| Cadence says "Measured over the last N days rather than 90" | Working as designed — the window was narrowed to the span every account covers | Same fix as above. The figures shown are honest; they just cover less history. §4.4 |
 | Accounts I added in the UI vanished | `npm run ingest -- --roster` pruned them | Use plain `npm run ingest`, or add them to `config/accounts.ts` |
 | Ingest reports 0 posts for an account | Genuinely nothing in the window, or a wrong handle | `npm run ingest -- --check-handles` and read the resolved name |

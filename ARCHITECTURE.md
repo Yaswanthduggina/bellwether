@@ -71,8 +71,9 @@ server/src/
 │   ├── gaps.ts             #   formats/slots/themes competitors own — plus the
 │   │                       #   near misses, i.e. what was rejected and by which gate
 │   ├── cadence.ts          #   posting frequency vs performance   (SHOULD)
-│   │                       #   withholds its figures when a history does not span
-│   │                       #   the window — see DECISIONS §2.8
+│   │                       #   when a history does not span the window: narrows to
+│   │                       #   the span every account covers, or withholds the
+│   │                       #   figures — see DECISIONS §2.8 and §2.8a
 │   └── buildReport.ts      #   assembles the ONE analytics JSON the AI layer consumes
 │
 ├── ai/

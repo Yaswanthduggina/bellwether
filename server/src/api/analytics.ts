@@ -104,7 +104,12 @@ analyticsRouter.get(
                 cadence === null || cadence.principal === null
                     ? null
                     : {
-                          principalPostsPerWeek: cadence.principal.postsPerWeek,
+                          // Withheld on the same condition as the platform
+                          // sections in buildReport. This KPI is the same
+                          // arithmetic over the same posts, and a figure the
+                          // comparison refuses to publish must not reappear on
+                          // the overview strip with the caveat stripped off.
+                          principalPostsPerWeek: cadence.comparable ? cadence.principal.postsPerWeek : null,
                           peerMedianPostsPerWeek: cadence.peerBenchmark,
                           sentence: describeCadence(cadence),
                       },

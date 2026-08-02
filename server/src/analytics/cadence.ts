@@ -124,6 +124,17 @@ export interface CadenceStats {
 const MIN_WINDOW_COVERAGE = 0.9;
 
 /**
+ * The shortest window a narrowed comparison may be published over, in days.
+ *
+ * Two weekly blocks. Below this, `consistency` — share of 7-day blocks with a
+ * post — has one or two blocks to work with and reads 100% for anyone who
+ * posted at all, which is not a measurement. Narrowing that far buys a
+ * posts-per-week figure at the cost of a meaningless regularity figure, so it is
+ * refused and the comparison stays withheld.
+ */
+const MIN_NARROWED_DAYS = 14;
+
+/**
  * The tightest window containing every post across every corpus.
  *
  * Used when the caller has not filtered to an explicit date range. It is derived
@@ -145,6 +156,50 @@ export function windowSpanning<T extends CadencePost>(corpora: readonly CadenceC
 
     if (earliest === null || latest === null) return null;
     return { from: new Date(earliest), to: new Date(latest) };
+}
+
+/**
+ * The longest window EVERY account with posts actually has history for.
+ *
+ * The union window above is the honest default, but it is only usable when every
+ * account's history reaches back to its start. A per-account result cap at
+ * ingestion breaks that: the cap is on COUNT and it returns newest first, so a
+ * prolific account's 160 rows buy a fortnight while a quiet one's buy two
+ * months. `windowSpanning` then hands all of them the quiet account's
+ * denominator.
+ *
+ * This is the fallback. `from` is the LATEST first-post across accounts — the
+ * point from which everyone's history is complete — and `to` stays the union's
+ * end, because a count cap truncates the beginning of a corpus and never the
+ * end. Inside this window no account is missing posts it actually made, so one
+ * denominator is a denominator in fact and not only in form.
+ *
+ * Accounts with no posts are ignored here. A silent account is not truncated: it
+ * has nothing to be missing, and letting it collapse the window would let the
+ * quietest account decide what everyone else is measured over.
+ *
+ * WHAT IS TRADED AWAY. The window gets shorter — sometimes much shorter — and a
+ * short window is a worse window: fewer weekly blocks for `consistency`, less
+ * chance of catching a long silence. `MIN_NARROWED_DAYS` is the floor below
+ * which that trade stops being worth making.
+ */
+export function windowCovered<T extends CadencePost>(corpora: readonly CadenceCorpus<T>[]): CadenceWindow | null {
+    let latestFirst: number | null = null;
+    let latest: number | null = null;
+
+    for (const corpus of corpora) {
+        let first: number | null = null;
+        for (const post of corpus.posts) {
+            const time = post.postedAt.getTime();
+            if (first === null || time < first) first = time;
+            if (latest === null || time > latest) latest = time;
+        }
+        if (first === null) continue;
+        if (latestFirst === null || first > latestFirst) latestFirst = first;
+    }
+
+    if (latestFirst === null || latest === null || latest <= latestFirst) return null;
+    return { from: new Date(latestFirst), to: new Date(latest) };
 }
 
 /**
@@ -275,6 +330,36 @@ export interface CadenceComparison {
     comparable: boolean;
     /** Accounts whose history does not cover the window. Empty when comparable. */
     truncatedAccounts: string[];
+    /**
+     * Set when the default window was too wide for some account's history and
+     * the comparison was re-run over the span every account does cover.
+     *
+     * Null in the ordinary case, and null again when narrowing was tried and did
+     * not help — a comparison that is still not comparable is withheld over the
+     * ORIGINAL window rather than a narrowed one, so the blanks are never
+     * accompanied by a window nobody was measured over.
+     *
+     * `days` is what the figures above are computed over; `requestedDays` is what
+     * they would have been computed over. Both are reported because the gap
+     * between them is the size of the concession, and a reader who is told the
+     * window moved but not how far cannot judge it.
+     */
+    narrowed: {
+        requested: CadenceWindow;
+        requestedDays: number;
+        days: number;
+        /** The accounts whose short history forced the narrowing. */
+        accounts: string[];
+    } | null;
+    /**
+     * Whether the narrowed window above was even considered.
+     *
+     * False when the caller named an explicit window — that is a question about
+     * a period, and it is not this module's place to answer a different one. The
+     * only consumer is the withheld sentence, which would otherwise tell a
+     * reader that a fallback was tried when it was not.
+     */
+    narrowingTried: boolean;
 }
 
 /**
@@ -296,6 +381,48 @@ export function compareCadence<T extends CadencePost>(
     const resolved = window ?? windowSpanning(corpora);
     if (resolved === null) return null;
 
+    // An explicit window is a question about that period, and silently answering
+    // a different one would be worse than answering nothing — so the fallback
+    // below is offered only when the caller left the window to us.
+    const mayNarrow = window === undefined;
+
+    const overRequested = compareOverWindow(corpora, resolved, null, mayNarrow);
+    if (overRequested === null || overRequested.comparable || !mayNarrow) return overRequested;
+
+    // Not comparable over the requested window. Before withholding everything,
+    // try the window every account does cover — see `windowCovered`.
+    const covered = windowCovered(corpora);
+    if (covered === null) return overRequested;
+
+    const days = (covered.to.getTime() - covered.from.getTime()) / MS_PER_DAY;
+    if (days < MIN_NARROWED_DAYS) return overRequested;
+
+    const narrowed = compareOverWindow(
+        corpora,
+        covered,
+        {
+            requested: resolved,
+            requestedDays: (resolved.to.getTime() - resolved.from.getTime()) / MS_PER_DAY,
+            days,
+            accounts: overRequested.truncatedAccounts,
+        },
+        true,
+    );
+
+    // Narrowing does not always rescue the comparison: an account can be silent
+    // through the start of the covered window too, and that is a real finding
+    // rather than a coverage artefact. When it does not, the original withheld
+    // result stands — over the window that was actually asked for.
+    return narrowed !== null && narrowed.comparable ? narrowed : overRequested;
+}
+
+/** One pass of the comparison over a fixed window. The window choice is above. */
+function compareOverWindow<T extends CadencePost>(
+    corpora: readonly CadenceCorpus<T>[],
+    resolved: CadenceWindow,
+    narrowed: CadenceComparison["narrowed"],
+    narrowingTried: boolean,
+): CadenceComparison | null {
     const stats = corpora.map((corpus) => analyseCadence(corpus, resolved));
 
     const principal = stats.find((s) => s.role === "PRINCIPAL") ?? null;
@@ -329,6 +456,8 @@ export function compareCadence<T extends CadencePost>(
         peerConsistency: comparable ? medianOf(peers.map((p) => p.consistency)) : null,
         comparable,
         truncatedAccounts,
+        narrowed,
+        narrowingTried,
     };
 }
 
@@ -357,11 +486,31 @@ export function describeCadence(comparison: CadenceComparison): string {
             `measured over a shorter history than the rest. Dividing every account by the same window would ` +
             `report a posting rate that measures the gap in coverage rather than the account. The usual cause ` +
             `is a per-account result cap at ingestion (see X_RESULTS_LIMIT); the other is an account that was ` +
-            `genuinely silent, and post rows alone cannot tell the two apart.`
+            `genuinely silent, and post rows alone cannot tell the two apart.` +
+            (comparison.narrowingTried
+                ? ` Narrowing to the span every account covers was tried and did not rescue it — that span is ` +
+                  `either under two weeks or still has an account silent through its start.`
+                : "")
         );
     }
+    // Leads rather than trails. Every figure below is a rate, and a reader who
+    // learns the denominator afterwards has already read the numbers as if they
+    // covered the full period.
+    const narrowedNote =
+        comparison.narrowed === null
+            ? ""
+            : `Measured over the last ${comparison.narrowed.days.toFixed(0)} days rather than ` +
+              `${comparison.narrowed.requestedDays.toFixed(0)}: ${comparison.narrowed.accounts.join(", ")} ` +
+              `${comparison.narrowed.accounts.length === 1 ? "has" : "have"} no history before that, so the longer ` +
+              `window would have measured the gap in coverage rather than the accounts. ` +
+              `A ${comparison.narrowed.days.toFixed(0)}-day window is few enough weeks that the consistency ` +
+              `figure is weak evidence. `;
+
     if (peerBenchmark === null || principalVsPeers === null) {
-        return `${principal.personName} posts ${principal.postsPerWeek.toFixed(1)}×/week. No peers to compare against.`;
+        return (
+            narrowedNote +
+            `${principal.personName} posts ${principal.postsPerWeek.toFixed(1)}×/week. No peers to compare against.`
+        );
     }
 
     const direction = principalVsPeers >= 1 ? "more often than" : "less often than";
@@ -379,6 +528,7 @@ export function describeCadence(comparison: CadenceComparison): string {
             : ` Longest silence: ${principal.longestSilenceDays.toFixed(0)} days.`;
 
     return (
+        narrowedNote +
         `${principal.personName} posts ${principal.postsPerWeek.toFixed(1)}×/week across ${principal.posts} posts, ` +
         `${multiple.toFixed(2)}× ${direction} the peer median of ${peerBenchmark.toFixed(1)}×/week.` +
         consistencyNote +
