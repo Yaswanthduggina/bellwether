@@ -15,6 +15,12 @@
 //     list does not rank, so the counts are just facts about a post, and hiding
 //     them from someone who wants to open the post is pointless.
 //
+// A count column the platform never fills is dropped rather than printed as a
+// column of em dashes. Instagram and YouTube publish no share count at all, and
+// a full column of dashes there says "nothing was shared" to anyone reading at
+// a glance — the same absent-vs-zero confusion the em dash exists to prevent,
+// just moved up a level. The reason is stated under the table instead.
+//
 // The rate column still carries its basis, because the same number means
 // different things over views and over followers, and this table can legitimately
 // contain both at once — an Instagram reel is rated on views and the carousel
@@ -34,11 +40,21 @@ const UNRATED_REASON: Record<string, { short: string; long: string }> = {
     },
 };
 
+/**
+ * Formats that carry a view count wherever they appear. Mirrors
+ * `VIEW_BEARING_FORMATS` in server/src/analytics/engagement.ts — an Instagram
+ * reel reports plays, a carousel on the same account never will, and those two
+ * blanks mean different things.
+ */
+const VIEW_BEARING_FORMATS = new Set(["REEL_SHORT_VIDEO", "LONG_FORM_VIDEO", "LIVE"]);
+
+const ABSENT_DEFAULT = "Not reported by the platform. Absent, not zero.";
+
 /** Raw counts, right-aligned. An em dash means absent, which is not zero. */
-function Count({ value }: { value: number | null }) {
+function Count({ value, absentTitle }: { value: number | null; absentTitle?: string }) {
     if (value === null) {
         return (
-            <td className="n muted" title="Not reported by the platform. Absent, not zero.">
+            <td className="n muted" title={absentTitle ?? ABSENT_DEFAULT}>
                 —
             </td>
         );
@@ -46,7 +62,7 @@ function Count({ value }: { value: number | null }) {
     return <td className="n">{value.toLocaleString()}</td>;
 }
 
-function Row({ post, timezone }: { post: RecentPost; timezone: string }) {
+function Row({ post, timezone, showShares }: { post: RecentPost; timezone: string; showShares: boolean }) {
     const reason = post.unratedReason === null ? null : UNRATED_REASON[post.unratedReason];
 
     return (
@@ -83,8 +99,15 @@ function Row({ post, timezone }: { post: RecentPost; timezone: string }) {
             </td>
             <Count value={post.likes} />
             <Count value={post.comments} />
-            <Count value={post.shares} />
-            <Count value={post.views} />
+            {showShares && <Count value={post.shares} />}
+            <Count
+                value={post.views}
+                absentTitle={
+                    VIEW_BEARING_FORMATS.has(post.mediaType)
+                        ? ABSENT_DEFAULT
+                        : `${humanise(post.mediaType)} posts do not carry a view count on this platform — there is nothing to report, rather than something withheld.`
+                }
+            />
             <td className="n">
                 {post.ratePct === null ? (
                     <span className="muted" style={{ fontSize: 12 }} title={reason?.long}>
@@ -127,6 +150,19 @@ export function RecentPosts({
         return <p className="muted">No posts on this platform under the current filter.</p>;
     }
 
+    // Instagram and YouTube expose no share count on public data at all — see the
+    // `shares: null` in apifyAdapter.ts and youtubeAdapter.ts. On those platforms
+    // the column was ten em dashes wide, which reads as "nobody shared any of
+    // this" rather than "this number does not exist here". Dropped entirely, and
+    // explained below, so the absence is a stated fact rather than an empty
+    // column the reader has to interpret.
+    //
+    // Driven off the data rather than a platform allowlist: X reports reposts and
+    // keeps its column, and a CSV import that DOES carry shares for Instagram
+    // (fileAdapter.ts maps `shares`/`reposts`) gets it back without a code change.
+    const showShares = posts.some((post) => post.shares !== null);
+    const platform = posts[0]!.platform;
+
     return (
         <div>
             <div className="table-scroll">
@@ -137,7 +173,7 @@ export function RecentPosts({
                             <th>Format</th>
                             <th className="n">Likes</th>
                             <th className="n">Comments</th>
-                            <th className="n">Shares</th>
+                            {showShares && <th className="n">Shares</th>}
                             <th className="n">Views</th>
                             <th className="n" title="Weighted interactions ÷ views (v) or followers (f).">
                                 Rate
@@ -147,7 +183,7 @@ export function RecentPosts({
                     </thead>
                     <tbody>
                         {posts.map((post) => (
-                            <Row key={post.id} post={post} timezone={timezone} />
+                            <Row key={post.id} post={post} timezone={timezone} showShares={showShares} />
                         ))}
                     </tbody>
                 </table>
@@ -159,6 +195,13 @@ export function RecentPosts({
                 other post list here this one is not ranked, so raw counts are shown; a rate of "no metrics" means the
                 platform withheld them, not that the post earned nothing.
             </p>
+
+            {!showShares && (
+                <p className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>
+                    No share column: {platform} publishes no share count on public data, so there is no figure
+                    to show for any post here. Shares still count toward the rate wherever a platform does report them.
+                </p>
+            )}
         </div>
     );
 }

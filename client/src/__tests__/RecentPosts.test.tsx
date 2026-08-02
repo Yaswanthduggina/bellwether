@@ -102,11 +102,46 @@ describe("RecentPosts — posts with no computable rate", () => {
     });
 
     it("distinguishes an absent count from a zero one", () => {
-        renderList([{ ...posts[0]!, likes: 0, shares: null }]);
+        // A reel, so the views column is one the platform does fill — the em dash
+        // means withheld here, which is the case this asserts.
+        const reel = posts.find((p) => p.mediaType === "REEL_SHORT_VIDEO")!;
+        renderList([{ ...reel, likes: 0, views: null }]);
 
         const row = bodyRows()[0] as HTMLElement;
         expect(within(row).getByText("0")).toBeInTheDocument();
         expect(within(row).getAllByTitle(/Absent, not zero/).length).toBeGreaterThan(0);
+    });
+
+    it("drops the share column on a platform that never reports one", () => {
+        // Instagram publishes no share count, so every row would be an em dash —
+        // which reads as "none of this was shared" rather than "this figure does
+        // not exist here".
+        expect(posts.every((p) => p.shares === null)).toBe(true);
+
+        renderList();
+
+        expect(screen.queryByRole("columnheader", { name: "Shares" })).toBeNull();
+        expect(screen.getByText(/No share column/)).toBeInTheDocument();
+    });
+
+    it("keeps the share column wherever the platform does report shares", () => {
+        // X reports reposts. Data-driven rather than a platform allowlist, so an
+        // imported CSV carrying shares keeps its column too.
+        renderList([{ ...posts[0]!, shares: 4231 }, ...posts.slice(1)]);
+
+        expect(screen.getByRole("columnheader", { name: "Shares" })).toBeInTheDocument();
+        expect(screen.getByText("4,231")).toBeInTheDocument();
+        expect(screen.queryByText(/No share column/)).toBeNull();
+    });
+
+    it("separates a format with no view count from a withheld one", () => {
+        // A carousel never carries plays; a reel with no views was withheld. Both
+        // render an em dash, so the distinction lives in the tooltip.
+        const carousel = posts.find((p) => p.mediaType === "CAROUSEL")!;
+        expect(carousel.views).toBeNull();
+
+        renderList([carousel]);
+        expect(screen.getByTitle(/do not carry a view count/)).toBeInTheDocument();
     });
 
     it("explains an empty list rather than rendering an empty table", () => {
