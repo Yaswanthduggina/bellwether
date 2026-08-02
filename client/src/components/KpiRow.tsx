@@ -7,6 +7,13 @@
 // denominator, which is fewer than the posts ingested. A KPI row that shows 940
 // posts beside an engagement rate computed over 512 of them is the quiet
 // version of a made-up number.
+//
+// Cadence used to be the sixth tile and is now the panel below this row. A tile
+// holds ONE number, and there is no single posts-per-week figure to hold: the
+// principal posts on three platforms at three different rates, over three
+// different windows. Collapsing that into one tile is what produced the figure
+// documented above `cadenceMatrix` — a YouTube rate divided by an Instagram
+// median. The shape of the answer is a table, so it gets one.
 
 import type { Overview } from "../api/client";
 import { SeededBadge } from "./ui";
@@ -73,27 +80,6 @@ export function KpiRow({ overview }: { overview: Overview }) {
                     classification.complete
                         ? "every post has a theme"
                         : `${classification.unclassified.toLocaleString()} still unclassified`
-                }
-            />
-            <Kpi
-                label="Cadence"
-                value={
-                    overview.cadence?.principalPostsPerWeek == null
-                        ? "—"
-                        : `${overview.cadence.principalPostsPerWeek.toFixed(1)}/wk`
-                }
-                foot={
-                    overview.cadence === null
-                        ? "no principal in this filter"
-                        : // A blank rate here is the truncation guard, not a missing
-                          // principal, and a tile that says nothing invites the reader
-                          // to assume the pipeline broke. The full explanation is the
-                          // sentence on the Compare panel.
-                          overview.cadence.principalPostsPerWeek === null
-                          ? "withheld — see Compare"
-                          : overview.cadence.peerMedianPostsPerWeek === null
-                            ? "no peer benchmark"
-                            : `peers ${overview.cadence.peerMedianPostsPerWeek.toFixed(1)}/wk`
                 }
             />
         </div>

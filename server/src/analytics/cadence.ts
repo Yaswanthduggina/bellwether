@@ -461,6 +461,150 @@ function compareOverWindow<T extends CadencePost>(
     };
 }
 
+// ── The matrix: every account, every platform ────────────────────────────
+//
+// One row per person, one column per platform, and — the entire point — ONE
+// COMPARISON PER COLUMN, each over its own window.
+//
+// THE FAILURE THIS REPLACES. The overview KPI used to pass every corpus into a
+// single `compareCadence` call and print the result as one number. That looks
+// like it answers "how often does the principal post" and does not.
+// `compareOverWindow` takes the FIRST principal row it finds (`stats.find`), so
+// a principal tracked on three platforms contributed one of them and the other
+// two vanished silently. The peer median was then taken across every platform
+// at once, so on the roster this was found with, a YouTube numerator (839 posts,
+// 64.4/wk) was divided by a median that landed on a peer's INSTAGRAM row
+// (14.1/wk) and the strip reported "4.56× more often than peers". Every step of
+// that arithmetic is correct and the claim is meaningless.
+//
+// Per platform, therefore, exactly as `buildReport` already does it. Two
+// consequences worth stating rather than hiding:
+//
+//   - COLUMNS ARE NOT STRICTLY COMMENSURABLE. Each is measured over its own
+//     window — the platforms are ingested on different days, so their spans
+//     differ by a day or two — and more importantly a tweet and a 20-minute
+//     upload are not the same unit of work. The window is reported per column
+//     so a reader can see the first part; the second part is judgement and the
+//     UI says so.
+//   - A WITHHELD COLUMN IS WITHHELD WHOLE. If one account's history does not
+//     cover a platform's window, every cell in that column is null, not just
+//     the cross-account figures. They are all divided by the same window, so
+//     they are all wrong in the same way — the rule `buildReport` applies to
+//     the principal's own rate, applied to the rest of the column.
+
+export interface PlatformCadenceCorpus<T extends CadencePost> extends CadenceCorpus<T> {
+    platform: string;
+}
+
+export interface CadenceCell {
+    handle: string;
+    /** Posts inside this platform's window. A fact about the account either way. */
+    posts: number;
+    /** Null when this column was withheld — see `CadenceMatrixWindow.comparable`. */
+    postsPerWeek: number | null;
+    consistencyPct: number | null;
+    isSynthetic: boolean;
+}
+
+/** The denominator behind one column, stated rather than assumed. */
+export interface CadenceMatrixWindow {
+    from: Date;
+    to: Date;
+    days: number;
+    comparable: boolean;
+    truncatedAccounts: string[];
+    narrowedFromDays: number | null;
+    narrowedBy: string[];
+}
+
+export interface CadenceMatrixRow {
+    personName: string;
+    role: AccountRole;
+    /** Keyed by platform. Absent where the person is not tracked on that one. */
+    cells: Record<string, CadenceCell>;
+}
+
+export interface CadenceMatrix {
+    /** Columns, in order. A platform with no posts at all is not a column. */
+    platforms: string[];
+    rows: CadenceMatrixRow[];
+    windows: Record<string, CadenceMatrixWindow>;
+}
+
+/**
+ * Posts-per-week for every tracked account, grouped person × platform.
+ *
+ * No sample-size gate and no basis, for the reasons at the top of this file:
+ * cadence measures behaviour, and an account that posted twice has told us its
+ * posting rate exactly rather than given us a thin sample of it.
+ */
+export function cadenceMatrix<T extends CadencePost>(
+    corpora: readonly PlatformCadenceCorpus<T>[],
+): CadenceMatrix {
+    const platforms = [...new Set(corpora.map((c) => c.platform))].sort();
+
+    const columns: string[] = [];
+    const windows: Record<string, CadenceMatrixWindow> = {};
+    const statsByAccount = new Map<string, CadenceStats>();
+
+    for (const platform of platforms) {
+        const onPlatform = corpora.filter((c) => c.platform === platform);
+        const comparison = compareCadence(onPlatform);
+
+        // Nothing posted anywhere on this platform, so there is no window to
+        // divide by. Dropped rather than rendered as a column of dashes —
+        // `buildReport` skips such a platform for the same reason.
+        if (comparison === null) continue;
+
+        columns.push(platform);
+        windows[platform] = {
+            from: comparison.window.from,
+            to: comparison.window.to,
+            days: (comparison.window.to.getTime() - comparison.window.from.getTime()) / MS_PER_DAY,
+            comparable: comparison.comparable,
+            truncatedAccounts: comparison.truncatedAccounts,
+            narrowedFromDays: comparison.narrowed?.requestedDays ?? null,
+            narrowedBy: comparison.narrowed?.accounts ?? [],
+        };
+
+        // `principal` and `peers` between them are every account on the
+        // platform, already measured over the window resolved above.
+        const stats = comparison.principal === null ? comparison.peers : [comparison.principal, ...comparison.peers];
+        for (const entry of stats) statsByAccount.set(entry.accountId, entry);
+    }
+
+    // Principal first — the row the reader came for — then peers by name, so the
+    // order cannot shift between two identical requests.
+    const people = [...new Map(corpora.map((c) => [c.personName, c])).values()].sort((a, b) =>
+        a.role === b.role ? a.personName.localeCompare(b.personName) : a.role === "PRINCIPAL" ? -1 : 1,
+    );
+
+    const rows = people.map((person) => {
+        const cells: Record<string, CadenceCell> = {};
+
+        for (const platform of columns) {
+            const corpus = corpora.find((c) => c.personName === person.personName && c.platform === platform);
+            if (corpus === undefined) continue;
+
+            const entry = statsByAccount.get(corpus.accountId);
+            if (entry === undefined) continue;
+
+            const withheld = !windows[platform]!.comparable;
+            cells[platform] = {
+                handle: corpus.handle,
+                posts: entry.posts,
+                postsPerWeek: withheld ? null : entry.postsPerWeek,
+                consistencyPct: withheld ? null : Math.round(entry.consistency * 100),
+                isSynthetic: corpus.isSynthetic,
+            };
+        }
+
+        return { personName: person.personName, role: person.role, cells };
+    });
+
+    return { platforms: columns, rows, windows };
+}
+
 /**
  * One sentence for a comms manager.
  *

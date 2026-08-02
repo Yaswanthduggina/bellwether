@@ -1,12 +1,16 @@
 // The briefing. Recommendations first, then the evidence for them.
 //
-// THREE REQUESTS, NOT NINE. `GET /api/analytics/report` is the same document the
+// FOUR REQUESTS, NOT NINE. `GET /api/analytics/report` is the same document the
 // recommendation model is given, and it already carries formats, comparison,
 // cadence, gaps, over-investment and top posts for every platform. Rendering the
 // dashboard from it means the reviewer is looking at exactly what the model
 // looked at — the grounding claim is only checkable if the evidence is visible.
 // The heatmap needs the full 7×24 grid, which the report deliberately does not
-// carry, so timing is the second request. Recommendations are the third.
+// carry, so timing is the second request. Recommendations are the third. The
+// cadence matrix is the fourth, and it is a separate request for the same reason
+// it is a separate panel: it is the one figure on this page that reads across
+// every platform at once, so it does not fit inside a document organised by
+// platform section.
 //
 // PLATFORMS ARE TABS, NOT STACKED SECTIONS. Engagement rates on different
 // platforms have different denominators — views on YouTube and X, followers on
@@ -14,9 +18,15 @@
 // time" the default way to read the page, where four stacked sections would
 // invite exactly the cross-platform comparison the analytics layer refuses to
 // compute.
+//
+// The cadence panel is the deliberate exception, and it is safe to be one: posts
+// per week carries no engagement basis, so a column per platform is a grid of
+// comparable-within-column facts rather than a blend. It still says which
+// direction may be read and which may not.
 
 import { useMemo, useState } from "react";
 import { api, type Filter, type Platform, type ReportBasis } from "../api/client";
+import { CadenceTable } from "../components/CadenceTable";
 import { ComparePanel } from "../components/ComparePanel";
 import { Filters } from "../components/Filters";
 import { FormatChart } from "../components/FormatChart";
@@ -42,6 +52,7 @@ export function Dashboard() {
 
     const report = useAsync(() => api.report(filter), [key]);
     const overview = useAsync(() => api.overview(filter), [key]);
+    const cadence = useAsync(() => api.cadence(filter), [key]);
     const timing = useAsync(() => api.timing(filter), [key]);
     const recent = useAsync(() => api.recentPosts(filter, RECENT_POST_COUNT), [key]);
     const recommendations = useAsync(() => api.recommendations(filter), [key]);
@@ -109,6 +120,22 @@ export function Dashboard() {
                     <KpiRow overview={overview.data} />
                 </div>
             )}
+
+            {/* Above the platform tabs on purpose. Every panel below is scoped to
+                one platform; this is the only one that reads across all of them
+                at once, so it belongs where a tab does not apply to it. */}
+            <Panel
+                title="Cadence"
+                sub="How often each account posts, per platform. Volume only — the regularity half, and the comparison against the peer median, are on the Compare panel."
+            >
+                {cadence.loading || cadence.data === null ? (
+                    <Loading lines={4} />
+                ) : cadence.error ? (
+                    <Notice kind="warn">Could not load cadence. {cadence.error.message}</Notice>
+                ) : (
+                    <CadenceTable matrix={cadence.data} />
+                )}
+            </Panel>
 
             {report.loading || report.data === null ? (
                 <Panel title="Analytics">

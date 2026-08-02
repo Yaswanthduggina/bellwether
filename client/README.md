@@ -32,13 +32,19 @@ no longer occur in live data but are still reachable via CSV import. A wholesale
 recapture would delete that coverage — the live roster has no seeded rows and only
 two platforms, which turns those assertions vacuous or breaks them outright.
 
-`src/__tests__/timingLive.json` and `src/__tests__/recentPostsLive.json` are
-second captures — of `/api/analytics/timing` and `/api/analytics/recent-posts`
-alone — taken from the **current** corpus. They exist because those payloads carry
-things the older capture cannot: timing gained `minCellN`, `minMarginalN` and
-`suppressedSlots`, and the recent-posts route did not exist when `fixtures.json`
-was taken. `TimingHeatmap.test.tsx` and `RecentPosts.test.tsx` need real responses
-carrying them.
+`src/__tests__/timingLive.json`, `src/__tests__/recentPostsLive.json` and
+`src/__tests__/cadenceLive.json` are second captures — of `/api/analytics/timing`,
+`/api/analytics/recent-posts` and `/api/analytics/cadence` alone — taken from the
+**current** corpus. They exist because those payloads carry things the older
+capture cannot: timing gained `minCellN`, `minMarginalN` and `suppressedSlots`,
+and neither the recent-posts nor the cadence route existed when `fixtures.json`
+was taken. `TimingHeatmap.test.tsx`, `RecentPosts.test.tsx` and the cadence
+assertions in `App.test.tsx` need real responses carrying them.
+
+The cadence capture is also the only fixture where a *stale* one would be
+actively misleading rather than merely thin: the figure it pins is a rate, and a
+rate captured against a different roster looks exactly as plausible as a correct
+one.
 
 The vintages are not interchangeable, and the difference is visible in the tests
 rather than papered over: the old report still has a FACEBOOK tab that the live

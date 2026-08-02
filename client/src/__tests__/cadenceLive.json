@@ -1,0 +1,147 @@
+{
+ "filter": {},
+ "platforms": [
+  "INSTAGRAM",
+  "X",
+  "YOUTUBE"
+ ],
+ "rows": [
+  {
+   "personName": "Narendra Modi",
+   "role": "PRINCIPAL",
+   "cells": {
+    "INSTAGRAM": {
+     "handle": "narendramodi",
+     "posts": 160,
+     "postsPerWeek": 12.516988570461029,
+     "consistencyPct": 100,
+     "isSynthetic": false
+    },
+    "X": {
+     "handle": "narendramodi",
+     "posts": 1200,
+     "postsPerWeek": 93.39749606790056,
+     "consistencyPct": 100,
+     "isSynthetic": false
+    },
+    "YOUTUBE": {
+     "handle": "narendramodi",
+     "posts": 839,
+     "postsPerWeek": 65.79638730547894,
+     "consistencyPct": 100,
+     "isSynthetic": false
+    }
+   }
+  },
+  {
+   "personName": "Amit Shah",
+   "role": "COMPETITOR",
+   "cells": {
+    "INSTAGRAM": {
+     "handle": "amitshahofficial",
+     "posts": 29,
+     "postsPerWeek": 2.2687041783960615,
+     "consistencyPct": 85,
+     "isSynthetic": false
+    },
+    "X": {
+     "handle": "AmitShah",
+     "posts": 607,
+     "postsPerWeek": 47.243566761013035,
+     "consistencyPct": 100,
+     "isSynthetic": false
+    },
+    "YOUTUBE": {
+     "handle": "AmitShah",
+     "posts": 48,
+     "postsPerWeek": 3.764274839884374,
+     "consistencyPct": 92,
+     "isSynthetic": false
+    }
+   }
+  },
+  {
+   "personName": "Arvind Kejriwal",
+   "role": "COMPETITOR",
+   "cells": {
+    "INSTAGRAM": {
+     "handle": "arvindkejriwal",
+     "posts": 139,
+     "postsPerWeek": 10.87413382058802,
+     "consistencyPct": 100,
+     "isSynthetic": false
+    },
+    "X": {
+     "handle": "ArvindKejriwal",
+     "posts": 373,
+     "postsPerWeek": 29.031055027772425,
+     "consistencyPct": 100,
+     "isSynthetic": false
+    },
+    "YOUTUBE": {
+     "handle": "ArvindKejriwal",
+     "posts": 136,
+     "postsPerWeek": 10.665445379672391,
+     "consistencyPct": 100,
+     "isSynthetic": false
+    }
+   }
+  },
+  {
+   "personName": "Rahul Gandhi",
+   "role": "COMPETITOR",
+   "cells": {
+    "INSTAGRAM": {
+     "handle": "rahulgandhi",
+     "posts": 184,
+     "postsPerWeek": 14.394536856030182,
+     "consistencyPct": 92,
+     "isSynthetic": false
+    },
+    "X": {
+     "handle": "RahulGandhi",
+     "posts": 207,
+     "postsPerWeek": 16.111068071712847,
+     "consistencyPct": 100,
+     "isSynthetic": false
+    },
+    "YOUTUBE": {
+     "handle": "RahulGandhi",
+     "posts": 190,
+     "postsPerWeek": 14.900254574542313,
+     "consistencyPct": 100,
+     "isSynthetic": false
+    }
+   }
+  }
+ ],
+ "windows": {
+  "INSTAGRAM": {
+   "from": "2026-05-03T06:01:34.000Z",
+   "to": "2026-07-31T17:30:27.000Z",
+   "days": 89.47839120370371,
+   "comparable": true,
+   "truncatedAccounts": [],
+   "narrowedFromDays": null,
+   "narrowedBy": []
+  },
+  "X": {
+   "from": "2026-05-04T13:46:13.000Z",
+   "to": "2026-08-02T12:17:11.000Z",
+   "days": 89.93817129629629,
+   "comparable": true,
+   "truncatedAccounts": [],
+   "narrowedFromDays": null,
+   "narrowedBy": []
+  },
+  "YOUTUBE": {
+   "from": "2026-05-03T11:22:22.000Z",
+   "to": "2026-07-31T17:37:05.000Z",
+   "days": 89.2602199074074,
+   "comparable": true,
+   "truncatedAccounts": [],
+   "narrowedFromDays": null,
+   "narrowedBy": []
+  }
+ }
+}

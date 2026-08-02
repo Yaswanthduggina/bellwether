@@ -12,7 +12,7 @@
 
 import { Router } from "express";
 import { buildReport } from "../analytics/buildReport";
-import { compareCadence, describeCadence } from "../analytics/cadence";
+import { cadenceMatrix, compareCadence, describeCadence } from "../analytics/cadence";
 import {
     compareAccountsByBasis,
     compareFormatMix,
@@ -66,18 +66,6 @@ analyticsRouter.get(
         const principal = corpora.filter((c) => c.role === "PRINCIPAL");
         const principalPosts = principal.flatMap((c) => c.posts);
 
-        const cadence = compareCadence(
-            corpora.map((c) => ({
-                accountId: c.accountId,
-                personName: c.personName,
-                role: c.role,
-                handle: c.handle,
-                isSynthetic: c.isSynthetic,
-                timezone: c.timezone,
-                posts: c.posts,
-            })),
-        );
-
         res.json({
             filter,
             accounts: corpora.length,
@@ -100,20 +88,39 @@ analyticsRouter.get(
                 unclassified: posts.length - classified,
                 complete: posts.length > 0 && classified === posts.length,
             },
-            cadence:
-                cadence === null || cadence.principal === null
-                    ? null
-                    : {
-                          // Withheld on the same condition as the platform
-                          // sections in buildReport. This KPI is the same
-                          // arithmetic over the same posts, and a figure the
-                          // comparison refuses to publish must not reappear on
-                          // the overview strip with the caveat stripped off.
-                          principalPostsPerWeek: cadence.comparable ? cadence.principal.postsPerWeek : null,
-                          peerMedianPostsPerWeek: cadence.peerBenchmark,
-                          sentence: describeCadence(cadence),
-                      },
+            // No cadence figure here any more. It used to be a single
+            // posts-per-week number over every platform at once, which is not a
+            // quantity — see the note above `cadenceMatrix`. The honest version
+            // needs a column per platform, so it has its own route and its own
+            // panel rather than a tile it cannot fit in.
             platforms: [...new Set(corpora.map((c) => c.platform))].sort(),
+        });
+    }),
+);
+
+analyticsRouter.get(
+    "/cadence",
+    route(async (req, res) => {
+        const filter = parseFilter(req);
+        const corpora = await loadCorpora(filter);
+
+        // Every account, one comparison per platform, each over its own window.
+        // The arithmetic and the per-column withholding both live in
+        // analytics/cadence.ts; this route only projects them.
+        res.json({
+            filter,
+            ...cadenceMatrix(
+                corpora.map((c) => ({
+                    accountId: c.accountId,
+                    personName: c.personName,
+                    role: c.role,
+                    handle: c.handle,
+                    isSynthetic: c.isSynthetic,
+                    timezone: c.timezone,
+                    platform: c.platform,
+                    posts: c.posts,
+                })),
+            ),
         });
     }),
 );

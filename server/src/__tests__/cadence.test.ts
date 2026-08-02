@@ -11,12 +11,14 @@
 import { describe, expect, it } from "vitest";
 import {
     analyseCadence,
+    cadenceMatrix,
     compareCadence,
     describeCadence,
     windowSpanning,
     type CadenceCorpus,
     type CadencePost,
     type CadenceWindow,
+    type PlatformCadenceCorpus,
 } from "../analytics/cadence";
 
 const IST = "Asia/Kolkata";
@@ -472,5 +474,121 @@ describe("NARROWING TO THE WINDOW EVERY ACCOUNT ACTUALLY COVERS", () => {
         expect(comparison.comparable).toBe(true);
         expect(Math.round(comparison.narrowed!.days)).toBe(20);
         expect(comparison.peers.find((p) => p.personName === "Silent")!.postsPerWeek).toBe(0);
+    });
+});
+
+describe("the matrix: one comparison per platform, never one across them", () => {
+    /** Every day from `from` to day 28 inclusive. */
+    function daily(from: number): Date[] {
+        return Array.from({ length: 29 - from }, (_, i) => day(from + i));
+    }
+
+    /** Every other day from `from` to day 28. */
+    function alternate(from: number): Date[] {
+        const dates: Date[] = [];
+        for (let n = from; n <= 28; n += 2) dates.push(day(n));
+        return dates;
+    }
+
+    function on(
+        platform: string,
+        personName: string,
+        role: "PRINCIPAL" | "COMPETITOR",
+        dates: Date[],
+    ): PlatformCadenceCorpus<CadencePost> {
+        return { ...corpus(personName, role, dates), accountId: `${platform}_${personName}`, platform };
+    }
+
+    it("keeps every platform the principal is on, instead of the first one found", () => {
+        // THE BUG THIS FUNCTION EXISTS FOR. `compareOverWindow` picks the
+        // principal with `stats.find`, so a single comparison over every corpus
+        // at once reported ONE of the principal's platforms and dropped the
+        // rest — silently, because the surviving number looked perfectly normal.
+        const corpora = [
+            on("YOUTUBE", "P", "PRINCIPAL", daily(0)),
+            on("X", "P", "PRINCIPAL", [day(0), day(14)]),
+            on("YOUTUBE", "Peer", "COMPETITOR", alternate(0)),
+            on("X", "Peer", "COMPETITOR", alternate(0)),
+        ];
+
+        const blended = compareCadence(corpora)!;
+        expect(blended.principal!.posts).toBe(29); // one platform, and only one
+
+        const matrix = cadenceMatrix(corpora);
+        const principal = matrix.rows.find((r) => r.role === "PRINCIPAL")!;
+        expect(matrix.platforms).toEqual(["X", "YOUTUBE"]);
+        expect(principal.cells["YOUTUBE"]!.posts).toBe(29);
+        expect(principal.cells["X"]!.posts).toBe(2);
+    });
+
+    it("measures each column over its own window", () => {
+        // X spans 14 days here and YouTube 28. Sharing one window across the two
+        // would divide the X column by a fortnight it has no data for.
+        const matrix = cadenceMatrix([
+            on("YOUTUBE", "P", "PRINCIPAL", daily(0)),
+            on("X", "P", "PRINCIPAL", [day(0), day(7), day(14)]),
+        ]);
+
+        expect(matrix.windows["YOUTUBE"]!.days).toBeCloseTo(28, 6);
+        expect(matrix.windows["X"]!.days).toBeCloseTo(14, 6);
+
+        const principal = matrix.rows[0]!;
+        expect(principal.cells["YOUTUBE"]!.postsPerWeek).toBeCloseTo((29 * 7) / 28, 6);
+        expect(principal.cells["X"]!.postsPerWeek).toBeCloseTo((3 * 7) / 14, 6);
+    });
+
+    it("withholds a whole column when one account cannot cover its window", () => {
+        // Every cell in the column is divided by the same window, so they are
+        // all wrong in the same way — not just the cross-account figures.
+        const matrix = cadenceMatrix([
+            on("X", "P", "PRINCIPAL", daily(0)),
+            on("X", "Late", "COMPETITOR", [day(27), day(28)]),
+            on("YOUTUBE", "P", "PRINCIPAL", daily(0)),
+            on("YOUTUBE", "Late", "COMPETITOR", alternate(0)),
+        ]);
+
+        expect(matrix.windows["X"]!.comparable).toBe(false);
+        expect(matrix.windows["X"]!.truncatedAccounts).toContain("Late");
+        expect(matrix.rows.every((r) => r.cells["X"]!.postsPerWeek === null)).toBe(true);
+        // The post count survives — it is a fact about the account either way.
+        expect(matrix.rows[0]!.cells["X"]!.posts).toBe(29);
+
+        // The healthy column is untouched by its neighbour.
+        expect(matrix.windows["YOUTUBE"]!.comparable).toBe(true);
+        expect(matrix.rows[0]!.cells["YOUTUBE"]!.postsPerWeek).toBeGreaterThan(0);
+    });
+
+    it("leaves no cell where a person is not tracked on a platform", () => {
+        // Absent, not zero. A 0.0/wk cell would claim the account exists and
+        // posted nothing, which is a different and much stronger statement.
+        const matrix = cadenceMatrix([
+            on("X", "P", "PRINCIPAL", daily(0)),
+            on("X", "Peer", "COMPETITOR", alternate(0)),
+            on("YOUTUBE", "P", "PRINCIPAL", daily(0)),
+        ]);
+
+        const peer = matrix.rows.find((r) => r.personName === "Peer")!;
+        expect(peer.cells["YOUTUBE"]).toBeUndefined();
+        expect(peer.cells["X"]).toBeDefined();
+    });
+
+    it("drops a platform with no posts rather than showing an empty column", () => {
+        const matrix = cadenceMatrix([
+            on("X", "P", "PRINCIPAL", daily(0)),
+            on("FACEBOOK", "P", "PRINCIPAL", []),
+        ]);
+
+        expect(matrix.platforms).toEqual(["X"]);
+        expect(matrix.windows["FACEBOOK"]).toBeUndefined();
+    });
+
+    it("puts the principal first and holds the order steady", () => {
+        const matrix = cadenceMatrix([
+            on("X", "Zeta", "COMPETITOR", alternate(0)),
+            on("X", "Alpha", "COMPETITOR", alternate(0)),
+            on("X", "Modi", "PRINCIPAL", daily(0)),
+        ]);
+
+        expect(matrix.rows.map((r) => r.personName)).toEqual(["Modi", "Alpha", "Zeta"]);
     });
 });

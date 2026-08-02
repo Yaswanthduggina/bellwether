@@ -146,8 +146,45 @@ export interface Overview {
     unratedPosts: number;
     provenance: { livePosts: number; seededPosts: number; seededPct: number; seededAccounts: string[] };
     classification: { classified: number; unclassified: number; complete: boolean };
-    cadence: { principalPostsPerWeek: number | null; peerMedianPostsPerWeek: number | null; sentence: string } | null;
     platforms: Platform[];
+}
+
+/**
+ * Cadence for every account, person × platform.
+ *
+ * A separate route rather than a field on the overview because it needs a
+ * column per platform: one posts-per-week number spanning every platform at
+ * once is not a quantity, which is the bug this replaced. See the note above
+ * `cadenceMatrix` in server/src/analytics/cadence.ts.
+ */
+export interface CadenceCell {
+    handle: string;
+    posts: number;
+    /** Null when the whole column was withheld — read `windows[platform]` for why. */
+    postsPerWeek: number | null;
+    consistencyPct: number | null;
+    isSynthetic: boolean;
+}
+
+export interface CadenceWindow {
+    from: string;
+    to: string;
+    days: number;
+    comparable: boolean;
+    truncatedAccounts: string[];
+    narrowedFromDays: number | null;
+    narrowedBy: string[];
+}
+
+export interface CadenceMatrix {
+    platforms: Platform[];
+    rows: {
+        personName: string;
+        role: "PRINCIPAL" | "COMPETITOR";
+        /** Keyed by platform; absent where the person is not tracked on it. */
+        cells: Record<string, CadenceCell>;
+    }[];
+    windows: Record<string, CadenceWindow>;
 }
 
 export interface ReportFormat {
@@ -499,6 +536,7 @@ export const api = {
         ),
 
     overview: (filter: Filter) => get<Overview>("/api/analytics/overview", filter),
+    cadence: (filter: Filter) => get<CadenceMatrix>("/api/analytics/cadence", filter),
     report: (filter: Filter) => get<Report>("/api/analytics/report", filter),
     timing: (filter: Filter) => get<TimingResponse>("/api/analytics/timing", filter),
 

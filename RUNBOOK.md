@@ -253,6 +253,7 @@ Useful endpoints when demoing without a UI:
 |---|---|
 | `GET /api/health` | Liveness |
 | `GET /api/analytics/overview` | KPIs |
+| `GET /api/analytics/cadence` | Posts/week for every account, person × platform, one window per platform |
 | `GET /api/analytics/formats` · `/timing` · `/top-posts` · `/recent-posts` | Per-dimension |
 | `GET /api/analytics/compare` · `/gaps` | Principal vs peers |
 | `GET /api/analytics/report` | **The whole analytics document — the exact JSON the recommendation model is given.** Costs nothing, needs no Gemini key. |

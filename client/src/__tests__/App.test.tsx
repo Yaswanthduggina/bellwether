@@ -16,9 +16,10 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
 import fixtures from "./fixtures.json";
-// A second capture, from the current corpus — `fixtures.json` predates the route.
-// See client/README.md for why the two vintages coexist.
+// Two later captures, from the current corpus — `fixtures.json` predates both
+// routes. See client/README.md for why the vintages coexist.
 import recentPosts from "./recentPostsLive.json";
+import cadence from "./cadenceLive.json";
 
 const NO_KEY = {
     error: {
@@ -48,6 +49,7 @@ function mockFetch(overrides: Record<string, { status: number; body: unknown }> 
             "/api/analytics/report": fixtures.report,
             "/api/analytics/timing": fixtures.timing,
             "/api/analytics/recent-posts": recentPosts,
+            "/api/analytics/cadence": cadence,
             "/api/ai/recommendations": NO_KEY,
         };
 
@@ -144,6 +146,44 @@ describe("the dashboard renders the real corpus", () => {
         const served = recentPosts.accounts.some((a) => a.platform === tab);
         expect(served).toBe(false);
         expect(await screen.findByText(new RegExp(`no ${tab} account`))).toBeInTheDocument();
+    });
+
+    it("shows a posting rate per person per platform, not one blended number", async () => {
+        // The panel this replaced was a single KPI tile, which could only hold
+        // one of the principal's three platforms — and compared it against a
+        // peer median pooled across all of them. Every cell is asserted from the
+        // fixture so the table cannot drift from what the route returns.
+        render(<App />);
+
+        const heading = await screen.findByRole("heading", { name: "Cadence", level: 2 });
+        const panel = heading.closest(".panel") as HTMLElement;
+
+        expect(within(panel).getAllByRole("columnheader").map((h) => h.textContent)).toEqual([
+            "Person",
+            ...cadence.platforms,
+        ]);
+
+        for (const row of cadence.rows) {
+            const tr = within(panel).getByText(row.personName).closest("tr") as HTMLElement;
+            for (const platform of cadence.platforms) {
+                const cell = (row.cells as Record<string, { postsPerWeek: number | null }>)[platform]!;
+                expect(within(tr).getByText(cell.postsPerWeek!.toFixed(1))).toBeInTheDocument();
+            }
+        }
+    });
+
+    it("states the window per column, because the columns do not share one", async () => {
+        // Each platform is ingested on its own day, so each spans its own number
+        // of days. One "measured over 90 days" line under this table would be
+        // wrong for at least two of the three columns.
+        render(<App />);
+        const heading = await screen.findByRole("heading", { name: "Cadence", level: 2 });
+        const panel = heading.closest(".panel") as HTMLElement;
+
+        for (const platform of cadence.platforms) {
+            const window = (cadence.windows as Record<string, { days: number }>)[platform]!;
+            expect(within(panel).getByText(new RegExp(`${platform} ${window.days.toFixed(0)}d`))).toBeInTheDocument();
+        }
     });
 
     it("shows the comparison sentence the server composed", async () => {

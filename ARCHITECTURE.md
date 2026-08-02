@@ -130,6 +130,7 @@ POST   /api/import                        CSV/JSON upload                    (FR
 GET    /api/ingestion-runs                audit trail                        (FR14)
 
 GET    /api/analytics/overview            KPI row
+GET    /api/analytics/cadence             posts/week, person × platform
 GET    /api/analytics/formats             format × platform stats            (FR6)
 GET    /api/analytics/timing              day×hour heatmap + n per cell      (FR7)
 GET    /api/analytics/top-posts           best/worst + permalinks            (FR8)
