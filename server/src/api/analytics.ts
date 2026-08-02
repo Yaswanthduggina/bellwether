@@ -24,6 +24,7 @@ import { partitionByBasis, type EngagementBasis } from "../analytics/engagement"
 import { analyseFormatsByBasis } from "../analytics/format";
 import { describeGap, findGapsByBasis, mergeHourWindows } from "../analytics/gaps";
 import { clampRecentCount, recentPosts } from "../analytics/recentPosts";
+import { renderReportMarkdown } from "../analytics/reportMarkdown";
 import { analyseTimingByBasis, occupiedHours } from "../analytics/timing";
 import { topPostsByBasis } from "../analytics/topPosts";
 import { parseFilter } from "./filters";
@@ -95,6 +96,25 @@ analyticsRouter.get(
             // panel rather than a tile it cannot fit in.
             platforms: [...new Set(corpora.map((c) => c.platform))].sort(),
         });
+    }),
+);
+
+analyticsRouter.get(
+    "/report.md",
+    route(async (req, res) => {
+        const filter = parseFilter(req);
+        const report = await buildReport(filter);
+
+        // Rendered from the same document `/report` serves, by the same function
+        // the CLI export uses. A second rendering path would be a second source
+        // of truth, and the first time they disagreed nobody could say which was
+        // right. Recommendations are not included: they cost a model call, and a
+        // download button must not silently spend one.
+        const filename = `bellwether-${(report.principalName ?? "report").toLowerCase().replace(/\s+/g, "-")}.md`;
+
+        res.type("text/markdown; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+        res.send(renderReportMarkdown(report));
     }),
 );
 

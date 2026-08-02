@@ -106,6 +106,18 @@ export function Dashboard() {
         <>
             <Filters value={filter} onApply={setFilter} />
 
+            {/* Comms teams live in decks and email, so the analysis has to be
+                able to leave the browser. Markdown rather than PDF: it pastes
+                into a doc, a deck or an email without losing its tables, and it
+                is the same renderer the committed sample report is built with —
+                so what a reviewer reads in the repo is what this button hands
+                over, filters and all. */}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+                <a className="button ghost" href={api.reportMarkdownUrl(filter)} download>
+                    Download report ↓
+                </a>
+            </div>
+
             <Recommendations
                 run={recommendations.data}
                 error={recommendations.error}

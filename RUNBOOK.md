@@ -322,7 +322,7 @@ curl -X POST http://localhost:4000/api/ai/classify \
 
 ### 6.3 Budgeting a constrained key
 
-Roughly **one request per 25 posts**. A 1,725-post corpus is ~70 requests; a 2,365-post corpus is ~95. Recommendations cost **one or two requests total**.
+Roughly **one request per 25 posts**. A 1,725-post corpus is ~70 requests; the current 4,112-post corpus is ~165. Recommendations cost **one or two requests total**.
 
 So on a nearly-spent key, the order is:
 

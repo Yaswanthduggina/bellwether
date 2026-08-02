@@ -284,6 +284,22 @@ cd client && npm run dev      # http://localhost:5173
 
 Open http://localhost:5173.
 
+### 9. Export the analysis
+
+The dashboard has a **Download report** button that hands back the whole analysis as Markdown, carrying whatever filters are on screen. The same export runs from the command line:
+
+```bash
+cd server
+npm run report                                  # to stdout
+npm run report -- --out=../SAMPLE-REPORT.md     # the file committed at the repo root
+npm run report -- --platform=YOUTUBE            # one platform
+npm run report -- --recommendations             # include the AI section (needs GEMINI_API_KEY)
+```
+
+`SAMPLE-REPORT.md` in the repository root is that command's output against the live corpus — it is regenerated, never hand-edited, so a figure in it that disagrees with the portal is a bug rather than a stale paste.
+
+Markdown rather than PDF: it pastes into a doc, a deck or an email without losing its tables, and it renders in the browser on GitHub. Both paths call the same renderer as `GET /api/analytics/report.md`, which reads the same document the recommendation model is grounded against — so the report a manager receives and the evidence the model saw cannot drift apart.
+
 ---
 
 ## Tests
@@ -328,7 +344,7 @@ Module D — the recommendation validator (`src/__tests__/validate.test.ts`):
 - A fabricated number and a non-existent `post_id` are both rejected, as promised above.
 - A number lifted from a post **caption** is rejected too. `collectEvidence` deliberately leaves captions unindexed, so a rationale quoting "₹5,000 crore" out of a post fails — that figure is a claim about the world this system has not verified and cannot check.
 - The counterweight: a figure that appears **only inside the report's own pre-written prose** is accepted. Every number the model can see must be a number the validator accepts, or the only way to make the pipeline pass is to loosen the validator until it stops checking. Building this found a second live instance of that break — a gap's hour exists only in its `label` (`"20:00"`), which was unindexed, so the model would have been rejected for naming the very hour it was told about.
-- Verified on the real 940-post corpus rather than only on fixtures: every numeric literal in the report's own prose validates, across three filters, zero failures.
+- Verified against the real corpus rather than only against fixtures: every numeric literal in the report's own prose validates, across three filters, zero failures.
 
 **The round-trip tests are the ones worth reading.** Every multiplier the seed generator plants — format quality, the 7–9pm IST peak, the midweek lift, the theme ranking — is an exported constant, so the analytics tests run the real generator through the real pipeline and assert the engine **recovered a pattern that was deliberately put there**. That is a much stronger claim than "it computed a number without crashing."
 
@@ -340,14 +356,12 @@ One of them earned its keep: pooling format statistics across accounts turned ou
 
 ## Project status
 
-<!-- UPDATE THIS TABLE AS YOU BUILD — it is the first thing a reviewer reads -->
+**Complete.** Ingestion runs end to end across three live platforms, every number the product shows is computed and tested, the REST API is up, the grounded recommendation layer is in, the portal runs in a browser, and the analysis exports as Markdown.
 
-**Day 3 of 4 complete, plus a source change on Day 4.** Ingestion runs end to end, every number the product shows is computed and tested, the REST API is up, the grounded recommendation layer is in, and the portal runs in a browser.
+**The synthetic corpus is gone.** Instagram and X come from Apify and YouTube from the Data API, so the database holds fetched rows only — 4,112 posts, 0 generated. Nothing above the adapter layer moved when the sources changed: same `RawPost` contract, same validate → normalise → upsert → log pipeline, same analytics, same API, same UI.
 
-The Day 4 change: **the synthetic corpus is gone.** Instagram now comes from Apify and YouTube from the Data API, so the database holds fetched rows only. Nothing above the adapter layer moved — same `RawPost` contract, same validate → normalise → upsert → log pipeline, same analytics, same API, same UI. The corpus counts below are from the last seeded run and are **stale until the first live Apify ingest**; they are left visible rather than quietly replaced with numbers nobody has measured.
-
-`cd server && npm test` → **307 passing**, `tsc --noEmit` clean.
-`cd client && npm test` → **10 passing**, `npm run build` clean.
+`cd server && npm test` → **360 passing**, `tsc --noEmit` clean.
+`cd client && npm test` → **44 passing**, `npm run build` clean.
 
 | Module | Status |
 |---|---|
@@ -355,47 +369,38 @@ The Day 4 change: **the synthetic corpus is gone.** Instagram now comes from Api
 | A — DB client (Prisma 7 + `adapter-pg`), verified against Supabase | ✅ Done |
 | A — Seed generator carrying real signal (patterns to discover) | ⚪ Retired — kept in the tree with its tests, unreferenced by ingestion |
 | A — Normalise + idempotent upsert + ingestion run log | ✅ Done |
-| A — YouTube live adapter | ✅ Done — 108 real posts, 3 verified channels |
-| A — Instagram live adapter via Apify (`apifyAdapter.ts`) | ✅ Done — replaces the seeded Instagram corpus |
-| A — X live adapter via Apify (`xAdapter.ts`) | ✅ Done — 640 real posts across four accounts |
+| A — YouTube live adapter | ✅ Done — 1,213 real posts across four channels |
+| A — Instagram live adapter via Apify (`apifyAdapter.ts`) | ✅ Done — 512 real posts, replaces the seeded Instagram corpus |
+| A — X live adapter via Apify (`xAdapter.ts`) | ✅ Done — 2,387 real posts across four accounts |
 | A — Facebook adapter (`facebookAdapter.ts`) | 🟡 Planned — accounts declared, blocker recorded in the registry |
 | A — CSV/JSON import adapter (`fileAdapter.ts`) | ✅ Done |
 | B — Engagement rate + format analysis | ✅ Done |
 | B — Timing heatmap | ✅ Done |
 | B — Top/bottom performers | ✅ Done |
-| C — Comparison | ✅ Done |
 | B — Cadence analysis | ✅ Done |
+| B — Cadence matrix (person × platform, one window per platform) | ✅ Done |
+| C — Comparison: engagement, cadence, format mix, best windows | ✅ Done |
 | C — Gap analysis (formats · hours · days · themes) | ✅ Done |
-| C — Comparison: cadence, format mix, best windows | ✅ Done |
 | API — Express routes, accounts CRUD, shared filters | ✅ Done |
-| D — Theme classification | ✅ Done — 940 of 940 classified on the previous corpus; re-runs incrementally over the live one |
+| D — Theme classification | ✅ Done — 4,112 of 4,112 classified; re-runs incrementally as new posts arrive |
 | D — Grounded recommendations + validator | ✅ Done — generator, pure validator, retry-then-drop, drop count reported |
 | E — React portal — dashboard, filters, accounts CRUD | ✅ Done — recommendations panel at the top, SEEDED badges throughout |
-| Docs — README / DECISIONS.md / sample report / video | 🔨 README + `DECISIONS.md` current; report and video pending |
+| E — Markdown export (`npm run report`, download button, `GET /api/analytics/report.md`) | ✅ Done — `SAMPLE-REPORT.md` in the repository root is its output |
+| Docs — README / DECISIONS.md / ARCHITECTURE.md / RUNBOOK.md / sample report | ✅ Done |
 
-**Corpus, before the source change** (the last seeded run — kept for comparison, not current):
+**Corpus as it stands** — measured, from the live runs through 2 Aug 2026:
 
-| Platform | Posts | Then | Now |
-|---|---|---|---|
-| X | 275 | seeded | declared, **not ingested** — adapter planned |
-| Instagram | 263 | seeded | **live via Apify** |
-| Facebook | 263 | seeded | declared, **not ingested** — adapter planned |
-| YouTube | 108 live + 31 seeded | mixed | **live only** — the seeded account had no real channel and was dropped |
+| Account | Instagram | X | YouTube |
+|---|---:|---:|---:|
+| Narendra Modi *(principal)* | 160 | 1,200 | 839 |
+| Amit Shah | 29 | 607 | 48 |
+| Arvind Kejriwal | 139 | 373 | 136 |
+| Rahul Gandhi | 184 | 207 | 190 |
+| **Total** | **512** | **2,387** | **1,213** |
 
-**Corpus as it stands now** — measured, from the live run on 1 Aug 2026:
+**4,112 posts, all of them real, 0 synthetic, 0 failed rows, 4,112 of 4,112 classified.** Sources: `apify_instagram`, `apify_x`, `youtube_api`. Every account reaches back 84–90 days, so the window is genuinely covered rather than nominally requested — which is what lets the cadence comparison publish a figure instead of withholding one.
 
-| Account | Platform | Posts (90d) | Source |
-|---|---|---|---|
-| Narendra Modi | YouTube | 839 | `youtube_api` |
-| Rahul Gandhi | YouTube | 190 | `youtube_api` |
-| Rahul Gandhi | Instagram | 184 | `apify_instagram` |
-| Narendra Modi | Instagram | 160 | `apify_instagram` |
-| Arvind Kejriwal | Instagram | 139 | `apify_instagram` |
-| Arvind Kejriwal | YouTube | 136 | `youtube_api` |
-| Amit Shah | YouTube | 48 | `youtube_api` |
-| Amit Shah | Instagram | 29 | `apify_instagram` |
-
-**1,725 posts, all of them real, 0 synthetic, 0 failed rows.** Instagram 512, YouTube 1,213. Every account reaches back 84–90 days, so the window is genuinely covered rather than nominally requested. The reconcile pruned 5 accounts that were no longer in the roster, removing 458 posts with them.
+Facebook is declared in the adapter registry and carries no rows. The blocker recorded there: the Graph API reads only Pages you administer, and competitor benchmarking is by definition about Pages you do not — it needs either Page access granted by each owner, or a public-web source. It stays visible as `PLANNED` with that reason attached rather than being quietly dropped, and it is the one platform of the four where the honest answer is a stated gap rather than data. Data for it can still be loaded through the CSV/JSON import path.
 
 ### The bug that hid inside a successful run
 
@@ -419,7 +424,7 @@ Two changes followed. `MAX_PAGES` is now 60 (3,000 videos), and — the part tha
 
 **The volume asymmetry is real and worth reading before any cross-account conclusion.** Modi's YouTube alone is 839 posts against Amit Shah's 29 on Instagram — a 29× range across the corpus. That is a genuine finding about how these four operate rather than a sampling artefact, but it means per-account sample sizes differ by an order of magnitude, and the sample-size gates will include and exclude accounts unevenly because of it.
 
-**End-to-end result on this corpus.** All **1,725 posts are classified — 100% coverage, 0 low-confidence**, and the recommendation layer produced **6 recommendations, all 6 accepted, 0 dropped by the validator and 0 requiring repair**, citing 143 distinct figures and 20 real post IDs. A sample:
+**End-to-end result on this corpus.** All **4,112 posts are classified — 100% coverage, 0 low-confidence**, and the recommendation layer produced **6 recommendations, all 6 accepted, 0 dropped by the validator and 0 requiring repair**, citing 143 distinct figures and 20 real post IDs. A sample:
 
 > **Stop publishing SINGLE_IMAGE posts on Instagram and replace them with CAROUSEL posts.** Narendra Modi spends 25% of his Instagram output on SINGLE_IMAGE across 23 posts, where a typical post earns 0.49× his own baseline. In contrast, CAROUSEL posts earn 1.22× his own baseline across 68 posts. — *confidence HIGH, n=23*
 
@@ -440,7 +445,7 @@ Stated plainly rather than buried.
   Per-peer evidence rows ship with every gap and near miss, so `2 of 3 peers agree` is checkable rather than asserted — the lifts were previously computed and then dropped on the way to the UI.
 
   The panel also reports **what was searched** per dimension — `HOUR 12/18 buckets testable` — so a dimension that could test nothing (THEME before classification finishes) is distinguishable from one that ran and found nothing. Those are opposite meanings and previously rendered identically.
-- **The AI layer's binding constraint is the Gemini free tier, not the code.** Classification is roughly one request per 25 posts, so a 1,725-post corpus is ~70 requests and exhausts a free-tier key's daily allowance well before it finishes; reaching 100% coverage took four keys across one day. Two things follow. Classification is **incremental and resumable**, so a run that stops at a quota wall keeps everything it wrote and continues from there. And the UI's Classify button **paces itself** (one batch every 8 seconds, with exponential backoff on 429) because Gemini's per-minute limit and its daily limit return an identical error — firing batches back-to-back trips the per-minute one after about eight of them, which reads as "quota exhausted" when eight seconds of patience would have cleared it. Recommendations, by contrast, cost **one or two requests**, so generating them first and classifying with what remains is the right order on a constrained key.
+- **The AI layer's binding constraint is the Gemini free tier, not the code.** Classification is roughly one request per 25 posts, so a 4,112-post corpus is ~165 requests and exhausts a free-tier key's daily allowance well before it finishes; reaching 100% coverage took several keys across more than one day. Two things follow. Classification is **incremental and resumable**, so a run that stops at a quota wall keeps everything it wrote and continues from there. And the UI's Classify button **paces itself** (one batch every 8 seconds, with exponential backoff on 429) because Gemini's per-minute limit and its daily limit return an identical error — firing batches back-to-back trips the per-minute one after about eight of them, which reads as "quota exhausted" when eight seconds of patience would have cleared it. Recommendations, by contrast, cost **one or two requests**, so generating them first and classifying with what remains is the right order on a constrained key.
 - **Three platforms carry data, not four.** Facebook is declared in the roster and visible in the adapter registry with its blocker, but it is not ingested and not approximated. Any conclusion here describes Instagram, YouTube and X behaviour only, and the product says so rather than implying coverage it does not have.
 - **The X result cap is a per-account count, and a count cap truncates unevenly.** The actor bills per tweet against a $5/month free plan, so `X_RESULTS_LIMIT` exists to bound cost. It returns **newest first**, so hitting it drops the *oldest* posts in the window rather than sampling at random — a known, directional truncation. But because the cap is on **count** while the accounts post at very different rates, the same cap buys very different spans of history. At the original 160:
 
@@ -496,6 +501,8 @@ bellwether/
 ├── README.md            ← you are here
 ├── ARCHITECTURE.md      system design + build plan
 ├── DECISIONS.md         decisions made, alternatives rejected, why
+├── RUNBOOK.md           running it, and swapping the roster without breaking it
+├── SAMPLE-REPORT.md     the exported analysis, as a comms manager receives it
 ├── client/              React + Vite SPA
 └── server/              Express API, ingestion, analytics, AI layer
     ├── prisma/          schema + migrations

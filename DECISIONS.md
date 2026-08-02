@@ -6,6 +6,31 @@ The format is deliberate: **what was chosen · what was rejected · what it cost
 
 ---
 
+## The ten that mattered
+
+If you read nothing else, read these. Each links to the full entry in the appendix below; the rest of the file is the same treatment applied to the choices that shaped less.
+
+| # | Decision | Rejected | What it cost |
+|---|---|---|---|
+| [1.6](#16-day-4--every-row-is-fetched-or-there-is-no-row) | Every row is fetched, or there is no row — the synthetic corpus was deleted outright | Keeping a labelled seed generator as a fallback | Facebook now carries nothing at all, and the demo depends on live sources |
+| [2.1](#21-weighted-interactions-not-a-raw-sum) | Weighted interactions — like 1, comment 3, save 4, share 5 | A raw sum of interactions | The weights are a documented judgement, not a fitted model |
+| [2.2](#22-views-first-denominator-with-an-explicit-basis-flag) | Views where the platform reports them, followers otherwise, with the basis flagged on every rate | One denominator everywhere | One account can produce two rates that are not comparable |
+| [2.3](#23-the-analytics-layer-refuses-to-aggregate-across-mixed-bases) | The analytics layer **throws** rather than average across bases | Averaging, or silently preferring one basis | Some panels split in two, and the UI has to carry both |
+| [2.5](#25-sample-size-thresholds-enforced-in-code-not-styled-in-css) | Sample-size floors enforced in the computation, not styled faintly in CSS | Showing thin buckets greyed out | Real findings on small corpora are withheld |
+| [2.8](#28-cadence-is-withheld-when-histories-do-not-cover-the-window) · [2.8a](#28a-the-withheld-panel-gets-a-second-chance-narrow-the-window-dont-blank-the-panel) | Cadence narrows its window to the span every account covers, and withholds when it cannot | Publishing the figure with a caveat | A genuine early silence now moves the window instead of showing as a low rate |
+| [2.9](#29-one-competitor-is-enough-for-a-gap) | One clearing peer is enough for a gap, badged `ONE PEER` with its evidence rows | Holding the floor at two peers, which reported zero gaps on three of four panels | A gap can rest on one competitor's habit |
+| [3.1](#31-the-recommendation-model-never-sees-raw-post-data) | The model sees only the pre-computed report, never raw posts | Handing it the corpus and a good prompt | It cannot find anything the analytics layer did not compute first |
+| [3.2](#32-a-deterministic-validator-built-in-the-same-sitting-as-the-generator) | A deterministic validator that drops any unverifiable figure | Trusting schema-constrained output | Correct advice is occasionally dropped for citing an underivable number |
+| [3.3](#33-a-fixed-content-taxonomy-not-model-induced-themes) | A fixed content taxonomy | Letting the model induce themes from the corpus | A theme outside the taxonomy lands in `OTHER` |
+
+---
+
+## Appendix — the full record
+
+Everything below, including the ten above in full.
+
+---
+
 ## 1 — Data & provenance
 
 ### 1.1 Seed the platforms we cannot legitimately reach, and say so loudly

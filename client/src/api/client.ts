@@ -538,6 +538,16 @@ export const api = {
     overview: (filter: Filter) => get<Overview>("/api/analytics/overview", filter),
     cadence: (filter: Filter) => get<CadenceMatrix>("/api/analytics/cadence", filter),
     report: (filter: Filter) => get<Report>("/api/analytics/report", filter),
+
+    /**
+     * The Markdown export, as a URL rather than a fetch.
+     *
+     * A download is the browser's job: the server already sets the filename in
+     * `Content-Disposition`, and fetching the bytes into JS only to hand them
+     * back through a synthetic anchor would discard that and reimplement it.
+     * The current filter rides along, so what downloads is what is on screen.
+     */
+    reportMarkdownUrl: (filter: Filter) => `/api/analytics/report.md${toQuery(filter)}`,
     timing: (filter: Filter) => get<TimingResponse>("/api/analytics/timing", filter),
 
     /**

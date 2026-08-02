@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Bellwether API — ingestion, analytics and AI layer",
+  "description": "Bellwether API \u2014 ingestion, analytics and AI layer",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
@@ -15,7 +15,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "classify": "tsx src/scripts/classify.ts",
-    "recommend": "tsx src/scripts/recommend.ts"
+    "recommend": "tsx src/scripts/recommend.ts",
+    "report": "tsx src/scripts/report.ts"
   },
   "keywords": [],
   "author": "",
